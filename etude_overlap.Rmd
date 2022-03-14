@@ -1,0 +1,75 @@
+---
+title: "etude_overlap"
+output: html_document
+date: '2022-03-14'
+---
+
+```{r setup, include=FALSE}
+georef_dataset_level0_step11global_catch_firms_level0 <- readRDS("~/Documents/Tunaatlas_level1/data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds")
+
+library(DBI)
+library(RPostgres)
+library(RPostgreSQL)
+drv <- dbDriver("PostgreSQL")      
+con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
+                      port = 5432,
+                      user = "tunaatlas_u",
+                      password = "21c0551e7ed2911")
+
+library(tmap)
+
+# dbExistsTable(con,"iattc_after_treatment")
+# dbExistsTable(con,"/../area.area_wkt")
+
+library(dplyr, warn.conflicts = FALSE)
+library(sf)
+# summary(con)
+# dbListTables(con)
+query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
+world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
+# test <- tm_shape(world_sf)+tm_polygons()
+
+query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
+competence_area <- st_make_valid(st_read(con, query = query_area)) %>% filter(!st_is_empty(.))
+library(tmap)
+IOTC <- competence_area %>% filter(code == "IOTC")
+IATTC <- competence_area %>% filter(code == "IATTC")
+WCPFC <- competence_area %>% filter(code == "WCPFC")
+ICCAT <- competence_area %>% filter(code == "ICCAT")
+
+
+
+
+
+world_sf$iotc <- st_within(world_sf,IOTC) %>% lengths >0
+world_sf$iattc <- st_within(world_sf,IATTC) %>% lengths >0
+world_sf$wcpfc <- st_within(world_sf,WCPFC) %>% lengths >0
+world_sf$iccat <- st_within(world_sf,ICCAT) %>% lengths >0
+world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0
+
+# misplace <- georef_dataset_level0_step11global_catch_firms_level0
+
+# world_sf %>% mutate(test = paste0("iotc" * iotc +"iattc" * iattc + "wcpfc"* wcpfc + "iccat" * iccat ))
+library(tidyverse)
+for (i in 4:length(world_sf)) {
+    world_sf[[i]] <- str_replace(world_sf[[i]], "TRUE", colnames(world_sf)[i])
+}
+
+test <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat))))
+
+df <- st_as_sf(inner_join(world_sf %>% as.data.frame(), test ,by = "code"))
+tmap_mode("view")
+# tm_shape(df)+tm_polygons(col = "area_competence")+tm_facets("area_competence")
+
+continent <- st_read(
+  "data/continent.shp")
+
+
+
+```
+
+```{r}
+mislo
+```
+
+
