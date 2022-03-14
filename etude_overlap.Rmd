@@ -5,6 +5,7 @@ date: '2022-03-14'
 ---
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = FALSE)
 georef_dataset_level0_step11global_catch_firms_level0 <- readRDS("~/Documents/Tunaatlas_level1/data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds")
 
 library(DBI)
@@ -108,7 +109,7 @@ value_with_continent <- sum(test_2$value, na.rm = TRUE)
 ((value_with_continent-value_without_continent)/value_with_continent)*100
 ```
 
-En retirant les données placées sur les continents, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre`% en nombre et à `r perte_en_tonne`en tonnes. 
+En retirant les données placées sur les continents, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre`% en nombre et à `r perte_en_tonne`% en tonnes. 
 
 On s'intéresse maintenant aux données mislocated
 
@@ -131,4 +132,4 @@ perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
 
 ```
 
-En retirant les données placées sur les continents, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre`% en nombre et à `r perte_en_tonne`en tonnes. 
+En retirant les données placées sur les continents, ainsi que les données d'une rfmo dans une zone hors de leur compétence, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre`% en nombre et à `r perte_en_tonne`% en tonnes. 

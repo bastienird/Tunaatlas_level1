@@ -1,7 +1,7 @@
 
 getwd()
 require("remotes")
-install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"), force = TRUE)
+# install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"), force = TRUE)
 library(geoflow)
 library(RPostgreSQL)
 library(RPostgres)
