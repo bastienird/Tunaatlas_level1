@@ -36,6 +36,8 @@ IOTC <- competence_area %>% filter(code == "IOTC")
 IATTC <- competence_area %>% filter(code == "IATTC")
 WCPFC <- competence_area %>% filter(code == "WCPFC")
 ICCAT <- competence_area %>% filter(code == "ICCAT")
+continent <- st_read(
+  "data/continent.shp")
 
 
 
@@ -55,21 +57,78 @@ for (i in 4:length(world_sf)) {
     world_sf[[i]] <- str_replace(world_sf[[i]], "TRUE", colnames(world_sf)[i])
 }
 
-test <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat))))
+test <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
 
 df <- st_as_sf(inner_join(world_sf %>% as.data.frame(), test ,by = "code"))
-tmap_mode("view")
-# tm_shape(df)+tm_polygons(col = "area_competence")+tm_facets("area_competence")
 
-continent <- st_read(
-  "data/continent.shp")
+# tmap_mode("view")
+# tm_shape(df)+tm_polygons(col = "area_competence")+tm_facets("st_area.x")
+
 
 
 
 ```
+
 
 ```{r}
-mislo
+
+inner_join <- georef_dataset_level0_step11global_catch_firms_level0 %>% inner_join(df, by = c("geographic_identifier"="code"))
+
+test <- inner_join %>% ungroup() %>% group_by(geographic_identifier, st_area.x, area_competence, unit) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(df, by = c("geographic_identifier"="code")) %>% select(geographic_identifier, st_area.x.x, area_competence.x, value, geom.x, unit)
+
+test_2 <- test %>% st_sf(sf_column_name = 'geom.x')
+# inner_join2 <- st_as_sf(inner_join)
+
+tmap_mode("view")
+tm_shape(test_2)+tm_polygons(col = "area_competence.x")+tm_facets("st_area.x.x")
+
 ```
 
 
+Seeing the maps, we decide to remove data on the continent to see how much is lost.
+
+```{r}
+
+test3 <- test_2 %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
+st_geometry(test3) <- NULL
+final <- test3 %>% group_by(continent, unit) %>% summarise(value = sum(value))
+test2_without_continent <- test_2 %>% filter(area_competence.x != "continent")
+value_without_continent <- sum(test2_without_continent$value, na.rm =TRUE)
+
+en_nombre_continent <- pull(final %>% filter(unit == "no") %>% filter(continent == "continent"))
+en_nombre_ocean <- pull(final %>% filter(unit == "no") %>% filter(continent == "ocean"))
+en_tonne_continent <- pull(final %>% filter(unit == "t") %>% filter(continent == "continent"))
+en_tonne_ocean <- pull(final %>% filter(unit == "t") %>% filter(continent == "ocean"))
+
+perte_en_nombre <- (en_nombre_continent / (en_nombre_ocean+en_nombre_continent))*100
+perte_en_tonne <- (en_tonne_continent/ (en_tonne_continent+en_tonne_ocean))*100
+
+value_with_continent <- sum(test_2$value, na.rm = TRUE)
+
+((value_with_continent-value_without_continent)/value_with_continent)*100
+```
+
+En retirant les données placées sur les continents, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre`% en nombre et à `r perte_en_tonne`en tonnes. 
+
+On s'intéresse maintenant aux données mislocated
+
+```{r}
+
+mislocated <- inner_join %>% ungroup() %>% select(area_competence, source_authority, value, unit) %>% mutate(area_competence = toupper(area_competence)) %>%  mutate(mislocated = case_when(area_competence%in%c("IATTC", "ICCAT", "IOTC", "WCPFC") & area_competence == source_authority ~ TRUE,
+                              area_competence == "IOTCWCPFC" & source_authority %in% c("IOTC", "WCPFC")  ~ TRUE,
+                              area_competence == "IATTCWCPFC" & source_authority %in% c("IATTC", "WCPFC")  ~ TRUE, tolower(area_competence) == area_competence ~ TRUE,
+                              TRUE ~ FALSE))
+
+final <- mislocated %>% group_by(mislocated, unit) %>% summarise(value = sum(value))
+en_nombre_false<- pull(final %>% filter(unit == "no") %>% filter(mislocated == FALSE))
+en_nombre_true <- pull(final %>% filter(unit == "no") %>% filter(mislocated == TRUE))
+en_tonne_false <- pull(final %>% filter(unit == "t") %>% filter(mislocated == FALSE))
+en_tonne_true <- pull(final %>% filter(unit == "t") %>% filter(mislocated == TRUE))
+
+perte_en_nombre <- (en_nombre_false / (en_nombre_true+en_nombre_false))*100
+perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
+
+
+```
+
+En retirant les données placées sur les continents, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre`% en nombre et à `r perte_en_tonne`en tonnes. 
