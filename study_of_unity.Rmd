@@ -1,0 +1,158 @@
+---
+title: "study_of_unitiers"
+author: "Bastien Grasset"
+date: '2022-03-07'
+output: html_document
+params:
+  fichier: "~/Documents/Analyse_des_scripts/Test01_02/lancement/Rds/step3_before_unit_modification.Rds"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = TRUE,
+	warning = TRUE
+)
+library(dplyr)
+library(ggplot2)
+# library(ggrepel)
+library(tidyverse)
+```
+
+This markdown is aimed to study the repartition of each unity in the initial and final dataset.
+
+```{r}
+step3_before_unit_modification <- readRDS(params$fichier) %>% mutate(cat= ifelse(unit%in%c("MT", "MTNO"), "Tons", "Number"))
+
+
+
+# ggplot(step3_before_unit_modification, aes(x="", y=sum(value,na.rm = TRUE), fill=unit)) +geom_bar(width = 1, stat = "identity") +
+#   coord_polar("y", start=0) +theme_void()
+
+# georef_dataset <- step3_before_unit_modification %>% group_by(cat,unit, source_authority) %>% summarise(value = sum(value, na.rm = TRUE), nombre_lignes = n()) %>% mutate(pourcentage_lignes = ((nombre_lignes)/sum(nombre_lignes))*100, pourcentage_value = 100*((value/sum(value))))
+```
+
+
+
+
+# Number rows total
+
+```{r}
+georef_dataset <- step3_before_unit_modification %>% group_by(cat) %>% summarise(value = sum(value, na.rm = TRUE), nombre_lignes = n()) %>% mutate(pourcentage_lignes = ((nombre_lignes)/sum(nombre_lignes))*100, pourcentage_value = 100*((value/sum(value)))) %>% arrange(desc(cat))%>%
+  mutate(ypos_ligne = cumsum(pourcentage_lignes)- 0.5*pourcentage_lignes ) %>% mutate(ypos_value = cumsum(pourcentage_value)- 0.5*pourcentage_value )
+ggplot(georef_dataset) +
+  aes(
+    x = "",
+    fill = cat,
+    colour = cat,
+    group = cat,
+    weight = nombre_lignes
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (georef_dataset %>% mutate_if(is.numeric, round)),
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage_lignes,"%")), color = "black")+ 
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")+
+  labs(title = "Répartition des unités en nombre de lignes")
+
+```
+
+
+```{r}
+georef_dataset <- step3_before_unit_modification %>% group_by(unit) %>% summarise(value = sum(value, na.rm = TRUE), nombre_lignes = n()) %>% mutate(pourcentage_lignes = ((nombre_lignes)/sum(nombre_lignes))*100, pourcentage_value = 100*((value/sum(value)))) %>% arrange(desc(unit))%>%
+  mutate(ypos_ligne = cumsum(pourcentage_lignes)- 0.5*pourcentage_lignes ) %>% mutate(ypos_value = cumsum(pourcentage_value)- 0.5*pourcentage_value )
+ggplot(georef_dataset) +
+  aes(
+    x = "",
+    fill = unit,
+    colour = unit,
+    group = unit,
+    weight = nombre_lignes
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (georef_dataset %>% mutate_if(is.numeric, round)),
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage_lignes,"%")), color = "black")+ 
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")+
+  labs(title = "Répartition des unités en nombre de lignes")
+
+```
+
+
+
+# Number of rows
+```{r}
+
+
+georef_dataset <- step3_before_unit_modification %>% group_by(cat, unit) %>% summarise(value = sum(value, na.rm = TRUE), nombre_lignes = n()) %>% mutate(pourcentage_lignes = ((nombre_lignes)/sum(nombre_lignes))*100, pourcentage_value = 100*((value/sum(value)))) %>% arrange(desc(cat),desc(unit))%>%
+  group_by(cat) %>% 
+  mutate(ypos_ligne = cumsum(pourcentage_lignes)- 0.5*pourcentage_lignes ) %>% mutate(ypos_value = cumsum(pourcentage_value)- 0.5*pourcentage_value )
+```
+
+
+
+
+# Rows
+
+```{r}
+ggplot(georef_dataset) +
+  aes(
+    x = "",
+    fill = unit,
+    colour = unit,
+    group = unit,
+    weight = nombre_lignes
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ facet_wrap("cat")+ geom_text(data = (georef_dataset %>% mutate_if(is.numeric, round)),
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage_lignes,"%")), color = "black")+ 
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")+
+  labs(title = "Répartition des unités en nombre de lignes")
+
+
+
+```
+
+# Values
+
+```{r}
+ggplot(georef_dataset) +
+  aes(
+    x = "",
+    fill = unit,
+    colour = unit,
+    group = unit,
+    weight = value
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ facet_wrap(~cat)+ geom_text(data = (georef_dataset %>% mutate_if(is.numeric, round)),
+                           aes( x = 1 ,y = ypos_value/100, label = paste0(pourcentage_value,"%")), color = "black")+ 
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")+
+  labs(title = "Répartition des unités en valeur/nombre")
+```
+
+
+```{r}
+library(knitr)
+kable(georef_dataset%>% mutate_if(is.numeric, round) %>% select(-c(ypos_ligne, ypos_value )) %>% group_split(cat))
+```
+
+
+
+
+
+
