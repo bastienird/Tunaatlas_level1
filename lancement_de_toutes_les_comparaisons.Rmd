@@ -49,23 +49,24 @@ Finalement dans un dernier temps et possiblement un autre markdown, nous étudie
 # Comparaison des données initiales et finales pour chaque entité
 
 ```{r}
+library(RMySQL)
 fonction_markdown_si_diff_init = function(init, final,nom_de_sortie1 = init, nom_de_sortie2 = final){
   
   if (!(identical(init, final))) {
     
-      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = paste0(i,"/Rds/",first), final = paste0(i,"/Rds/",final)), output_file  = paste0("/home/grasset/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/Markdown/",first,"final",last,"Markdown.html"))
-    print(paste0("Nous pouvons retrouver la comparaison détaillée des deux jeux de données sous le chemin d'accès","/home/grasset/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/Markdown/",first,"final",last,"Markdown.html"))
+      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = paste0(i,"/Rds/",first), final = paste0(i,"/Rds/",final)), output_file  = paste0(first,"final",last,"Markdown.html"))
+    print(paste0("Nous pouvons retrouver la comparaison détaillée des deux jeux de données sous le chemin d'accès","Markdown/",first,"final",last,"Markdown.html"))
     
-  } else {print("There are no differences between", as.character(init), "and", as.character(final))}
+  } else {print("There are no differences between")}
   
 }
 
-list_dir <- list.dirs(path =paste0("~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/",params$working_directory, "/entities"), full.names = TRUE, recursive = FALSE)
-dir.create(paste0("~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/",params$working_directory, "/entities","/Markdown"))
+list_dir <- list.dirs(path =paste0("~/Documents/Tunaatlas_level1/data/",params$working_directory, "/entities"), full.names = TRUE, recursive = FALSE)
+dir.create(paste0("~/Documents/Tunaatlas_level1/data/",params$working_directory, "/entities","/Markdown"))
 
 #only for this example
 
-list_dir <- list_dir[c(1,4,6)]
+list_dir <- list_dir[c(2,5,7)]
 
 for (i in list_dir){
 

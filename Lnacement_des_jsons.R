@@ -1,6 +1,7 @@
 
 getwd()
-require("remotes")
+require(remotes)
+require(devtools)
 # install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"), force = TRUE)
 library(geoflow)
 library(RPostgreSQL)
@@ -13,7 +14,8 @@ if(require(rtunaatlas)) {
   remove.packages("rtunaatlas",
                   lib="~/Documents/Analyse_des_scripts/Test01_02/lancement/renv/library/R-4.1/x86_64-pc-linux-gnu")
   install_github("eblondel/rtunaatlas", force=TRUE)}
-files <- "tunaatlas_qa_global_L1_datasets_catch_d4science.json"
+setwd("~/Documents/Tunaatlas_level1")
+files <- "tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json"
 executeWorkflow(files)
 
 

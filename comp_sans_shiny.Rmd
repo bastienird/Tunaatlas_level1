@@ -1,0 +1,453 @@
+---
+title: "comparateur simplifie"
+author: "Bastien Grasset"
+date: "09/02/2022"
+output: html_document
+params: 
+  init: "~/Documents/Tunaatlas_level1/data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds"
+  final: "~/Documents/Tunaatlas_level1/data/Les7entites_finies/entities/5deg_level1_reallocate/georef_dataset_step5.rds"
+  filter_species: ""
+  filter_source_authority: ""
+  filter_gear: ""
+  filter_fishingfleet: ""
+  filter_time_start: ""
+  filter_time_end: ""
+  filter_cat_geo: ""
+  filter_catchtype: ""
+  filter_schooltype: ""
+---
+
+Ce markdown a pour objectif de décrire les pertes des données de l'atlas thonier mondial suite aux différents filtres effectués. 
+Il décri%>% les différences entre les données initiales et les données finales, il est à destination des utilisateurs de la donnée finale qui seraient tentés de l'utiliser sans prendre en compte les différentes spécificités des filtres.
+
+# Les données 
+
+Les données analysées sont ***`r params$init`*** pour les données initiales et ***`r params$final`*** pour les données finales.
+
+Les filtres utilisés sont :
+
+- sur les espèces : `r params$filter_species`
+- sur les engins : `r params$filter_gear`
+- sur les rfmos : `r params$source_authority`
+- sur les flottes : `r params$fishing_fleet`
+- sur les dates initiales : `r params$time_start`
+- sur les dates finales : `r params$time_end`
+- sur les catégories géographiques: `r params$cat_geo`
+- sur les types de captures : `r params$catchtype`
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(shiny)
+library(DBI)
+library(RMySQL)
+library(dbplyr)
+library(RPostgreSQL)
+library(odbc)
+library(sf)
+library(tmap)
+library(leaflet)
+library(tidyr)
+tmap_mode("view")
+           drv <- dbDriver("PostgreSQL")      
+con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
+                 port = 5432,
+                 user = "tunaatlas_u",
+                 password = "21c0551e7ed2911")
+
+
+
+# dbExistsTable(con,"iattc_after_treatment")
+# dbExistsTable(con,"/../area.area_wkt")
+
+library(dplyr, warn.conflicts = FALSE)
+# summary(con)
+# dbListTables(con)
+query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+world_sf <- st_read(con, query = query) 
+
+shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.))
+shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
+
+```
+
+
+```{r}
+colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
+"geographic_identifier","schooltype",           "species",              "catchtype",           
+ "unit",                 "value",                "source_authority")
+```
+
+
+
+
+```{r}
+# as.character(params$init)
+# as.character(params$final)
+
+fonction_filtre = function(dataframe_tot_filter) {
+  if (!length(params$filter_species)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  species %in% params$filter_species)
+  }
+    if (!length(params$filter_gear)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  gear %in% params$filter_gear)
+    }    
+  if (!length(params$filter_source_authority)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  source_authority %in% params$filter_source_authority)
+  }  
+  if (!length(params$filter_fishingfleet)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  fishingfleet %in% params$filter_fishingfleet)
+  }
+    if (!length(params$filter_time_start)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  time_start %in% params$filter_time_start)
+    }
+      if (!length(params$filter_time_end)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  time_end %in% params$filter_time_end)
+      }
+    if (!length(params$filter_schooltype)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  schooltype %in% params$filter_schooltype)
+  }
+    if (!length(params$filter_catchtype)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  catchtype %in% params$filter_catchtype)
+    }
+  
+  if (!length(params$filter_cat_geo)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  cat_geo %in% params$filter_cat_geo)
+  }
+    if (!length(params$filter_catchtype)==1){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  cat_geo %in% params$filter_catchtype)
+    }
+
+  dataframe_tot_filter
+  
+  
+}
+
+  
+init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% mutate(cat_geo = as.factor(st_area)))
+
+final <- fonction_filtre(readRDS(as.character(params$final))%>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% mutate(cat_geo = as.factor(st_area)))
+
+#just_for_this one before fixing th eunit problem 
+final <- final %>% mutate(unit = "t")
+
+# summary(final)
+# summary(init)
+
+```
+
+
+
+```{r}
+fonction_groupement = function(x, init, final){
+  x  <-   enquo(x)
+  groupement_1  <-   init %>% group_by(!!x,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), nombre_lignes1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
+  groupement_2  <-   final %>% group_by(!!x,unit) %>% summarise(value_sum_2 = sum(value, na.rm=TRUE), nombre_lignes2 = n()) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
+  
+  fulljoin  <-   full_join(groupement_1, groupement_2) %>% 
+    mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>% mutate(Dimension = colnames(groupement_1[1])) %>%
+    rename("Precision" = 1) %>% mutate(Precision = as.character(Precision)) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>% mutate(Perte_pourcent = ifelse(is.na(Perte_pourcent), 100, Perte_pourcent)) %>% mutate(perte_nb_ligne = nombre_lignes1 - nombre_lignes2)%>% 
+    mutate(Perte_en_milliers_de_tonne = (value_sum_1 - value_sum_2)/ 10^6) %>% 
+           rename(`Perte (en %)` = Perte_pourcent,`Perte en milliers de tonnes` = Perte_en_milliers_de_tonne, 
+                  `Perte en nombre de ligne` = perte_nb_ligne) %>% mutate_if(is.numeric, list(~replace_na(., 0)))
+}
+```
+
+
+
+```{r}
+carte_init <- fonction_groupement(geographic_identifier,init, final)
+
+
+Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"]
+  # t <- init[0,] 
+  t <- carte_init[0,]
+
+
+for (i in Dimensions){
+  temporaire <- fonction_groupement(.data[[i]],init, final)
+  assign(paste0("test", i), temporaire)
+  
+  t <- rbind(t, temporaire)
+}
+  
+nb_ligne_init_millions <- nrow(init)/10^6
+nb_ligne_final_millions<- nrow(final)/10^6
+
+sum_valeur_init <- sum(init$value, na.rm = TRUE)/10^9
+sum_valeur_final <- sum(final$value, na.rm = TRUE)/10^9
+
+t$Dimension <-as.character(t$Dimension)
+t$Precision <-as.character(t$Precision)
+```
+
+
+# Introduction sur les deux jeux de données 
+
+Nous présentons dans un premier temps les caractéristiques principales de chaque dimension pour chacun des jeux de données.
+
+## Le jeu de données initial
+
+```{r}
+library(rlang)
+pie_chart = function(x, i) {
+  r <- deparse(substitute(x))
+  colnames <- enquo(x)
+  provisoire <- i  %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(cat = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
+  # filter(id < 4) %>% 
+  #   mutate(cat = !!colnames) %>% 
+    group_by(cat, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    select(unit, value, cat) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(cat))%>%
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+  
+test <- ggplot(provisoire) +
+  aes(
+    x = "",
+    fill = cat,
+    colour = cat,
+    group = cat,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire %>% mutate_if(is.numeric, round)),
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")+
+  labs(title = paste0("Répartition en valeur pour la dimension : ",r)) + facet_wrap("unit")
+
+}
+
+# ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(cat)))
+
+Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&
+                               colnames(init)!= "time_start"&
+                               colnames(init)!= "time_end"&
+                               colnames(init)!= "geographic_identifier"]
+  # t <- init[0,] 
+```
+
+
+```{r}
+# for (i in (Dimensions)){
+# assign(paste0(i,"pie_chart"), pie_chart(.data[[i]], init), envir = .GlobalEnv)
+# 
+# }
+library(cowplot)
+a <- pie_chart(fishingfleet, init)
+b <- pie_chart(gear, init)
+c <- pie_chart(schooltype, init)
+d <- pie_chart(species, init)
+e <- pie_chart(catchtype, init)
+f <- pie_chart(source_authority, init)
+g <- pie_chart(cat_geo, init)
+```
+
+
+```{r eval=FALSE, include=FALSE, out.width="100%"}
+plot_grid(a,b, nrow = 2)
+plot_grid(c,d, nrow = 2)
+plot_grid(e,f, nrow = 2)
+plot(g)
+```
+
+
+## Le jeu de données final
+
+```{r}
+h <- pie_chart(fishingfleet, final)
+i <- pie_chart(gear, final)
+j <- pie_chart(schooltype, final)
+k <- pie_chart(species, final)
+l <- pie_chart(catchtype, final)
+m <- pie_chart(source_authority, final)
+n <- pie_chart(cat_geo, final)
+```
+
+
+```{r eval=FALSE, include=FALSE, out.width="100%"}
+plot_grid(h,i, nrow = 2)
+plot_grid(j,k, nrow = 2)
+plot_grid(l,m, nrow = 2)
+plot(n)
+
+```
+
+```{r}
+plot_grid(a, h)
+plot_grid(b, i)
+plot_grid(c, j)
+plot_grid(d, k)
+plot_grid(e, l)
+plot_grid(f, m)
+plot_grid(g, n)
+
+```
+
+
+## Les empreintes spatiales
+
+### Carte données initiales
+
+```{r}
+fonction_empreinte_spatiale = function(x, variable_affichee){
+  
+inner_join <- st_as_sf(x %>% group_by(geographic_identifier, unit, cat_geo)  %>%  summarise(value = sum(value, na.rm = TRUE)) %>% inner_join(shapefile.fix, by = c("geographic_identifier"= "code")))
+tm_shape(inner_join)+
+  tm_polygons( variable_affichee, palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0) +
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","unit"))
+}
+tmap_mode("view")
+fonction_empreinte_spatiale(init, "value")
+
+```
+
+### Carte données finales
+
+```{r}
+fonction_empreinte_spatiale(final, "value")
+```
+
+
+# Les pertes 
+
+## Les pertes générales
+
+Le nombre de lignes passe de `r nb_ligne_init_millions` millions à `r nb_ligne_final_millions` millions, soit une perte de `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
+
+La somme en valeur passe de `r sum_valeur_init` milliers de tonnes à `r sum_valeur_final` milliers de tonnes, soit une perte de `r round(((sum_valeur_init - sum_valeur_final)/sum_valeur_init)*100,5)`%.
+
+```{r}
+topn <- 5
+```
+
+
+## Les pertes pour chaque dimension
+
+Nous allons regarder pour chaque dimensions les `r topn` pertes plus importantes.
+
+
+```{r paged.print=TRUE}
+library(knitr)
+
+kable(t %>%  filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by(unit, Dimension) %>% arrange(desc(`Perte (en %)`))   %>%   mutate(id = row_number())%>% ungroup() %>%  mutate(test = ifelse(id>(topn-1),"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(id, test)) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%  group_split(unit))
+
+```
+
+## Les données géographiques
+
+```{r}
+tmap_mode("view")
+
+
+
+tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_geo = as.factor(st_area)) 
+         %>% filter(unit == "t")
+         )+
+  tm_polygons( "Perte (en %)", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0) +
+  tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
+
+```
+
+## Les données temporelles
+
+```{r}
+
+t %>%
+ filter(Dimension %in% "time_start") %>%
+ ggplot() +
+ aes(x = Precision, weight = `Perte en milliers de tonnes`) +
+ geom_bar(fill = "#112446") +
+ theme_minimal()+facet_wrap("unit")
+
+t %>%
+ filter(Dimension %in% "time_end") %>%
+ ggplot() +
+ aes(x = Precision, weight = `Perte en milliers de tonnes`) +
+ geom_bar(fill = "#112446") +
+ theme_minimal()+facet_wrap("unit")
+
+
+```
+
+## Comparaison des deux évolutions de captures
+
+```{r}
+captures_par_time <- testtime_start %>% mutate(Precision = as.Date(Precision))%>% rename(`Captures tableau 1` = "value_sum_1",`Captures tableau 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures tableau 1`, `Captures tableau 2`), names_to = "origine", values_to ="Captures") 
+
+
+ggplot(captures_par_time) +
+  aes(
+    x = Precision,
+    y = Captures,
+    fill = origine,
+    colour = origine,
+    group = origine
+  ) +
+  geom_line(size = 0.5) +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_dark() +
+  theme(legend.position = "top") +
+  facet_wrap(vars(unit), nrow = 2L)+
+  labs(x = "Temps", y = "Captures (en tonnes)")
+```
+
+## Comparaison de l'évolution des captures cumulées
+
+```{r}
+
+captures_par_time <- captures_par_time %>% arrange(Precision) %>% group_by(unit, origine) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
+
+ggplot_capt_par_time = function(x){
+  
+  ggplot(captures_par_time %>% filter(unit==x)) +
+  aes(
+    x = Precision,
+    y = `Captures cumulées`,
+    colour = origine
+  ) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit)) +
+  labs(x = "Temps", y = "Captures cumulées (en tonnes)")+guides(fill=guide_legend(title="Etaoe du traitement de la donnée"))
+}
+
+ggplot_capt_par_time("t")
+
+```
+
+```{r}
+ggplot_capt_par_time("no")
+
+```
+
