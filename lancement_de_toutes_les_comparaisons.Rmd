@@ -5,7 +5,7 @@ date: "09/02/2022"
 output: html_document
 params: 
   working_directory: "Les7entites_finies"
-  strates_to_check_doublon: ""
+  strates_to_check_doublon: c("time_start", "species", "unit")
 
 ---
 
@@ -17,84 +17,131 @@ knitr::opts_chunk$set(
 	warning = FALSE
 )
 library(dplyr)
+library(stringr)
 ```
 
 ```{r}
-fonction_markdown_si_diff = function(init, final,nom_de_sortie1 = init, nom_de_sortie2 = final){
+last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
+
+fonction_markdown_si_diff = function(init, final,nom_de_sortie1 = last_path_reduced(init), nom_de_sortie2 = last_path_reduced(final)){
   init2 <- readRDS(init)
   final2 <- readRDS(final)
   if (!(identical(init2, final2))) {
-    print(paste0("Le jeux de données initial a un total de ",sum((init2 %>% filter(unit == "t"))$value, na.rm = TRUE), "en nombre et de ",sum((init2 %>% filter(unit == "no"))$value, na.rm = TRUE)," en valeur"))
-    if(!(exists(paste0(nom_de_sortie1,nom_de_sortie2,"Markdown.html")))){
+    somme_init_t <- sum((init2 %>% filter(unit %in%c("t", "MT")))$value, na.rm = TRUE)
+    somme_init_no <- sum((init2 %>% filter(unit %in%c("no", "NO")))$value, na.rm = TRUE)
+    somme_final_t <- sum((final2 %>% filter(unit %in%c("t", "MT")))$value, na.rm = TRUE)
+    somme_final_no <- sum((final2 %>% filter(unit %in%c("no", "NO")))$value, na.rm = TRUE)
     
-      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = init, final = final), output_dir = paste0(nom_de_sortie1,nom_de_sortie2,"Markdown.html"))
+    print(paste0("Le jeux de données initial a un total de ",round(somme_init_t), " en tonnes et de ",round(somme_init_no)," en nombre de poisson."))
+    
+    print(paste0("Le jeux de données final a un total de ",round(somme_final_t), " en tonnes et de ",round(somme_final_no)," en nombre de poisson."))
+    perte_en_tonnes <- round(somme_init_t-somme_final_t)
+    perte_en_tonnes_pourcent <- round(100*(somme_init_t-somme_final_t)/somme_init_t,2)
+    perte_en_nombre <- round(somme_init_no-somme_final_no)
+    perte_en_nombre_pourcent <- round(100*(somme_init_no-somme_final_no)/somme_init_no,2)
+    
+    print(paste0("La perte en tonnes est de ", perte_en_tonnes, "(", perte_en_tonnes_pourcent, "% )", "la perte en nombre est de ", perte_en_nombre, "(", perte_en_nombre_pourcent, "% )"))
+    
+   if(!(exists(paste0("Markdown/",nom_de_sortie1,"comp",nom_de_sortie1,".html")))){
+    
+      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = init, final = final), output_file  = paste0("Markdown/",nom_de_sortie1,"comp",nom_de_sortie1,".html"))
+    # print(paste0("Nous pouvons retrouver la comparaison détaillée des deux jeux de données sous le chemin d'accès Markdown/",last_path_reduced(init),"comp",last_path_reduced(final),".html"))
+
       
-    }  
+    }
         
       
     
-  } else {print(paste0("There are no differences between", init, "and", final))}
-  
+  } else {print(paste0("There are no differences between", last_path_reduced(init), "and", last_path_reduced(final)))}
+  rm(list=ls()[ends_with(".rds", vars=ls())])
+gc()
 }
 ```
 
+The purpose of this markdown is to run all the comparisons between the data from the tunaatlas run. 
 
-Ce markdown a pour objectif de lancer toutes les comparaisons entre les données issues du lancement du tunaatlas. 
+The comparisons are done two by two between each dataset and we will be particularly interested in some variables of interest depending on the datasets used. 
 
-Les comparaisons sont faites deux à deux entre chaque jeux de données et nous nous intéresserons particulièrement à certaines variables d'intérêts selon les jeux de données utilisés. 
+First we run all comparisons between the initial and final data of each entity. Then we compare the final data between them and finally we will be interested in the impact of the different steps for each entity. 
+Finally in a last step and possibly another markdown, we will study within each entity some losses for some steps. 
 
-Dans un premier temps nous lançons toutes les comparaisons entre les données initiales et finales de chaque entité. Ensuite nous comparons les données finales entre elles et pour finir nous nous intéresserons pour chaque entité à ce les différents steps ont comme impact. 
-Finalement dans un dernier temps et possiblement un autre markdown, nous étudierons au sein de chaque entité certaines pertes pour certains steps. 
-
-# Comparaison des données initiales et finales pour chaque entité
+# Comparison of initial and final data for each entity
 
 ```{r}
 library(RMySQL)
-fonction_markdown_si_diff_init = function(init, final,nom_de_sortie1 = init, nom_de_sortie2 = final){
-  
-  if (!(identical(init, final))) {
+library(stringr)
+fonction_markdown_si_diff_init = function(init, final,nom_de_sortie1 = init, nom_de_sortie2 = final,i){
+  init2 <- readRDS(paste0(i,"/Rds/",init))
+  final2 <- readRDS(paste0(i,"/Rds/",final))
+    if (!(identical(init2, final2))) {
+    somme_init_t <- sum((init2 %>% filter(unit %in%c("t", "MT")))$value, na.rm = TRUE)
+    somme_init_no <- sum((init2 %>% filter(unit %in%c("no", "NO")))$value, na.rm = TRUE)
+    somme_final_t <- sum((final2 %>% filter(unit %in%c("t", "MT")))$value, na.rm = TRUE)
+    somme_final_no <- sum((final2 %>% filter(unit %in%c("no", "NO")))$value, na.rm = TRUE)
     
-      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = paste0(i,"/Rds/",first), final = paste0(i,"/Rds/",final)), output_file  = paste0(first,"final",last,"Markdown.html"))
-    print(paste0("Nous pouvons retrouver la comparaison détaillée des deux jeux de données sous le chemin d'accès","Markdown/",first,"final",last,"Markdown.html"))
+    print(paste0("Le jeux de données initial a un total de ",round(somme_init_t), " en tonnes et de ",round(somme_init_no)," en nombre de poisson."))
     
-  } else {print("There are no differences between")}
+    print(paste0("Le jeux de données final a un total de ",round(somme_final_t), " en tonnes et de ",round(somme_final_no)," en nombre de poisson."))
+    perte_en_tonnes <- round(somme_init_t-somme_final_t)
+    perte_en_tonnes_pourcent <- round(100*(somme_init_t-somme_final_t)/somme_init_t,2)
+    perte_en_nombre <- round(somme_init_no-somme_final_no)
+    perte_en_nombre_pourcent <- round(100*(somme_init_no-somme_final_no)/somme_init_no,2)
+    
+    print(paste0("La perte en tonnes est de ", perte_en_tonnes, " (", perte_en_tonnes_pourcent, "%)", "la perte en nombre est de ", perte_en_nombre, " (", perte_en_nombre_pourcent, "%)"))
+   if(!(exists(paste0("Markdown/",last_path_reduced(init),"comp",last_path_reduced(final),".html")))){
+
+      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = paste0(i,"/Rds/",init), final = paste0(i,"/Rds/",final)), output_file  = paste0("Markdown/",last_path_reduced(init),"comp",last_path_reduced(final),".html"))
+    # print(paste0("Nous pouvons retrouver la comparaison détaillée des deux jeux de données sous le chemin d'accès Markdown/", last_path_reduced(init),"comp",last_path_reduced(final),".html"))
+     }
+    
+  } else {print(paste0("There are no differences between",last_path_reduced(init), "and", last_path_reduced(final)))}
   
 }
 
-list_dir <- list.dirs(path =paste0("~/Documents/Tunaatlas_level1/data/",params$working_directory, "/entities"), full.names = TRUE, recursive = FALSE)
-dir.create(paste0("~/Documents/Tunaatlas_level1/data/",params$working_directory, "/entities","/Markdown"))
+list_dir <- list.dirs(path =paste0("data/",params$working_directory, "/entities"), full.names = TRUE, recursive = FALSE)
+dir.create(paste0("data/",params$working_directory, "/entities","/Markdown"))
 
 #only for this example
 
 list_dir <- list_dir[c(2,5,7)]
+# automatisation mais pas assez bien je pense
+# list_dir <- list_dir[c(7)]
+```
 
+
+```{r}
+#begin
 for (i in list_dir){
 
   tmpshot <- fileSnapshot(paste0(i,"/Rds"))
-first <- rownames(tmpshot$info[which.min(tmpshot$info$mtime),])
+init <- rownames(tmpshot$info[which.min(tmpshot$info$mtime),])
 last <- rownames(tmpshot$info[which.max(tmpshot$info$mtime),])
-  # fonction_markdown_si_diff(first, last)
-fonction_markdown_si_diff_init(first, last)
-
+fonction_markdown_si_diff_init(init, last, i= i)
+rm(list=ls()[ends_with(".rds", vars=ls())])
+gc()
 }
-
 
 
 
 ```
 
 
-# Comparaison des données finales entre elles 
 
-Pour ces comparaisons nous n'allons pas comparer tous les jeux de données entre eux ce qui serait très long et peu utile. Nous nous contenterons d'évaluer la différence entre les principaux et les nominals catchs ainsi que la différence entre les entités particulières et leurs homologues avec une options en plus ou en moins (include WCPFC ou raise billshark)
+# Comparison of the final data between them 
+
+For these comparisons we will not compare all the datasets with each other, which would be very long and not very useful. We will only evaluate the difference between the principals and the nominals catches as well as the difference between the particular entities and their counterparts with one option more or less (include WCPFC or raise billshark)
+
+# Comparison 1 degree total
 
 ```{r}
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0.rds")
+```
 
-nominal <-  global_catch_1deg_1m_ps_bb_firms_level0
-deg1 <-  global_catch_1deg_1m_ps_bb_firms_level0
-deg5 <- global_catch_5deg_1m_firms_level0
-all <- global_catch_5deg_1m_firms_level0
+# Comparaison 5 degrés total
 
+```{r}
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_5deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_ps_bb_firms_level0.rds")
 ```
 
 # Analyse des options initiales
@@ -102,96 +149,136 @@ all <- global_catch_5deg_1m_firms_level0
 ## Analyse de l'inclusion ou non de WCPFC sur les données 1 deg
 
 ```{r}
-fonction_markdown_si_diff("~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_includeWCPFC_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_includeWCPFC_firms_level0.rds","~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0.rds", "without_wpcpf", "with_wcpfc")
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0.rds","data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_includeWCPFC_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_includeWCPFC_firms_level0.rds", "without_wpcpf", "with_wcpfc")
 
   # rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0", final ="global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0"), output_dir = paste0("comparaison_including_wcpfc",init,"final",final,"Markdown.html"))
 
 ```
 
-Nous remarquerons qu'il n'y a pas de différence entre le tuna atlas 1 degré incluant ou non les données de WCPFC.
+We note that there is no difference between the 1 degree tuna atlas including or not the WCPFC data.
 
-## Analyse du raising factor sur les données IATTC des requins 1 deg
+## Raising factor analysis on 1 deg shark IATTC data
 
-```{r}
-  rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0", final ="entities/global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0.rds"), output_dir = paste0("comparaison_raising_sharks_iattc",init,"comparaison_not_raising_sharks_iattc",final,"Markdown.html"))
+```{r eval=FALSE, include=FALSE}
+
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0.rds", "withoutraising", "withraising")
+  
+
 ```
 
-## Analyse du raising factor sur les données IATTC des requins 5 deg
+## Analyse of raising factor on IATTC data for billfish/shark on 5 deg tunaatlas
 
-```{r}
-  rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "global_catch_5deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_ps_bb_firms_level0", final ="entities/global_catch_5deg_1m_ps_bb_options_raise_false_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_ps_bb_options_raise_false_firms_level0.rds"), output_dir = paste0("comparaison_raising_sharks_iattc",init,"comparaison_not_raising_sharks_iattc",final,"Markdown.html"))
+```{r eval=FALSE, include=FALSE}
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_5deg_1m_firms_options_raise_false_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_options_raise_false_level0.rds", "withraising", "withoutraising")
 ```
 
-# Analyse des choix sur les overlapp
+## Analyse of raising factor on IATTC data for billfish/shark on global tunaatlas
 
-Pour l'analyse des choix sur les overlapp nous décidons d'étudier l'impact sur le jeux de données global.
+```{r eval=FALSE, include=FALSE}
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_firms_options_raise_false_level0/Rds/georef_dataset_level0_step11global_catch_firms_options_raise_false_level0.rds", "withraising", "withoutraising")
+```
 
-## Valeur maximale par strate pour le 5 degré
+### Filtering on IATTC
+
+```{r}
+rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds", final = "data/Les7entites_finies/entities/global_catch_firms_options_raise_false_level0/Rds/georef_dataset_level0_step11global_catch_firms_options_raise_false_level0.rds",   filter_source_authority = c("IATTC")), output_file  = paste0("Markdown/","globalcompglobalwithoutsharkraising_filterIATTC.html"))
+
+ 
+
+```
+
+
+# Analysis of choices on overlaps
+
+For the analysis of the choices on the overlaps we decide to study the impact on the global dataset.
+
+## We already analyze the total treatment of all overlaps
 
 ```{r}
 
-fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_step5global_catch_firms_level0.rds", "global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds")
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step5global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds", "step5", "step10")
 
 strates_to_check_doublon <- if ((is.null(params$strates_to_check_doublon))){c("fishingfleet", "gear", "time_start", "time_end", "geographic_identifier", "schooltype", "species", "catchtype", "unit")} else{ params$strates_to_check_doublon}
 
-georef_dataset_level0_step5global_catch_5deg_1m_firms_level0 <- readRDS("~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step5global_catch_5deg_1m_firms_level0.rds")
-pourcent_strates_identiques <- 100*(nrow(georef_dataset_level0_step5global_catch_5deg_1m_firms_level0) - nrow(georef_dataset_level0_step5global_catch_5deg_1m_firms_level0 %>% select(strates_to_check_doublons) %>% distinct())/nrow(georef_dataset_level0_step5global_catch_5deg_1m_firms_level0))
+georef_dataset_level0_step5global_catch_5deg_1m_firms_level0 <- readRDS("~/Documents/Tunaatlas_level1/data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step5global_catch_firms_level0.rds")
+strates_to_check_doublon <- c(time_start, unit, species)
+
+pourcent_strates_identiques <- 100*((nrow(georef_dataset_level0_step5global_catch_5deg_1m_firms_level0) - nrow(georef_dataset_level0_step5global_catch_5deg_1m_firms_level0 %>% select(time_start, unit, species) %>% distinct()))/nrow(georef_dataset_level0_step5global_catch_5deg_1m_firms_level0))
 
 ```
 
-Le choix effectué sur les overlapp est le suivant. Pour chaque combinaison de `r strates_to_check_doublon` on regarde le maximum pour chaque rfmo. 
+The choice made on the overlaps is the following. For each combination of `r strates_to_check_doublon` we look at the maximum for each rfmo. 
 
-On remarque que pour `r pourcent_strates_identiques`% des strates il n'y a pas de doublons. Les données sont donc à `r 100 - pourcent_strates_identiques`% conservées.
+We notice that for `r pourcent_strates_identiques` of the strata there are no duplicates. The data are therefore `r 100 - pourcent_strates_identiques`% preserved.
 
 
-## Valeur maximale par strate pour le tuna atlas global
+## Old method
+
+We take here the example of the total data and for the first step managed by an overlapp previously (step10) (for the moment). Indeed, previously the first 3 overlaps, including all CCSBT, were managed on the basis of the species and not the area. 
+
+### Comparison old method/ new method
+
+#### Lost data keeping only CCSBT for SBF
 
 ```{r}
 
-fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_step5global_catch_firms_level0.rds", "global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds")
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0ancient.rds", "newone", "ancien_keeping_all")
+
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds",  "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0ancient.rds", "newone", "ancien_keeping_allkeepingonlySBF")
+
+rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds", final = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0ancient.rds",   filter_species = c("SBF")), output_file  = paste0("Markdown/","step10onSBF"))
 
 ```
-
-## Ancienne méthode
-
-Nous prenons ici l'exemple des données totales et pour le premier step géré par un overlapp précédemment (step10) (pour le moment). En effet, anciennement les 3 premiers overlapp, incluant tous CCSBT, étaient gérés sur la base de l'espèce et non pas de la zone. 
-
-### Comparaison ancienne méthode/ nouvelle méthode
 
 ```{r}
 
-fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds", "global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0ancient.rds", "newone", "ancien_keeping_ctoi")
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0ancient.rds", "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0reverse.rds", "ancient", "reverse")
 
 ```
 
-### Comparaison dans l'ancienne méthode : IOTC/WCPFC
+<!-- ### Comparaison dans l'ancienne méthode : IOTC/WCPFC -->
 
-```{r}
-#careful has to verify that it is really the first one ctoi and the second one Wcpfc
+<!-- ```{r} -->
+<!-- #careful has to verify that it is really the init one ctoi and the second one Wcpfc -->
 
-fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0ancient.rds", "global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0reverse.rds", "ancien_keeping_ctoi", "ancien_keeping_wcpfc")
-```
+<!-- fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step10global_catch_firms_level0ancient.rds", "newone", "ancien_keeping_all") -->
+<!-- ``` -->
 
 ### Comparaison ORGP/CCSBT
+
+```{r}
+
+```
+
 
 #### Comparaison IOTC/CCSBT 
 
 ```{r}
-fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_step9global_catch_firms_level0ancient.rds", "global_catch_firms_level0/Rds/georef_dataset_level0_step9global_catch_firms_level0reverse.rds", "iotc_ccbst", "ancien_iotc_ccbst")
+# fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step9global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step9global_catch_firms_level0ancient.rds", "iotc_ccbst", "ancien_iotc_ccbst")
+
+rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step9global_catch_firms_level0.rds", final = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step9global_catch_firms_level0ancient.rds",   filter_species = c("SBF")), output_file  = paste0("Markdown/","iotc_ccsbt_on_sbf"))
+
 ```
 
 
 #### Comparaison ICCAT/CCSBT 
 
 ```{r}
-fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_step8global_catch_firms_level0ancient.rds", "global_catch_firms_level0/Rds/georef_dataset_level0_step8global_catch_firms_level0reverse.rds", "iccat_ccsbt", "ancien_iccat_ccsbt")
-```
+# fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step8global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step8global_catch_firms_level0ancient.rds", "iccat_ccsbt", "ancien_iccat_ccsbt")
 
+rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step8global_catch_firms_level0.rds", final = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step8global_catch_firms_level0ancient.rds",   filter_species = c("SBF")), output_file  = paste0("Markdown/","iccat_ccsbt_on_sbf"))
+```
 
 #### Comparaison WCPFC/CCSBT 
 
 ```{r}
-fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_step7global_catch_firms_level0ancient.rds", "global_catch_firms_level0/Rds/georef_dataset_level0_step7global_catch_firms_level0reverse.rds", "ancien_wcpfc_ccsbt", "ancien_wcpfc_ccsbt")
+# fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step7global_catch_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step7global_catch_firms_level0ancient.rds", "ancien_wcpfc_ccsbt", "ancien_wcpfc_ccsbt")
+
+rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step7global_catch_firms_level0.rds", final = "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step7global_catch_firms_level0ancient.rds",   filter_species = c("SBF")), output_file  = paste0("Markdown/","wcpfc_ccsbt_on_sbf"))
+```
+
+```{r}
+fonction_markdown_si_diff("data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds", "data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0.rds", "5deg", "1deg")
 ```
 
 
@@ -200,21 +287,23 @@ fonction_markdown_si_diff("global_catch_firms_level0/Rds/georef_dataset_level0_s
 
 ### Analyse de l'ancien niveau 1 sans prise en compte des doublons d'unités
 
-#### Pour les 5 degrés
-
-```{r}
-fonction_markdown_si_diff("~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/5deg_level1_reallocate/georef_dataset_step5.rds", "~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds", "level1_5deg", "level0_5deg")
-```
-
 #### Pour les 1 degré 
 
 ```{r}
-fonction_markdown_si_diff("~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/1deg_level1_reallocate/georef_dataset_step5.rds", "~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/Les7entites_finies/entities/global_catch_1deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_firms_level0.rds", "level1_1deg", "level0_1deg")
+fonction_markdown_si_diff( "data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds","data/Les7entites_finies/entities/5deg_level1_reallocate/georef_dataset_step5.rds", "level0_5deg", "level1_5deg")
 ```
 
-#### Pour le global 
+<!-- #### Pour les 5 degrés -->
 
-```{r}
+<!-- ```{r} -->
+<!-- fonction_markdown_si_diff("data/Les7entites_finies/entities/5deg_level1_reallocate/georef_dataset_step5.rds", "data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds", "level1_5deg", "level0_5deg") -->
+<!-- ``` -->
 
-```
+
+
+<!-- #### Pour le global  -->
+
+<!-- ```{r} -->
+
+<!-- ``` -->
 

@@ -10,10 +10,11 @@ library(RSQLite)
 library(gsheet)
 library(rtunaatlas)
 library(DBI)
-if(require(rtunaatlas)) {
-  remove.packages("rtunaatlas",
-                  lib="~/Documents/Analyse_des_scripts/Test01_02/lancement/renv/library/R-4.1/x86_64-pc-linux-gnu")
-  install_github("eblondel/rtunaatlas", force=TRUE)}
+library(readr)
+if(!require(rtunaatlas)) {
+  install_github("eblondel/rtunaatlas", force=TRUE)
+  library(rtunaatlas)
+  }
 setwd("~/Documents/Tunaatlas_level1")
 files <- "tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json"
 executeWorkflow(files)
@@ -53,6 +54,7 @@ jobdir <- initWorkflowJob(config)
 # config$job <- "~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/20220309152940"
 #3. le téléchargement de la donnée vers le dossier d'execution ne se fait  que lorsqu'on execute executeWorkflowJob. 
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
+config$job <- "~/Documents/Tunaatlas_level1/jobs/20220315173538"
 config$job <- jobdir
 executeWorkflowJob(config)
 executeWorkflow(file)

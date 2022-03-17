@@ -1,10 +1,10 @@
 ---
-title: "study_of_unitiers"
+title: "Etude des unités pourun jeux de données donné"
 author: "Bastien Grasset"
 date: '2022-03-07'
 output: html_document
 params:
-  fichier: "~/Documents/Analyse_des_scripts/Test01_02/lancement/Rds/step3_before_unit_modification.Rds"
+  chemin_dacces: "data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds"
 ---
 
 ```{r setup, include=FALSE}
@@ -19,10 +19,10 @@ library(ggplot2)
 library(tidyverse)
 ```
 
-This markdown is aimed to study the repartition of each unity in the initial and final dataset.
+***This markdown is aimed to study the repartition of each unity for a specific dataset, in this case is `r params$chemin_dacces`.***
 
 ```{r}
-step3_before_unit_modification <- readRDS(params$fichier) %>% mutate(cat= ifelse(unit%in%c("MT", "MTNO"), "Tons", "Number"))
+step3_before_unit_modification <- readRDS(params$chemin_dacces) %>% mutate(cat= ifelse(unit%in%c("MT", "MTNO", "t"), "Tons", "Number"))
 
 
 
@@ -88,8 +88,6 @@ ggplot(georef_dataset) +
 
 # Number of rows
 ```{r}
-
-
 georef_dataset <- step3_before_unit_modification %>% group_by(cat, unit) %>% summarise(value = sum(value, na.rm = TRUE), nombre_lignes = n()) %>% mutate(pourcentage_lignes = ((nombre_lignes)/sum(nombre_lignes))*100, pourcentage_value = 100*((value/sum(value)))) %>% arrange(desc(cat),desc(unit))%>%
   group_by(cat) %>% 
   mutate(ypos_ligne = cumsum(pourcentage_lignes)- 0.5*pourcentage_lignes ) %>% mutate(ypos_value = cumsum(pourcentage_value)- 0.5*pourcentage_value )
