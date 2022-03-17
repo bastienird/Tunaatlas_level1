@@ -45,7 +45,7 @@ fonction_markdown_si_diff = function(init, final,nom_de_sortie1 = last_path_redu
     
    if(!(exists(paste0("Markdown/",nom_de_sortie1,"comp",nom_de_sortie1,".html")))){
     
-      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = init, final = final), output_file  = paste0("Markdown/",nom_de_sortie1,"comp",nom_de_sortie1,".html"))
+      rmarkdown::render("comp_sans_shiny.Rmd", params = list(init = init, final = final), output_file  = paste0("Markdown/",nom_de_sortie1,"comp",nom_de_sortie2,".html"))
     # print(paste0("Nous pouvons retrouver la comparaison détaillée des deux jeux de données sous le chemin d'accès Markdown/",last_path_reduced(init),"comp",last_path_reduced(final),".html"))
 
       
