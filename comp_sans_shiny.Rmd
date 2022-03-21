@@ -2,7 +2,10 @@
 title: "Comparison of two data sets at different levels/options of the tuna atlas"
 author: "Bastien Grasset"
 date: "09/02/2022"
-output: html_document
+output:
+  html_document:
+    toc: true
+    theme: united
 params: 
   init: "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step4global_catch_firms_level0.rds"
   final: "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds"
@@ -15,8 +18,8 @@ params:
   filter_cat_geo:   "NULL"
   filter_catchtype:   "NULL"
   filter_schooltype: "NULL"
-  titre_dataset_1: "step4_global"
-  titre_dataset_2: "step11_global"
+  titre_dataset_1: "NULL"
+  titre_dataset_2: "NULL"
   
 ---
 
@@ -66,6 +69,8 @@ shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(c
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
 options(scipen=999)
 library(kableExtra)
+
+
 ```
 
 
@@ -84,7 +89,9 @@ It describes the differences between the initial data and the final data, and is
 
 # The data compared
 
-The analyzed data are ***`r params$init`*** for the initial data and ***`r params$final`*** for the final data.
+The analyzed data are :
+- ***`r params$init`*** for the initial data 
+- ***`r params$final`*** for the final data.
 
 The filters used are:
 
@@ -200,7 +207,15 @@ if(any(final$unit == "NOMT")) final[final$unit == "NOMT", ]$unit <- "no"
   }
 
 
-    
+# palette3_info <- brewer.pal.info[brewer.pal.info$category == "qual", ]  
+# palette3_all <- unlist(mapply(brewer.pal, 
+#                               palette3_info$maxcolors,
+#                               rownames(palette3_info)))
+# set.seed(2643598)  
+# # palette3 <- sample(palette3_all, nrow(unique(df_i11_map$country)), replace=TRUE)
+# palette3 <- sample(palette3_all, nrow(unique(init$species)), replace=TRUE)
+# names(palette3) = init$species
+# palette3
 
 ```
 
@@ -276,6 +291,58 @@ The loss is `r perte_en_tonnes` in tons (`r perte_en_tonnes_pourcent`%). The los
 
 We first present the main characteristics of each dimension for each dataset.
 
+## Comparison of the two catch evolutions
+
+```{r}
+captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "origin", values_to ="Captures") 
+
+
+ggplot(captures_par_time) +
+  aes(
+    x = Time,
+    y = Captures,
+    fill = origin,
+    colour = origin,
+    group = origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_dark() +
+  theme(legend.position = "top") +
+  facet_wrap(vars(unit), nrow = 2L)+
+  labs(x = "Time", y = "Captures (in tons)")
+```
+
+## Comparison of the evolution of the cumulative catches
+
+```{r}
+
+captures_par_time <- captures_par_time %>% mutate(Time = as.Date(Precision))%>% arrange(Precision) %>% group_by(unit, origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
+
+ggplot_capt_par_time = function(x){
+  
+  ggplot(captures_par_time %>% filter(unit==x)) +
+  aes(
+    x = Time,
+    y = `Captures cumulées`,
+    colour = origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit)) +
+  labs(x = "Time", y = "Cumulated captures (in tons)")+guides(fill=guide_legend(title="Etape du traitement de la donnée"))
+}
+
+ggplot_capt_par_time("t")
+
+```
+
+```{r}
+ggplot_capt_par_time("no")
+```
+
 ## Comparison of the two datasets
 
 ```{r}
@@ -284,9 +351,9 @@ library(rlang)
 #   r <- deparse(substitute(x))
 #   colnames <- enquo(x)
 #   provisoire <- i  %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-#     mutate(cat = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
+#     mutate(class= as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
 #   # filter(id < 4) %>% 
-#   #   mutate(cat = !!colnames) %>% 
+#   #   mutate(class= !!colnames) %>% 
 #     group_by(cat, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
 #     select(unit, value, cat) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
 #     mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(cat))%>%
@@ -309,7 +376,7 @@ library(rlang)
 #   theme(axis.ticks.x = element_blank(),
 #         axis.text.x = element_blank())+
 #   labs(x = "", y="")+
-#   labs(title = paste0("Répartition en valeur pour la dimension : ",r)) + facet_wrap("unit")
+#   labs(title = paste0("Distribution in value for the dimension : ",r)) + facet_wrap("unit")
 # 
 # }
 
@@ -318,33 +385,33 @@ pie_chart_2 = function(x, i,t) {
   r <- deparse(substitute(x))
   colnames <- enquo(x)
   provisoire_i <- i  %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-    mutate(cat = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
-    group_by(cat, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
-    select(unit, value, cat) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
-    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(cat))%>%
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
+    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
   mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
     distinct()
   
   provisoire_t <- t%>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-    mutate(cat = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
-    group_by(cat, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
-    select(unit, value, cat) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
-    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(cat))%>%
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
+    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
   mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
     distinct()
   
 ggplot_i <- ggplot(provisoire_i) +
   aes(
     x = "",
-    fill = cat,
-    colour = cat,
-    group = cat,
+    fill = class,
+    colour = class,
+    group = class,
     weight = pourcentage
   ) +
   geom_bar(position = "fill") +
   scale_fill_hue(direction = 1) +
   scale_color_hue(direction = 1) +
-  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)),
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
                            aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
   theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank())+
@@ -353,23 +420,23 @@ ggplot_i <- ggplot(provisoire_i) +
 ggplot_t <- ggplot(provisoire_t) +
   aes(
     x = "",
-    fill = cat,
-    colour = cat,
-    group = cat,
+    fill = class,
+    colour = class,
+    group = class,
     weight = pourcentage
   ) +
   geom_bar(position = "fill") +
   scale_fill_hue(direction = 1) +
   scale_color_hue(direction = 1) +
-  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_t %>% mutate_if(is.numeric, round)),
-                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_t %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1, y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
   theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank())+
   labs(x = "", y="") + facet_wrap("unit")
 
 title <- ggdraw() + 
   draw_label(
-    paste0("Répartition en valeur pour la dimension : ",r),
+    paste0("Distribution in value for the dimension : ",r),
     fontface = 'bold',
     x = 0,
     hjust = 0
@@ -381,18 +448,20 @@ title <- ggdraw() +
   )
 
 graph <- plot_grid(ggplot_i, ggplot_t,nrow = 2,labels = c(paste0( titre_1), paste0(titre_2)),
-  label_size = 12)
+  label_size = 10)
 
 plot_grid(
   title, graph,
   ncol = 1,
   # rel_heights values control vertical title margins
-  rel_heights = c(0.1, 1)
-)
+  rel_heights = c(0.1, 1))+
+    theme(plot.background = element_rect(color = "black"))
+
 
 }
 
-# ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(cat)))
+
+# ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(class)))
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&
                                colnames(init)!= "time_start"&
@@ -445,22 +514,22 @@ n <- pie_chart(cat_geo, final)
 ```
 
 ```{r eval=FALSE, include=FALSE}
-plot_grid(a, h, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
+plot_grid(a, h, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
   label_size = 12,
   label_x = 0, label_y = 0,
   hjust = -0.5, vjust = -0.5
 )
-plot_grid(b, i, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
+plot_grid(b, i, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
   label_size = 12,
   label_x = 0, label_y = 0,
   hjust = -0.5, vjust = -0.5
 )
-# plot_grid(c, j, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
+# plot_grid(c, j, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
 #   label_size = 12,
 #   label_x = 0, label_y = 0,
 #   hjust = -0.5, vjust = -0.5
 # )
-plot_grid(d, k, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
+plot_grid(d, k, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
   label_size = 12,
   label_x = 0, label_y = 0,
   hjust = -0.5, vjust = -0.5
@@ -486,11 +555,13 @@ plot_grid(g, n, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.chara
 
 ```{r}
 library(cowplot)
-pie_chart_2(fishingfleet, init, final)
+fishing_fleet <- pie_chart_2(fishingfleet, init, final)
 ```
 
 ```{r}
-pie_chart_2(cat_geo, init, final)
+cat_geo <- pie_chart_2(cat_geo, init, final)
+a <- plot_grid(cat_geo, fishing_fleet, nrow=2)
+tmap_arrange(cat_geo, fishing_fleet, nrow=2)
 ```
 
 ```{r}
@@ -510,30 +581,44 @@ pie_chart_2(species_group, init, final)
 ```
 
 
-## Spatial footprints
-
-### Initial data map
+## Spatial coverage
 
 ```{r}
-fonction_empreinte_spatiale = function(x, variable_affichee){
-  
-inner_join <- st_as_sf(x %>% group_by(geographic_identifier, unit, cat_geo)  %>%  summarise(value = sum(value, na.rm = TRUE)) %>% inner_join(shapefile.fix %>% select(-cat_geo), by = c("geographic_identifier"= "code"))) %>% filter(value != 0)
-tm_shape(inner_join)+
-  tm_fill(variable_affichee, palette="RdYlGn", style="cont", n=8,
+library(gdata)
+fonction_empreinte_spatiale = function(variable_affichee){
+  selection = function(x){x %>% ungroup() %>% select(geographic_identifier, value, cat_geo, unit)}
+  Initial_dataframe <- selection(init)
+  Final_dataframe <- selection(final)
+  geo_data <- gdata::combine(`Initial_dataframe`, `Final_dataframe`)
+  rm(`Initial_dataframe`, `Final_dataframe`)
+  gc()
+inner_join <- st_as_sf(geo_data%>% group_by(geographic_identifier, unit,source)  %>%  summarise(value = sum(value, na.rm = TRUE))  %>% filter(value != 0) %>% inner_join(shapefile.fix, by = c("geographic_identifier"="code")))
+
+tm_shape(inner_join %>% filter(unit == variable_affichee))+
+  tm_fill("value", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","unit"))
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"))
+
+tm_shape(inner_join %>% filter(unit == variable_affichee))+
+  tm_fill("value", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0) +
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"))
+rm(inner_join)
 }
 tmap_mode("view")
-fonction_empreinte_spatiale(init, "value")
-
 ```
 
-### Final data map
+In tons
 
 ```{r}
-fonction_empreinte_spatiale(final, "value")
+fonction_empreinte_spatiale("t")
 ```
 
+In numbers 
+
+```{r}
+fonction_empreinte_spatiale("no")
+```
 
 # Loss
 
@@ -546,7 +631,6 @@ topn <- 5
 
 We will look for each dimension the `r topn` most important losses.
 
-
 ```{r paged.print=TRUE}
 library(knitr)
 library(DT)
@@ -558,20 +642,26 @@ ligne_totale <- nrow(init)
 
 unit_t <- t %>% filter(unit == "t")%>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Autres"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Perte en millions de tonnes`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
-unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Autres"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Perte en millions de tonnes`*1000000/value_sum_1)*100) %>% select(-id) %>% arrange(desc(`Loss (in %)`))
-
+unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Autres"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Perte en millions de tonnes`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
 
 
 # %>% ungroup()%>% group_by(test,Dimension) %>% mutate_all(sum) %>% ungroup() %>% mutate(`Loss (in %)` =`Perte en millions de tonnes`/sum(`Perte en millions de tonnes`)) %>% mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(test,id)) %>%  group_by(Dimension) %>%arrange(Dimension,desc(`Loss (in %)`))
 # unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  mutate(test = ifelse(`Loss (in %)` >10,"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%    mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>%  mutate_if(is.character, as.factor)%>%select(-test) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Perte en millions de tonnes`)) %>% group_by(Dimension)
 # library(kable)
+```
 
+***In tons***
 
+```{r paged.print=TRUE}
 kbl(unit_t, align = "c") %>% 
   kable_paper(full_width = F)%>%
   pack_rows(index = table(unit_t$Dimension))
+```
 
+***In numbers***
+
+```{r paged.print=TRUE}
 kbl(unit_no, align = "c") %>% 
   kable_paper(full_width = F)%>%
   pack_rows(index = table(unit_no$Dimension))
@@ -580,7 +670,7 @@ kbl(unit_no, align = "c") %>%
 ## Geographical data
 
 ```{r}
-tmap_mode("view")
+tmap_mode("plot")
 
 tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_geo = as.factor(st_area)) 
          # %>% filter(unit == "t")
@@ -590,7 +680,9 @@ tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identif
   tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
 ```
 
+
 Map presenting for each area, the kept information, the all loss information and the area where only a part of the information is lost.
+
 
 ```{r}
 tmap::tmap_mode("view")
@@ -624,55 +716,5 @@ t %>%
 
 ```
 
-## Comparison of the two catch evolutions
 
-```{r}
-captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>% rename(`Captures tableau 1` = "value_sum_1",`Captures tableau 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures tableau 1`, `Captures tableau 2`), names_to = "origin", values_to ="Captures") 
-
-
-ggplot(captures_par_time) +
-  aes(
-    x = Time,
-    y = Captures,
-    fill = origin,
-    colour = origin,
-    group = origin
-  ) +
-  geom_line(size = 0.5) +
-  scale_fill_hue(direction = 1) +
-  scale_color_hue(direction = 1) +
-  theme_dark() +
-  theme(legend.position = "top") +
-  facet_wrap(vars(unit), nrow = 2L)+
-  labs(x = "Time", y = "Captures (in tons)")
-```
-
-## Comparison of the evolution of the cumulative catches
-
-```{r}
-
-captures_par_time <- captures_par_time %>% mutate(Time = as.Date(Precision))%>% arrange(Precision) %>% group_by(unit, origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
-
-ggplot_capt_par_time = function(x){
-  
-  ggplot(captures_par_time %>% filter(unit==x)) +
-  aes(
-    x = Time,
-    y = `Captures cumulées`,
-    colour = origin
-  ) +
-  geom_line(size = 0.5) +
-  scale_color_hue(direction = 1) +
-  theme_minimal() +
-  facet_wrap(vars(unit)) +
-  labs(x = "Time", y = "Cumulated captures (in tons)")+guides(fill=guide_legend(title="Etaoe du traitement de la donnée"))
-}
-
-ggplot_capt_par_time("t")
-
-```
-
-```{r}
-ggplot_capt_par_time("no")
-```
 
