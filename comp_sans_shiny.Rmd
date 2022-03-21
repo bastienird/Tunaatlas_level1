@@ -15,6 +15,9 @@ params:
   filter_cat_geo:   "NULL"
   filter_catchtype:   "NULL"
   filter_schooltype: "NULL"
+  titre_dataset_1: "step4_global"
+  titre_dataset_2: "step11_global"
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -61,20 +64,25 @@ world_sf <- st_read(con, query = query)
 
 shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(st_area))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
-
+options(scipen=999)
+library(kableExtra)
 ```
 
 
 ```{r}
+library(readxl)
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
 "geographic_identifier","schooltype",           "species",              "catchtype",           
  "unit",                 "value",                "source_authority")
+
 ```
+
 
 The purpose of this markdown is to describe the loss of data from the World Tuna Atlas following the different filters. 
 It describes the differences between the initial data and the final data, and is intended for users of the final data who might be tempted to use it without taking into account the various filtering specificities.
 
-# The data 
+# The data compared
 
 The analyzed data are ***`r params$init`*** for the initial data and ***`r params$final`*** for the final data.
 
@@ -152,7 +160,7 @@ fonction_filtre = function(dataframe_tot_filter) {
 # 
 # }
   
-init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")))
+init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")))%>% inner_join(species_group, by = c("species"))
 
 if(any(init$unit == "MT")) init[init$unit == "MT", ]$unit <- "t"
 		if(any(init$unit == "NO")) init[init$unit == "NO", ]$unit <- "no"
@@ -161,12 +169,13 @@ if(any(init$unit == "MT")) init[init$unit == "MT", ]$unit <- "t"
 
 
 
-final <- fonction_filtre(readRDS(as.character(params$final))%>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")))
+
+final <- fonction_filtre(readRDS(as.character(params$final))%>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code"))) %>% inner_join(species_group, by = c("species"))
 
 if(any(final$unit == "MT")) final[final$unit == "MT", ]$unit <- "t"
-		if(any(final$unit == "NO")) final[final$unit == "NO", ]$unit <- "no"
-		if(any(final$unit == "MTNO")) final[final$unit == "MTNO", ]$unit <- "t"
-		if(any(final$unit == "NOMT")) final[final$unit == "NOMT", ]$unit <- "no"
+if(any(final$unit == "NO")) final[final$unit == "NO", ]$unit <- "no"
+if(any(final$unit == "MTNO")) final[final$unit == "MTNO", ]$unit <- "t"
+if(any(final$unit == "NOMT")) final[final$unit == "NOMT", ]$unit <- "no"
 
 
 #just_for_this one before fixing th eunit problem 
@@ -176,6 +185,22 @@ if(any(final$unit == "MT")) final[final$unit == "MT", ]$unit <- "t"
 # summary(init)
 
 # test2 <- fonction_groupement(species, init, final)
+
+  if ((params$titre_dataset_1 == "NULL")){
+    titre_1 <- last_path_reduced(as.character(params$init))
+  } else {
+    titre_1 <- params$titre_dataset_1
+  }
+
+
+  if ((params$titre_dataset_2 == "NULL")){
+    titre_2 <- last_path_reduced(as.character(params$final))
+  } else {
+    titre_2 <- params$titre_dataset_2
+  }
+
+
+    
 
 ```
 
@@ -236,6 +261,16 @@ sum_valeur_final <- sum(final$value, na.rm = TRUE)/10^6
 t$Dimension <-as.character(t$Dimension)
 t$Precision <-as.character(t$Precision)
 ```
+
+# General loss
+
+The number of lines goes from `r nb_ligne_init_millions` millions to `r nb_ligne_final_millions` millions, which correspond to a loss of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
+
+The initial dataset has a total of `r round(somme_init_t)` in tons and of `r round(somme_init_no)` in number of fish.
+    
+The final dataset has a total of  `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
+
+The loss is `r perte_en_tonnes` in tons (`r perte_en_tonnes_pourcent`%). The loss is `r perte_en_nombre` in number of fish (`r perte_en_nombre_pourcent`%).
 
 # Introduction to the two datasets 
 
@@ -345,7 +380,7 @@ title <- ggdraw() +
     plot.margin = margin(0, 0, 0, 7)
   )
 
-graph <- plot_grid(ggplot_i, ggplot_t,nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
+graph <- plot_grid(ggplot_i, ggplot_t,nrow = 2,labels = c(paste0( titre_1), paste0(titre_2)),
   label_size = 12)
 
 plot_grid(
@@ -466,6 +501,15 @@ pie_chart_2(source_authority, init, final)
 pie_chart_2(species, init, final)
 ```
 
+```{r}
+pie_chart_2(gear, init, final)
+```
+
+```{r}
+pie_chart_2(species_group, init, final)
+```
+
+
 ## Spatial footprints
 
 ### Initial data map
@@ -491,19 +535,7 @@ fonction_empreinte_spatiale(final, "value")
 ```
 
 
-# Les pertes 
-
-## Les pertes générales
-
-The number of lines goes from `r nb_ligne_init_millions` millions to `r nb_ligne_final_millions` millions, which correspond to a loss of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
-
-The initial dataset has a total of `r round(somme_init_t)` in tons and of `r round(somme_init_no)` in number of fish.
-    
-The final dataset has a total of  `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
-
-The loss is `r perte_en_tonnes` in tons (`r perte_en_tonnes_pourcent`%). The loss is `r perte_en_nombre` in number of fish (`r perte_en_nombre_pourcent`%).
-
-
+# Loss
 
 ```{r}
 topn <- 5  
@@ -518,25 +550,37 @@ We will look for each dimension the `r topn` most important losses.
 ```{r paged.print=TRUE}
 library(knitr)
 library(DT)
+library(kableExtra)
 # kable(t %>%  filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by(unit, Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>% ungroup() %>%  mutate(test = ifelse(id>(topn-1),"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(id, test)) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Perte en millions de tonnes`)) %>%   group_split(unit))
 
-unit_t <- t %>% filter(unit == "t") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  mutate(test = ifelse(`Loss (in %)` >50
-,"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-test) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Perte en millions de tonnes`)) 
+valeur_totale <- sum(init$value, na.rm = TRUE)
+ligne_totale <- nrow(init)
 
-unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  mutate(test = ifelse(`Loss (in %)` >50,"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-test) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Perte en millions de tonnes`)) 
+unit_t <- t %>% filter(unit == "t")%>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Autres"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Perte en millions de tonnes`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
-datatable(unit_t)
+unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Autres"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Perte en millions de tonnes`*1000000/value_sum_1)*100) %>% select(-id) %>% arrange(desc(`Loss (in %)`))
 
-datatable(unit_no)
 
+
+
+# %>% ungroup()%>% group_by(test,Dimension) %>% mutate_all(sum) %>% ungroup() %>% mutate(`Loss (in %)` =`Perte en millions de tonnes`/sum(`Perte en millions de tonnes`)) %>% mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(test,id)) %>%  group_by(Dimension) %>%arrange(Dimension,desc(`Loss (in %)`))
+# unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  mutate(test = ifelse(`Loss (in %)` >10,"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%    mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>%  mutate_if(is.character, as.factor)%>%select(-test) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Perte en millions de tonnes`)) %>% group_by(Dimension)
+# library(kable)
+
+
+kbl(unit_t, align = "c") %>% 
+  kable_paper(full_width = F)%>%
+  pack_rows(index = table(unit_t$Dimension))
+
+kbl(unit_no, align = "c") %>% 
+  kable_paper(full_width = F)%>%
+  pack_rows(index = table(unit_no$Dimension))
 ```
 
 ## Geographical data
 
 ```{r}
 tmap_mode("view")
-
-
 
 tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_geo = as.factor(st_area)) 
          # %>% filter(unit == "t")
@@ -545,6 +589,19 @@ tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identif
 				 id="name", midpoint = 0) +
   tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
 ```
+
+Map presenting for each area, the kept information, the all loss information and the area where only a part of the information is lost.
+
+```{r}
+tmap::tmap_mode("view")
+tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_perte = as.factor(case_when(`Loss (in %)` == 0 ~ 'Pas de perte', `Loss (in %)` == 100~'Perte totale', TRUE ~ 'Perte partielle')))
+         # %>% filter(unit == "t")
+         )+
+  tm_fill( "cat_perte", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0) +
+  tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
+```
+
 
 ## Temporal data
 
