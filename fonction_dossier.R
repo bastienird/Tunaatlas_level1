@@ -6,4 +6,3 @@ fonction_dossier=function(nom_dossier, nomrds, explication,fonctions) {
 
 }
 
-test <- as.data.frame(iris)
