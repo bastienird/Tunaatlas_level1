@@ -90,7 +90,10 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		georef_dataset<-dataset
 		class(georef_dataset$value) <- "numeric"
 		rm(dataset)
-		saveRDS(georef_dataset, "level0_step1.rds")
+		fonction_dossier("rawdata",
+		                 georef_dataset, 
+		                 "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
+		                 "get_rfmos_datasets_level0", "")
 
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
@@ -124,7 +127,10 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 			
 		  }
 		}
-		saveRDS(georef_dataset, "level0_stepmapcodelist.rds")
+		fonction_dossier("mapping_codelist",
+		                 georef_dataset, 
+		                 "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
+		                 "map_codelists", paste0("mapping_map_code_lists = ",options$mapping_map_code_lists))
 
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 3/8: Apply filters on fishing gears if needed (Filter data by groups of gears) ")
@@ -137,7 +143,10 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 			config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
 			
 		}
-		saveRDS(georef_dataset, "level0_step3.rds")
+		fonction_dossier("filtering_on_gear",
+		                 georef_dataset, 
+		                 "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
+		                 "", paste0("options$gear_filter = ",options$gear_filter))
 		
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 4/8: Southern Bluefin Tuna (SBF): SBF data: keep data from CCSBT or data from the other tuna RFMOs? ")
@@ -153,8 +162,11 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 			config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
 			
 		}
-		saveRDS(georef_dataset, "level0_stepSBF.rds")
-
+		fonction_dossier("SBF",
+		                 georef_dataset, 
+		                 "Southern Bluefin Tuna (SBF): SBF data: keep data from CCSBT or data from the other tuna RFMOs? ",
+		                 "", paste0("options$include_CCSBT = ",options$include_CCSBT, "options$SBF_data_rfmo_to_keep=",options$SBF_data_rfmo_to_keep))
+		
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 6/8: Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)")
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -177,8 +189,13 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 			config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
 			
 		}
-		saveRDS(georef_dataset, "level0_stepaggregation.rds")
-
+		fonction_dossier("Aggregation",
+		                 georef_dataset, 
+		                 "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
+		                 "spatial_curation_upgrade_resolution", 
+		  paste0("options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg = ",
+		                           options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
+		
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 7/8: Overlapping zone (IATTC/WCPFC): keep data from IATTC or WCPFC?")
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -230,7 +247,13 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 			config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
 			
 		}
-		saveRDS(georef_dataset, "level0_stepIATTCWCPFC.rds")
+		fonction_dossier("OverlappingIATTCWCPFC",
+		                 georef_dataset, 
+		                 "Overlapping zone (IATTC/WCPFC): keep data from IATTC or WCPFC?",
+		                 "", 
+		                 paste0("overlapping_zone_iattc_wcpfc_data_to_keep = ",
+		                        overlapping_zone_iattc_wcpfc_data_to_keep))
+		
 		
 	#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 	#LEVEL 1 IRD PRODUCTS
@@ -275,7 +298,12 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		  config$logger.info(sprintf("LEVEL 1 => STEP 2/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet): Convert units by using A. Fonteneau file. Option is: [%s] ",entity$data$source[[2]], options$unit_conversion_convert))
 		  config$logger.info("-----------------------------------------------------------------------------------------------------")
 		}
-		saveRDS(georef_dataset, "level1_stepafter_conversion.rds")
+		fonction_dossier("level1conversion",
+		                 georef_dataset, 
+		                 "Convert units by using A. Fonteneau file",
+		                 "do_unit_conversion", 
+		                 paste0("options$unit_conversion_convert = ",
+		                        options$unit_conversion_convert))
 			
 
 		if (options$spatial_curation_data_mislocated %in% c("reallocate","remove")){
@@ -310,7 +338,12 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		  config$logger.info(sprintf("LEVEL 1 => STEP 3/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet):  Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], options$spatial_curation_data_mislocated))
 		  config$logger.info("-----------------------------------------------------------------------------------------------------")
 		}
-		saveRDS(georef_dataset, "level1_steprealocation.rds")
+		fonction_dossier("level1reallocation",
+		                 georef_dataset, 
+		                 "Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA')",
+		                 "function_spatial_curation_data_mislocated", 
+		                 paste0("options$spatial_curation_data_mislocated = ",
+		                        options$spatial_curation_data_mislocated))
 		
 		if (options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg %in% c("disaggregate","remove")) {
 		  
@@ -345,8 +378,14 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		  config$logger.info(sprintf("LEVEL 1 => STEP 4/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet):  Disaggregate data on 5° resolution quadrants (for 5deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
 		  config$logger.info("-----------------------------------------------------------------------------------------------------")
 		}
-		saveRDS(georef_dataset, "level1_stepdisagregate5deg.rds")
-
+		fonction_dossier("level1disaggregation5deg",
+		                 georef_dataset, 
+		                 "Disaggregate data on 5° resolution quadrants (for 5deg resolution datasets only)",
+		                 "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg", 
+		                 paste0("options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg = ",
+		                        options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
+		
+		
 		if (options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg %in% c("disaggregate","remove")) { 
 		  
 		  config$logger.info("-----------------------------------------------------------------------------------------------------")
@@ -378,8 +417,13 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		  config$logger.info(sprintf("LEVEL 1 => STEP 5/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet): Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
 		  config$logger.info("-----------------------------------------------------------------------------------------------------")
 		}
-		saveRDS(georef_dataset, "level1_stepdisagregate1deg.rds")
-	
+		fonction_dossier("level1disaggregation1deg",
+		                 georef_dataset, 
+		                 "Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only)",
+		                 "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg", 
+		                 paste0("options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg = ",
+		                        options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
+		
 	# 
 	# #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 	# #LEVEL 2 IRD PRODUCTS
@@ -520,7 +564,20 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		}else{
 		  config$logger.info("LEVEL 2 => STEP 3/3 not executed (since not selected in the workflow options (see column 'Data' of geoflow entities spreadsheet)")
 		} 
-		saveRDS(georef_dataset, "level2_raising.rds")
+		fonction_dossier("level2raising",
+		                 georef_dataset, 
+		                 "Raise IRD gridded Level 1 (1 or 5 deg) input with FIRMS Level O total (nominal) catch dataset",
+		                 c("function_raising_georef_to_nominal","function_unit_conversion_convert","get_rfmos_datasets_level0"), 
+		                 paste0("raising_georef_to_nominal = ",
+		                        raising_georef_to_nominal ,"/",
+		                        "iattc_ps_raise_flags_to_schooltype = ",
+		                        iattc_ps_raise_flags_to_schooltype ,"/",
+		                        "iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype = ",
+		                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,"/",
+		                        "iattc_ps_catch_billfish_shark_raise_to_effort = ",
+		                        iattc_ps_catch_billfish_shark_raise_to_effort ,"/",
+		                        "iccat_ps_include_type_of_school = ",
+		                        iccat_ps_include_type_of_school))
 
 
 config$logger.info("-----------------------------------------------------------------------------------------------------")
