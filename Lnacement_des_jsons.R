@@ -57,7 +57,7 @@ jobdir <- initWorkflowJob(config)
 config$job <- "~/Documents/Tunaatlas_level1/jobs/20220315173538"
 config$job <- jobdir
 executeWorkflowJob(config)
-executeWorkflow(file)
+executeWorkflow(files)
 
 
 entities <- config$metadata$content$entities
@@ -67,7 +67,7 @@ contacts <- config$metadata$content$contacts
 contacts <- config$getContacts()
 
 entity <- config$metadata$content$entities[[1]]
-entity <- entities[[1]]
+entity <- entities[[4]]
 
 options <- entity$data$actions[[1]]$options
 #options <-config$actions[[1]]$options

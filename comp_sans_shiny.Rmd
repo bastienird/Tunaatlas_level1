@@ -6,9 +6,10 @@ output:
   html_document:
     toc: true
     theme: united
+    number_sections: true
 params: 
-  init: "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step4global_catch_firms_level0.rds"
-  final: "data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds"
+  final: "data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_options_raise_false_firms_level0.rds"
+  init: "data/Les7entites_finies/entities/global_catch_1deg_1m_ps_bb_firms_level0/Rds/georef_dataset_level0_step11global_catch_1deg_1m_ps_bb_firms_level0.rds"
   filter_species:  "NULL"
   filter_source_authority:  "NULL"
   filter_gear:  "NULL"
@@ -18,8 +19,8 @@ params:
   filter_cat_geo:   "NULL"
   filter_catchtype:   "NULL"
   filter_schooltype: "NULL"
-  titre_dataset_1: "NULL"
-  titre_dataset_2: "NULL"
+  titre_dataset_1: "Level0_1deg_step11"
+  titre_dataset_2: "Level0_1deg_step11_no_raise_shark"
   
 ---
 
@@ -47,8 +48,14 @@ library(tmap)
 library(leaflet)
 library(tidyr)
 library(DT)
+library(kableExtra)
+
 tmap_mode("view")
-           drv <- dbDriver("PostgreSQL")      
+```
+
+
+```{r}
+drv <- dbDriver("PostgreSQL")      
 con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
                  port = 5432,
                  user = "tunaatlas_u",
@@ -59,7 +66,6 @@ con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science
 # dbExistsTable(con,"iattc_after_treatment")
 # dbExistsTable(con,"/../area.area_wkt")
 
-library(dplyr, warn.conflicts = FALSE)
 # summary(con)
 # dbListTables(con)
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
@@ -68,7 +74,6 @@ world_sf <- st_read(con, query = query)
 shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(st_area))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
 options(scipen=999)
-library(kableExtra)
 
 
 ```
@@ -154,39 +159,39 @@ fonction_filtre = function(dataframe_tot_filter) {
   cat_geo %in% params$filter_catchtype)
     }
 
-  dataframe_tot_filter
-  
+  # dataframe_tot_filter <- dataframe_tot_filter 
+  dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO")~ "Tons", unit %in% c("NO", "NOMT","no")~"Number of fish"))
   
 }
 
 # fonction_harmonization_unit = function(x){
-#   if(any(x$unit == "MT")) x[x$unit == "MT", ]$unit <- "t"
-# 		if(any(x$unit == "NO")) x[x$unit == "NO", ]$unit <- "no"
-# 		if(any(x$unit == "MTNO")) x[x$unit == "MTNO", ]$unit <- "t"
-# 		if(any(x$unit == "NOMT")) x[x$unit == "NOMT", ]$unit <- "no"
+#   if(any(x$unit == "MT")) x[x$unit == "MT", ]$unit <- "tons"
+# 		if(any(x$unit == "NO")) x[x$unit == "NO", ]$unit <- "Number of fish"
+# 		if(any(x$unit == "MTNO")) x[x$unit == "MTNO", ]$unit <- "tons"
+# 		if(any(x$unit == "NOMT")) x[x$unit == "NOMT", ]$unit <- "Number of fish"
 # 
 # }
   
-init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")))%>% inner_join(species_group, by = c("species"))
+init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)))%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% inner_join(species_group, by = c("species"))
 
-if(any(init$unit == "MT")) init[init$unit == "MT", ]$unit <- "t"
-		if(any(init$unit == "NO")) init[init$unit == "NO", ]$unit <- "no"
-		if(any(init$unit == "MTNO")) init[init$unit == "MTNO", ]$unit <- "t"
-		if(any(init$unit == "NOMT")) init[init$unit == "NOMT", ]$unit <- "no"
-
-
+# if(any(init$unit == "MT")) init[init$unit == "MT", ]$unit <- "Tons"
+# 		if(any(init$unit == "NO")) init[init$unit == "NO", ]$unit <- "Number of fish"
+# 		if(any(init$unit == "MTNO")) init[init$unit == "MTNO", ]$unit <- "Tons"
+# 		if(any(init$unit == "NOMT")) init[init$unit == "NOMT", ]$unit <- "Number of fish"
 
 
-final <- fonction_filtre(readRDS(as.character(params$final))%>% select(colnames_to_keep)%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code"))) %>% inner_join(species_group, by = c("species"))
 
-if(any(final$unit == "MT")) final[final$unit == "MT", ]$unit <- "t"
-if(any(final$unit == "NO")) final[final$unit == "NO", ]$unit <- "no"
-if(any(final$unit == "MTNO")) final[final$unit == "MTNO", ]$unit <- "t"
-if(any(final$unit == "NOMT")) final[final$unit == "NOMT", ]$unit <- "no"
+
+final <- fonction_filtre(readRDS(as.character(params$final))%>% select(all_of(colnames_to_keep)))%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% inner_join(species_group, by = c("species"))
+
+# if(any(final$unit == "MT")) final[final$unit == "MT", ]$unit <- "Tons"
+# if(any(final$unit == "NO")) final[final$unit == "NO", ]$unit <- "Number of fish"
+# if(any(final$unit == "MTNO")) final[final$unit == "MTNO", ]$unit <- "Tons"
+# if(any(final$unit == "NOMT")) final[final$unit == "NOMT", ]$unit <- "Number of fish"
 
 
 #just_for_this one before fixing th eunit problem 
-# final <- final %>% mutate(unit = "t")
+# final <- final %>% mutate(unit = "Tons")
 
 # summary(final)
 # summary(init)
@@ -224,15 +229,15 @@ if(any(final$unit == "NOMT")) final[final$unit == "NOMT", ]$unit <- "no"
 ```{r}
 fonction_groupement = function(x, init, final){
   x  <-   enquo(x)
-  groupement_1  <-   init %>% group_by(!!x,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), nombre_lignes1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
-  groupement_2  <-   final %>% group_by(!!x,unit) %>% summarise(value_sum_2 = sum(value, na.rm=TRUE), nombre_lignes2 = n()) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
+  groupement_1  <-   init %>% group_by(!!x,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
+  groupement_2  <-   final %>% group_by(!!x,unit) %>% summarise(value_sum_2 = sum(value, na.rm=TRUE), number_lines2 = n()) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
   
   fulljoin  <-   full_join(groupement_1, groupement_2) %>% 
     mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>% mutate(Dimension = colnames(groupement_1[1])) %>%
-    rename("Precision" = 1) %>% mutate(Precision = as.character(Precision)) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>% mutate(Perte_pourcent = ifelse(is.na(Perte_pourcent), 100, Perte_pourcent)) %>% mutate(perte_nb_ligne = nombre_lignes1 - nombre_lignes2)%>% 
+    rename("Precision" = 1) %>% mutate(Precision = as.character(Precision)) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>% mutate(Perte_pourcent = ifelse(is.na(Perte_pourcent), 100, Perte_pourcent)) %>% mutate(perte_nb_ligne = number_lines1 - number_lines2)%>% 
     mutate(Perte_en_milliers_de_tonne = (value_sum_1 - value_sum_2)/ 10^6) %>% 
-           rename(`Loss (in %)` = Perte_pourcent,`Perte en millions de tonnes` = Perte_en_milliers_de_tonne, 
-                  `Perte en nombre de ligne` = perte_nb_ligne) %>% mutate_if(is.numeric, list(~replace_na(., 0)))
+           rename(`Loss (in %)` = Perte_pourcent,`Loss in millions of tons` = Perte_en_milliers_de_tonne, 
+                  `Loss in number of lines` = perte_nb_ligne) %>% mutate_if(is.numeric, list(~replace_na(., 0))) %>% select(-c(value_sum1))
 }
 ```
 
@@ -254,10 +259,15 @@ for (i in Dimensions){
   t <- rbind(t, temporaire)
 }
   
-      somme_init_t <- sum((init %>% filter(unit == "t"))$value, na.rm = TRUE)
-    somme_init_no <- sum((init %>% filter(unit == "no"))$value, na.rm = TRUE)
-    somme_final_t <- sum((final %>% filter(unit == "t"))$value, na.rm = TRUE)
-    somme_final_no <- sum((final %>% filter(unit == "no"))$value, na.rm = TRUE)
+init_t <- init %>% filter(unit == "Tons")
+init_no <- init %>% filter(unit == "Number of fish")
+final_t <- final %>% filter(unit == "Tons")
+final_no <- final %>% filter(unit == "Number of fish")
+  
+      somme_init_t <- sum(init_t$value, na.rm = TRUE)
+    somme_init_no <- sum(init_no$value, na.rm = TRUE)
+    somme_final_t <- sum(final_t$value, na.rm = TRUE)
+    somme_final_no <- sum(final_no$value, na.rm = TRUE)
     
 
     perte_en_tonnes <- round(somme_init_t-somme_final_t)
@@ -277,15 +287,17 @@ t$Dimension <-as.character(t$Dimension)
 t$Precision <-as.character(t$Precision)
 ```
 
-# General loss
+# Main differences
 
-The number of lines goes from `r nb_ligne_init_millions` millions to `r nb_ligne_final_millions` millions, which correspond to a loss of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
+We prese
+
+The number of lines goes from  `r nb_ligne_init_millions` millions in `r titre_1` to `r nb_ligne_final_millions` millions in `r titre_2`, which correspond to a difference of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
 
 The initial dataset has a total of `r round(somme_init_t)` in tons and of `r round(somme_init_no)` in number of fish.
     
 The final dataset has a total of  `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
 
-The loss is `r perte_en_tonnes` in tons (`r perte_en_tonnes_pourcent`%). The loss is `r perte_en_nombre` in number of fish (`r perte_en_nombre_pourcent`%).
+The loss is `r perte_en_tonnes` in tons (**`r perte_en_tonnes_pourcent`%**). The loss is `r perte_en_nombre` in number of fish (**`r perte_en_nombre_pourcent`%**).
 
 # Introduction to the two datasets 
 
@@ -293,17 +305,19 @@ We first present the main characteristics of each dimension for each dataset.
 
 ## Comparison of the two catch evolutions
 
+For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish.
+
 ```{r}
-captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "origin", values_to ="Captures") 
+captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>% mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
 
 
 ggplot(captures_par_time) +
   aes(
     x = Time,
     y = Captures,
-    fill = origin,
-    colour = origin,
-    group = origin
+    fill = Origin,
+    colour = Origin,
+    group = Origin
   ) +
   geom_line(size = 0.5) +
   scale_fill_hue(direction = 1) +
@@ -311,14 +325,15 @@ ggplot(captures_par_time) +
   theme_dark() +
   theme(legend.position = "top") +
   facet_wrap(vars(unit), nrow = 2L)+
-  labs(x = "Time", y = "Captures (in tons)")
+  labs(x = "Time", y = "Captures")+
+  facet_grid("unit", scales = "free_y")
 ```
 
 ## Comparison of the evolution of the cumulative catches
 
 ```{r}
 
-captures_par_time <- captures_par_time %>% mutate(Time = as.Date(Precision))%>% arrange(Precision) %>% group_by(unit, origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
+captures_par_time <- captures_par_time %>% mutate(Time = as.Date(Precision))%>% arrange(Precision) %>% group_by(unit, Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
 
 ggplot_capt_par_time = function(x){
   
@@ -326,74 +341,43 @@ ggplot_capt_par_time = function(x){
   aes(
     x = Time,
     y = `Captures cumulées`,
-    colour = origin
+    colour = Origin
   ) +
   geom_line(size = 0.5) +
   scale_color_hue(direction = 1) +
   theme_minimal() +
   facet_wrap(vars(unit)) +
-  labs(x = "Time", y = "Cumulated captures (in tons)")+guides(fill=guide_legend(title="Etape du traitement de la donnée"))
+  labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
 }
 
-ggplot_capt_par_time("t")
+ggplot_capt_par_time("Tons")
 
 ```
 
 ```{r}
-ggplot_capt_par_time("no")
+ggplot_capt_par_time("Number of fish")
 ```
 
 ## Comparison of the two datasets
 
+We check the distribution of the value of each dimension in tons and number of fish for each dataset.
+
 ```{r}
 library(rlang)
-# pie_chart = function(x, i) {
-#   r <- deparse(substitute(x))
-#   colnames <- enquo(x)
-#   provisoire <- i  %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-#     mutate(class= as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
-#   # filter(id < 4) %>% 
-#   #   mutate(class= !!colnames) %>% 
-#     group_by(cat, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
-#     select(unit, value, cat) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
-#     mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(cat))%>%
-#   mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
-#     distinct()
-#   
-# test <- ggplot(provisoire) +
-#   aes(
-#     x = "",
-#     fill = cat,
-#     colour = cat,
-#     group = cat,
-#     weight = pourcentage
-#   ) +
-#   geom_bar(position = "fill") +
-#   scale_fill_hue(direction = 1) +
-#   scale_color_hue(direction = 1) +
-#   theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire %>% mutate_if(is.numeric, round)),
-#                            aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
-#   theme(axis.ticks.x = element_blank(),
-#         axis.text.x = element_blank())+
-#   labs(x = "", y="")+
-#   labs(title = paste0("Distribution in value for the dimension : ",r)) + facet_wrap("unit")
-# 
-# }
 
-
-pie_chart_2 = function(x, i,t) {
+pie_chart_2 = function(x, init= init,final = final) {
   r <- deparse(substitute(x))
   colnames <- enquo(x)
-  provisoire_i <- i  %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-    mutate(class = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
+  provisoire_i <-init %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
     group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
     select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
     mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
   mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
     distinct()
   
-  provisoire_t <- t%>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-    mutate(class = as.factor(ifelse(id<4,!!colnames,"Autres"))) %>%
+  provisoire_t <- final %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
     group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
     select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
     mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
@@ -470,114 +454,29 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
   # t <- init[0,] 
 ```
 
-
-```{r eval=FALSE, warning=FALSE, include=FALSE}
-# for (i in (Dimensions)){
-# assign(paste0(i,"pie_chart"), pie_chart(.data[[i]], init), envir = .GlobalEnv)
-# 
-# }
-a <- pie_chart(fishingfleet, init)
-b <- pie_chart(gear, init)
-c <- pie_chart(schooltype, init)
-d <- pie_chart(species, init)
-e <- pie_chart(catchtype, init)
-f <- pie_chart(source_authority, init)
-g <- pie_chart(cat_geo, init)
-```
-
-
-```{r eval=FALSE, include=FALSE, out.width="100%"}
-plot_grid(a,b, nrow = 2)
-plot_grid(c,d, nrow = 2)
-plot_grid(e,f, nrow = 2)
-plot(g)
-```
-
-
-```{r eval=FALSE, include=FALSE}
-h <- pie_chart(fishingfleet, final)
-i <- pie_chart(gear, final)
-j <- pie_chart(schooltype, final)
-k <- pie_chart(species, final)
-l <- pie_chart(catchtype, final)
-m <- pie_chart(source_authority, final)
-n <- pie_chart(cat_geo, final)
-```
-
-
-```{r eval=FALSE, include=FALSE, out.width="100%"}
-# plot_grid(h,i, nrow = 2,)
-# plot_grid(j,k, nrow = 2)
-# plot_grid(l,m, nrow = 2)
-# plot(n)
-
-```
-
-```{r eval=FALSE, include=FALSE}
-plot_grid(a, h, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
-  label_size = 12,
-  label_x = 0, label_y = 0,
-  hjust = -0.5, vjust = -0.5
-)
-plot_grid(b, i, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
-  label_size = 12,
-  label_x = 0, label_y = 0,
-  hjust = -0.5, vjust = -0.5
-)
-# plot_grid(c, j, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
-#   label_size = 12,
-#   label_x = 0, label_y = 0,
-#   hjust = -0.5, vjust = -0.5
-# )
-plot_grid(d, k, nrow = 2,labels = c(paste0('table', last_path_reduced(as.character(params$init))), paste0('table', last_path_reduced(as.character(params$final)))),
-  label_size = 12,
-  label_x = 0, label_y = 0,
-  hjust = -0.5, vjust = -0.5
-)
-# plot_grid(e, l, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
-#   label_size = 12,
-#   label_x = 0, label_y = 0,
-#   hjust = -0.5, vjust = -0.5
-# )
-# plot_grid(f, m, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
-#   label_size = 12,
-#   label_x = 0, label_y = 0,
-#   hjust = -0.5, vjust = -0.5
-# )
-plot_grid(g, n, nrow = 2,labels = c(paste0('tableau', last_path_reduced(as.character(params$init))), paste0('tableau', last_path_reduced(as.character(params$final)))),
-  label_size = 12,
-  label_x = 0, label_y = 0,
-  hjust = -0.5, vjust = -0.5
-)
-
-```
-
-
 ```{r}
 library(cowplot)
 fishing_fleet <- pie_chart_2(fishingfleet, init, final)
-```
-
-```{r}
+source_authority <- pie_chart_2(source_authority, init, final)
 cat_geo <- pie_chart_2(cat_geo, init, final)
-a <- plot_grid(cat_geo, fishing_fleet, nrow=2)
-tmap_arrange(cat_geo, fishing_fleet, nrow=2)
+species <- pie_chart_2(species, init, final)
+species_group <- pie_chart_2(species_group, init, final)
+
 ```
 
 ```{r}
-pie_chart_2(source_authority, init, final)
-```
+species
 
-```{r}
-pie_chart_2(species, init, final)
-```
+cat_geo
 
-```{r}
-pie_chart_2(gear, init, final)
-```
+fishing_fleet
 
-```{r}
-pie_chart_2(species_group, init, final)
+source_authority
+
+species_group
+
+
+# plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
 ```
 
 
@@ -605,27 +504,38 @@ tm_shape(inner_join %>% filter(unit == variable_affichee))+
   tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"))
 rm(inner_join)
 }
-tmap_mode("view")
+tmap_mode("plot")
+
+number_of_cat_geo <- nrow(unique(t$cat_geo))
+cat_geo <- (unique(t$cat_geo))
 ```
 
-In tons
+We represent the spatial coverage, faceted by the geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).
+
+### Spatial coverage in tons
 
 ```{r}
-fonction_empreinte_spatiale("t")
+fonction_empreinte_spatiale("Tons")
 ```
 
-In numbers 
+### Spatial coverage in number of fish
 
 ```{r}
-fonction_empreinte_spatiale("no")
+fonction_empreinte_spatiale("Number of fish")
 ```
 
 # Loss
 
+This section detail the different loss that observed between the dataframe `r titre_1` and `r titre_2`.
+
+```{r}
+disappearing_strates <- t %>% filter(value_sum_2 == 0)
+```
+
+
 ```{r}
 topn <- 5  
 ```
-
 
 ## The losses for each dimension
 
@@ -635,21 +545,23 @@ We will look for each dimension the `r topn` most important losses.
 library(knitr)
 library(DT)
 library(kableExtra)
-# kable(t %>%  filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by(unit, Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>% ungroup() %>%  mutate(test = ifelse(id>(topn-1),"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(id, test)) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Perte en millions de tonnes`)) %>%   group_split(unit))
+# kable(t %>%  filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by(unit, Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>% ungroup() %>%  mutate(test = ifelse(id>(topn-1),"Others",as.character(Precision))) %>%mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(id, test)) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Loss in millions of tons`)) %>%   group_split(unit))
 
 valeur_totale <- sum(init$value, na.rm = TRUE)
 ligne_totale <- nrow(init)
 
-unit_t <- t %>% filter(unit == "t")%>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Autres"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Perte en millions de tonnes`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
+unit_t <- t %>% filter(unit == "Tons")%>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
-unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Autres"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Perte en millions de tonnes`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
+unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
 
 
-# %>% ungroup()%>% group_by(test,Dimension) %>% mutate_all(sum) %>% ungroup() %>% mutate(`Loss (in %)` =`Perte en millions de tonnes`/sum(`Perte en millions de tonnes`)) %>% mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(test,id)) %>%  group_by(Dimension) %>%arrange(Dimension,desc(`Loss (in %)`))
-# unit_no <- t %>% filter(unit == "no") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  mutate(test = ifelse(`Loss (in %)` >10,"Autres",as.character(Precision))) %>%mutate(Precision = test) %>%    mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>%  mutate_if(is.character, as.factor)%>%select(-test) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Perte en millions de tonnes`)) %>% group_by(Dimension)
+# %>% ungroup()%>% group_by(test,Dimension) %>% mutate_all(sum) %>% ungroup() %>% mutate(`Loss (in %)` =`Loss in millions of tons`/sum(`Loss in millions of tons`)) %>% mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(test,id)) %>%  group_by(Dimension) %>%arrange(Dimension,desc(`Loss (in %)`))
+# unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  mutate(test = ifelse(`Loss (in %)` >10,"Others",as.character(Precision))) %>%mutate(Precision = test) %>%    mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>%  mutate_if(is.character, as.factor)%>%select(-test) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Loss in millions of tons`)) %>% group_by(Dimension)
 # library(kable)
 ```
+
+
 
 ***In tons***
 
@@ -659,6 +571,8 @@ kbl(unit_t, align = "c") %>%
   pack_rows(index = table(unit_t$Dimension))
 ```
 
+
+
 ***In numbers***
 
 ```{r paged.print=TRUE}
@@ -667,35 +581,34 @@ kbl(unit_no, align = "c") %>%
   pack_rows(index = table(unit_no$Dimension))
 ```
 
-## Geographical data
+## Loss in geographical data
 
 ```{r}
-tmap_mode("plot")
+tmap_mode("view")
 
 tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_geo = as.factor(st_area)) 
-         # %>% filter(unit == "t")
+         # %>% filter(unit == "Tons")
          )+
   tm_fill( "Loss (in %)", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
   tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
 ```
 
-
-Map presenting for each area, the kept information, the all loss information and the area where only a part of the information is lost.
-
+Here we represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information.
 
 ```{r}
 tmap::tmap_mode("view")
-tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_perte = as.factor(case_when(`Loss (in %)` == 0 ~ 'Pas de perte', `Loss (in %)` == 100~'Perte totale', TRUE ~ 'Perte partielle')))
-         # %>% filter(unit == "t")
+tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_perte = as.factor(case_when(`Loss (in %)` == 0 ~ 'No loss', `Loss (in %)` == 100~'All data lost', TRUE ~ 'Partial loss')))
+         # %>% filter(unit == "Tons")
          )+
   tm_fill( "cat_perte", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
   tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
 ```
 
+## Loss in temporal data
 
-## Temporal data
+Here is represented the loss in percent for each year. 
 
 ```{r}
 
@@ -709,7 +622,7 @@ t %>%
 # t %>%
 #  filter(Dimension %in% "time_end") %>%
 #  ggplot() +
-#  aes(x = Precision, weight = `Perte en millions de tonnes`) +
+#  aes(x = Precision, weight = `Loss in millions of tons`) +
 #  geom_bar(fill = "#112446") +
 #  theme_minimal()+facet_wrap("unit")
 
