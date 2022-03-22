@@ -1,4 +1,4 @@
-fonction_dossier=function(nom_dossier, nomrds, explication,fonctions, options) {
+fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", options="") {
   dir.create(nom_dossier)
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
