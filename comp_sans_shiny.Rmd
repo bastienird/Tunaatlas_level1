@@ -75,6 +75,10 @@ shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(c
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
 options(scipen=999)
 
+kbl <- function(data) {
+  knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
+    kable_styling(latex_options =c("striped", "scale_down"))
+}
 
 ```
 
