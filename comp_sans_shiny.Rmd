@@ -49,6 +49,15 @@ library(leaflet)
 library(tidyr)
 library(DT)
 library(kableExtra)
+library(flextable)
+
+set_flextable_defaults(
+  font.size = 10,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = 0,
+  theme_fun = "theme_box"
+  )
 
 tmap_mode("view")
 ```
@@ -289,11 +298,12 @@ sum_valeur_final <- sum(final$value, na.rm = TRUE)/10^6
 
 t$Dimension <-as.character(t$Dimension)
 t$Precision <-as.character(t$Precision)
+
+strates_perdues <- t %>% filter(`Loss (in %)` == 100)
+
 ```
 
 # Main differences
-
-We prese
 
 The number of lines goes from  `r nb_ligne_init_millions` millions in `r titre_1` to `r nb_ligne_final_millions` millions in `r titre_2`, which correspond to a difference of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
 
@@ -302,6 +312,13 @@ The initial dataset has a total of `r round(somme_init_t)` in tons and of `r rou
 The final dataset has a total of  `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
 
 The loss is `r perte_en_tonnes` in tons (**`r perte_en_tonnes_pourcent`%**). The loss is `r perte_en_nombre` in number of fish (**`r perte_en_nombre_pourcent`%**).
+
+The strates loss between the first one and the second one are : 
+
+```{r}
+qflextable(strates_perdues)
+```
+
 
 # Introduction to the two datasets 
 
@@ -554,11 +571,11 @@ library(kableExtra)
 valeur_totale <- sum(init$value, na.rm = TRUE)
 ligne_totale <- nrow(init)
 
-unit_t <- t %>% filter(unit == "Tons")%>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
+# unit_t <- t %>% filter(unit == "Tons")%>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
+# 
+# unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
-unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
-
-
+unit <- t %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension, unit) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test, unit) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(unit,Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
 # %>% ungroup()%>% group_by(test,Dimension) %>% mutate_all(sum) %>% ungroup() %>% mutate(`Loss (in %)` =`Loss in millions of tons`/sum(`Loss in millions of tons`)) %>% mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(test,id)) %>%  group_by(Dimension) %>%arrange(Dimension,desc(`Loss (in %)`))
 # unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>% mutate(Dimension = as.factor(Dimension)) %>%  mutate(test = ifelse(`Loss (in %)` >10,"Others",as.character(Precision))) %>%mutate(Precision = test) %>%    mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>%  mutate_if(is.character, as.factor)%>%select(-test) %>% ungroup() %>%  group_by(Precision,unit, Dimension)%>% summarise_all(sum)  %>% group_by(unit, Dimension) %>%arrange(desc(`Loss (in %)`), desc(`Loss in millions of tons`)) %>% group_by(Dimension)
@@ -570,20 +587,16 @@ unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("s
 ***In tons***
 
 ```{r paged.print=TRUE}
-kbl(unit_t, align = "c") %>% 
-  kable_paper(full_width = F)%>%
-  pack_rows(index = table(unit_t$Dimension))
+qflextable(as_grouped_data(unit, groups = c("Dimension","unit"))) 
 ```
 
 
 
-***In numbers***
+<!-- ***In numbers*** -->
 
-```{r paged.print=TRUE}
-kbl(unit_no, align = "c") %>% 
-  kable_paper(full_width = F)%>%
-  pack_rows(index = table(unit_no$Dimension))
-```
+<!-- ```{r paged.print=TRUE} -->
+<!-- qflextable(as_grouped_data(unit_no, groups = c("Dimension")))  -->
+<!-- ``` -->
 
 ## Loss in geographical data
 

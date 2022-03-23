@@ -16,7 +16,7 @@ if(!require(rtunaatlas)) {
   library(rtunaatlas)
   }
 setwd("~/Documents/Tunaatlas_level1")
-files <- "tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json"
+files <- "~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_2022.json"
 executeWorkflow(files)
 
 
