@@ -254,9 +254,9 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 paste0("overlapping_zone_iattc_wcpfc_data_to_keep = ",
 		                        if(exists(option$overlapping_zone_iattc_wcpfc_data_to_keep){
 		                          option$overlapping_zone_iattc_wcpfc_data_to_keep
-		                          }else{"not filled out"
+		                          }else{"not filled out"}
 		                          
-		                        })))
+		                        )))
 		
 		
 	#-----------------------------------------------------------------------------------------------------------------------------------------------------------
