@@ -1,5 +1,7 @@
 fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", options="") {
-  dir.create(nom_dossier)
+  dir.create("Markdown")
+  dir.create(paste0("Markdown/",nom_dossier))
+  nom_dossier <- paste0("Markdown/",nom_dossier)
   somme_t <- sum((nomrds %>% filter(unit %in% c("t", "MTNO","MT")))$value, na.rm = TRUE)
   somme_no <- sum((nomrds %>% filter(unit %in% c("no", "NOMT","NO")))$value, na.rm = TRUE)
   write_csv(data.frame(somme_t, somme_no), paste0(nom_dossier,"/sums.csv"))
