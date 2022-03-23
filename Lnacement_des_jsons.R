@@ -11,10 +11,10 @@ library(gsheet)
 library(rtunaatlas)
 library(DBI)
 library(readr)
-if(!require(rtunaatlas)) {
-  install_github("eblondel/rtunaatlas", force=TRUE)
-  library(rtunaatlas)
-  }
+# if(!require(rtunaatlas)) {
+#   install_github("eblondel/rtunaatlas", force=TRUE)
+#   library(rtunaatlas)
+#   }
 setwd("~/Documents/Tunaatlas_level1")
 files <- "~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_2022.json"
 executeWorkflow(files)

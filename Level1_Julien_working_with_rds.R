@@ -306,7 +306,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Convert units by using A. Fonteneau file",
 		                 "do_unit_conversion", 
-		                 paste0("options$unit_conversion_convert = ",
+		                 paste0("unit_conversion_convert = ",
 		                        options$unit_conversion_convert))
 			
 
@@ -346,7 +346,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA')",
 		                 "function_spatial_curation_data_mislocated", 
-		                 paste0("options$spatial_curation_data_mislocated = ",
+		                 paste0("spatial_curation_data_mislocated = ",
 		                        options$spatial_curation_data_mislocated))
 		
 		if (options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg %in% c("disaggregate","remove")) {
@@ -386,7 +386,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Disaggregate data on 5° resolution quadrants (for 5deg resolution datasets only)",
 		                 "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg", 
-		                 paste0("options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg = ",
+		                 paste0("disaggregate_on_5deg_data_with_resolution_superior_to_5deg = ",
 		                        options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
 		
 		
@@ -425,7 +425,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only)",
 		                 "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg", 
-		                 paste0("options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg = ",
+		                 paste0("disaggregate_on_1deg_data_with_resolution_superior_to_1deg = ",
 		                        options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
 		
 	# 
@@ -573,13 +573,13 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 "Raise IRD gridded Level 1 (1 or 5 deg) input with FIRMS Level O total (nominal) catch dataset",
 		                 c("function_raising_georef_to_nominal","function_unit_conversion_convert","get_rfmos_datasets_level0"), 
 		                 paste0("raising_georef_to_nominal = ",
-		                        raising_georef_to_nominal ,"/",
+		                        raising_georef_to_nominal ,"\n",
 		                        "iattc_ps_raise_flags_to_schooltype = ",
-		                        iattc_ps_raise_flags_to_schooltype ,"/",
+		                        iattc_ps_raise_flags_to_schooltype ,"\n",
 		                        "iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype = ",
-		                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,"/",
+		                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,"\n",
 		                        "iattc_ps_catch_billfish_shark_raise_to_effort = ",
-		                        iattc_ps_catch_billfish_shark_raise_to_effort ,"/",
+		                        iattc_ps_catch_billfish_shark_raise_to_effort ,"\n",
 		                        "iccat_ps_include_type_of_school = ",
 		                        iccat_ps_include_type_of_school))
 
