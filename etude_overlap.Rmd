@@ -25,10 +25,7 @@ library(tidyverse)
 ```{r}
 
 data <- readRDS(params$chemin_dacces)
-if(any(data$unit == "MT")) data[data$unit == "MT", ]$unit <- "t"
-		if(any(data$unit == "NO")) data[data$unit == "NO", ]$unit <- "no"
-		if(any(data$unit == "MTNO")) data[data$unit == "MTNO", ]$unit <- "t"
-		if(any(data$unit == "NOMT")) data[data$unit == "NOMT", ]$unit <- "no"
+  data <- data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO")~ "Tons", unit %in% c("NO", "NOMT","no")~"Number of fish"))
 
 
 drv <- dbDriver("PostgreSQL")      
@@ -38,11 +35,8 @@ con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science
                       password = "21c0551e7ed2911")
 
 
-# summary(con)
-# dbListTables(con)
 query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
 world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
-# test <- tm_shape(world_sf)+tm_polygons()
 
 query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
 competence_area <- st_make_valid(st_read(con, query = query_area)) %>% filter(!st_is_empty(.))
@@ -63,9 +57,6 @@ world_sf$wcpfc <- st_within(world_sf,WCPFC) %>% lengths >0
 world_sf$iccat <- st_within(world_sf,ICCAT) %>% lengths >0
 world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0
 
-# misplace <- georef_dataset_level0_step11global_catch_firms_level0
-
-# world_sf %>% mutate(test = paste0("iotc" * iotc +"iattc" * iattc + "wcpfc"* wcpfc + "iccat" * iccat ))
 for (i in 4:length(world_sf)) {
     world_sf[[i]] <- str_replace(world_sf[[i]], "TRUE", colnames(world_sf)[i])
 }
@@ -73,10 +64,18 @@ for (i in 4:length(world_sf)) {
 test <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
 
 df <- st_as_sf(inner_join(world_sf %>% as.data.frame() %>% select(-geom), test ,by = "code"))
+inner_join <- data %>% inner_join(df, by = c("geographic_identifier"="code"))
 
-tmap_mode("plot")
+
+test <- inner_join %>% filter(area_competence == "continent") %>% ungroup() %>% group_by(geographic_identifier, st_area.x, unit, source_authority) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(df, by = c("geographic_identifier"="code")) %>% select(geographic_identifier, st_area.x.x, value, geom, unit, source_authority)
+tmap_mode("view")
+
+tm_shape(st_as_sf(test %>% filter()))+tm_fill("value")+tm_facets(by=c("st_area.x.x","unit"))+tm_text("source_authority")+tm_shape(continent)+tm_borders()
+
 # tm_shape(df)+tm_polygons(col = "area_competence")+tm_facets("st_area.x")
-
+# test3 <- inner_join %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
+# # summary(test3)
+# tm_shape(test3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))+tm_polygons(col = "value")+tm_facets("st_area")+tm_shape(continent)+tm_borders()
 
 
 
@@ -93,17 +92,14 @@ test <- inner_join %>% ungroup() %>% group_by(geographic_identifier, st_area.x, 
 test_2 <- test %>% st_sf(sf_column_name = 'geom')
 # inner_join2 <- st_as_sf(inner_join)
 
-tmap_mode("plot")
+tmap_mode("view")
 tm_shape(test_2)+tm_polygons(col = "area_competence.x")+tm_facets("st_area.x.x")
+tm_shape(test_2 %>% filter(area_competence.x == "continent"))+tm_fill("value")
 
-```
 
-Seeing the maps, we decide to remove data on the continent to see how much is lost.
-
-```{r}
 test3 <- test_2 %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
 # summary(test3)
-tm_shape(test3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))+tm_polygons(col = "value")+tm_facets("st_area")
+tm_shape(test3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))+tm_polygons(col = "value")+tm_facets("st_area")+tm_shape(continent)+tm_borders()
 
 
 ```
@@ -128,13 +124,13 @@ value_with_continent <- sum(test_2$value, na.rm = TRUE)
 perte_en_pourcent_conitnent <- ((value_with_continent-value_without_continent)/value_with_continent)*100
 ```
 
-En retirant les données placées sur les continents, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre` % en nombre et à `r perte_en_tonne` % en tonnes. 
+Removing the data placed on the continents, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
 
-On s'intéresse maintenant aux données mislocated
+We are now interested in the mislocated data
 
 ```{r}
 
-mislocated <- inner_join %>% ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(area_competence = toupper(area_competence)) %>%  mutate(mislocated = case_when(area_competence%in%c("IATTC", "ICCAT", "IOTC", "WCPFC") & area_competence == source_authority ~ TRUE,
+mislocated <- inner_join %>%filter(area_competence!="continent") %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(area_competence = toupper(area_competence)) %>%  mutate(mislocated = case_when(area_competence%in%c("IATTC", "ICCAT", "IOTC", "WCPFC") & area_competence == source_authority ~ TRUE,
                               area_competence == "IOTCWCPFC" & source_authority %in% c("IOTC", "WCPFC")  ~ TRUE,
                               area_competence == "IATTCWCPFC" & source_authority %in% c("IATTC", "WCPFC")  ~ TRUE, tolower(area_competence) == area_competence ~ TRUE, 
                               TRUE ~ FALSE))
@@ -152,7 +148,7 @@ perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
 ```
 
 ```{r}
-tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE)))+tm_polygons(col = "source_authority")+tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")
+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")+tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")
 ```
 
 En retirant les données placées sur les continents, ainsi que les données d'une rfmo dans une zone hors de leur compétence, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre` % en nombre et à `r perte_en_tonne` % en tonnes. 

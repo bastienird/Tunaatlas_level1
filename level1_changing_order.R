@@ -58,6 +58,8 @@ source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R"))
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/function_overlapped.R")
+
 
 # connect to Tuna atlas database
 con <- config$software$output$dbi
@@ -96,9 +98,9 @@ rm(dataset)
 fonction_dossier("rawdata",
                  georef_dataset, 
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-                 "get_rfmos_datasets_level0", c("options$include_IOTC", "options$include_ICCAT", 
-                                                "options$include_IATTC","options$include_WCPFC", 
-                                                "options$include_CCSBT"))
+                  "get_rfmos_datasets_level0" , c( options$include_IOTC ,  options$include_ICCAT , 
+                                                 options$include_IATTC , options$include_WCPFC , 
+                                                 options$include_CCSBT ))
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -134,12 +136,12 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
 fonction_dossier("mapping_codelist",
                  georef_dataset, 
                  "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
-                 "map_codelists",c("options$mapping_map_code_lists"))
+                 "map_codelists",c(options$mapping_map_code_lists))
 
 
          
 
-         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         #--------get_rfmos_datasets_level0--------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 6/8: Overlapping zone (IATTC/WCPFC): keep data from IATTC or WCPFC?")
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          if (options$include_IATTC && options$include_WCPFC && !is.null(options$overlapping_zone_iattc_wcpfc_data_to_keep)) {
@@ -165,8 +167,8 @@ fonction_dossier("mapping_codelist",
 fonction_dossier("overlapIATTC_WCPFC",
                  georef_dataset, 
                  "Keeping data from IATTC or WCPFC ",
-                 "function_overlapped", c("options$include_IATTC" , 
-                  "options$include_WCPFC","options$overlapping_zone_iattc_wcpfc_data_to_keep"))
+                  "function_overlapped" , c( options$include_IATTC  , 
+                   options$include_WCPFC , options$overlapping_zone_iattc_wcpfc_data_to_keep ))
          
          
          
@@ -191,8 +193,10 @@ fonction_dossier("overlapIATTC_WCPFC",
 fonction_dossier("overlapccsbt_WCPFC",
                  georef_dataset, 
                  "Keeping data from ccsbt or WCPFC ",
-                 "function_overlapped", c("options$include_CCSBT" , 
-                                          "options$include_WCPFC","options$overlapping_zone_wcpfc_ccsbt_data_to_keep"))
+                 "function_overlapped", 
+                 c( options$include_CCSBT  , 
+                                           options$include_WCPFC ,
+                                           options$overlapping_zone_wcpfc_ccsbt_data_to_keep ))
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 8/8: Overlapping zone (ICCAT/CCSBT): keep data from ICCAT or CCSBT?")
@@ -214,8 +218,9 @@ fonction_dossier("overlapccsbt_WCPFC",
 fonction_dossier("overlapiccat_ccsbt",
                  georef_dataset, 
                  "Keeping data from ccsbt or iccat ",
-                 "function_overlapped", c("options$include_CCSBT" , 
-                                          "options$include_ICCAT","options$overlapping_zone_iccat_ccsbt_data_to_keep"))
+                 "function_overlapped", 
+                 c( options$include_CCSBT  , 
+                                           options$include_ICCAT , options$overlapping_zone_iccat_ccsbt_data_to_keep ))
 
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -237,8 +242,9 @@ fonction_dossier("overlapiccat_ccsbt",
 fonction_dossier("overlap_iotc_ccsbt",
                  georef_dataset, 
                  "Keeping data from ccsbt or iotc ",
-                 "function_overlapped", c("options$include_CCSBT" , 
-                                          "options$include_IOTC","options$overlapping_zone_iotc_ccsbt_data_to_keep"))
+                 "function_overlapped", 
+                 c( options$include_CCSBT  , 
+                                           options$include_IOTC , options$overlapping_zone_iotc_ccsbt_data_to_keep ))
 
 
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -260,8 +266,9 @@ fonction_dossier("overlap_iotc_ccsbt",
 fonction_dossier("overlap_iotc_wcpfc",
                  georef_dataset, 
                  "Keeping data from wcpfc or iotc",
-                 "function_overlapped", c("options$include_WCPFC" , 
-                                          "options$include_IOTC","options$overlapping_zone_iotc_wcpfc_data_to_keep"))
+                 "function_overlapped",
+                 c( options$include_WCPFC  , 
+                                           options$include_IOTC , options$overlapping_zone_iotc_wcpfc_data_to_keep ))
 
          
          
@@ -284,7 +291,8 @@ fonction_dossier("overlap_iotc_wcpfc",
          fonction_dossier("aggregation",
                           georef_dataset, 
                           "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
-                          "spatial_curation_upgrade_resolution", c("options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg"))
+                          "spatial_curation_upgrade_resolution", 
+                          c(options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
          
          
          if(!is.null(options$unit_conversion_convert)) if (options$unit_conversion_convert){
@@ -323,9 +331,10 @@ fonction_dossier("overlap_iotc_wcpfc",
          fonction_dossier("level1raising",
                           georef_dataset, 
                           "Convert units by using A. Fonteneau file",
-                          "do_unit_conversion", c("options$mapping_map_code_lists",
-      "options$unit_conversion_csv_conversion_factor_url",
-      "options$unit_conversion_codelist_geoidentifiers_conversion_factors","options$unit_conversion_convert"))
+                          "do_unit_conversion", 
+                          c( options$mapping_map_code_lists ,
+       options$unit_conversion_csv_conversion_factor_url ,
+       options$unit_conversion_codelist_geoidentifiers_conversion_factors , options$unit_conversion_convert ))
          
          
          
@@ -367,7 +376,7 @@ fonction_dossier("overlap_iotc_wcpfc",
                           georef_dataset, 
                           "Reallocation of mislocated data",
                           "function_spatial_curation_data_mislocated",
-                          c("options$spatial_curation_data_mislocated"))
+                          c(options$spatial_curation_data_mislocated))
          
          
          if (options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg %in% c("disaggregate","remove")) {
@@ -392,7 +401,7 @@ fonction_dossier("overlap_iotc_wcpfc",
                             georef_dataset, 
                             "Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                            c("options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg"))
+                            c(options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
            
            georef_dataset<-georef_dataset$dataset
            ntons_after_disaggregation_5deg <- round(georef_dataset %>% select(value)  %>% sum())
@@ -427,7 +436,7 @@ fonction_dossier("overlap_iotc_wcpfc",
                             georef_dataset, 
                             "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                            c("options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg"))
+                            c(options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            
            georef_dataset<-georef_dataset$dataset
            ntons_after_disaggregation_1deg <- round(georef_dataset %>% select(value)  %>% sum())
@@ -594,8 +603,7 @@ fonction_dossier("overlap_iotc_wcpfc",
          fonction_dossier("level2",
                           georef_dataset, 
                           "Test",
-                          "",
-                          c(""))
+                          "")
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: Apply filters on fishing gears if needed (Filter data by groups of gears) ")
@@ -611,7 +619,7 @@ fonction_dossier("overlap_iotc_wcpfc",
          fonction_dossier("filtering_on_gear",
                           georef_dataset, 
                           "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
-                          "", c("options$gear_filter"))
+                          "", c(options$gear_filter))
          
          dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
          dataset<-data.frame(dataset)
@@ -626,7 +634,7 @@ fonction_dossier("overlap_iotc_wcpfc",
          fonction_dossier("filtering_on_spatial_resolution",
                           georef_dataset, 
                           "Grid spatial resolution filter",
-                          "", c("options$resolution_filter"))
+                          "", c(options$resolution_filter))
          
 
 

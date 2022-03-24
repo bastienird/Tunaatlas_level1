@@ -3,14 +3,14 @@ title: "Summary of the treatment for each entity of the global tuna atlas"
 output: html_document
 date: '2022-03-23'
 params: 
-  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220322194525"
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220323153509"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
-	message = FALSE,
-	warning = FALSE
+	message = TRUE,
+	warning = TRUE
 )
 library(readtext)
 library(flextable)
@@ -18,21 +18,29 @@ set_flextable_defaults(
   font.size = 30,
   font.color = "black",
   table.layout = "fixed",
-  digits = 2,
+  digits = NULL,
   theme_fun = "theme_box"
   )
 library(dplyr)
 library(stringr)
 library(readr)
+library(webshot)
+if(require("htmltools"))
+  div(flextable_html_dependency())
 ```
 
-```{r}
+```{r results='asis'}
 FitFlextableToPage <- function(ft, pgwidth = 6){
+  # ft <- eval(as.symbol(ft))
+    table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
+  add_header_lines(table, values = paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), top = TRUE)
 
-  # ft_out <- ft %>% autofit()%>% fit_to_width(7.5)
+table %>% 
+  color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
+  color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>% 
+  colformat_num(col_keys = c("`Difference (in % of tons)`"), digits = 2) 
+# %>% flextable_to_rmd()
 
-  # ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
-  return(ft)
 }
 ```
 
@@ -43,11 +51,13 @@ list_dir <- list.dirs(path =paste0(params$working_directory, "/entities"), full.
 ```
 
 ```{r}
+list <- c()
 for (sub_list_dir in list_dir){
-    sub_list_dir_2 <- list.dirs(path =sub_list_dir, full.names = TRUE, recursive = FALSE)
-    # for later sub_list_dir_2 <- list.dirs(path =paste0(sub_list_dir,"/Markdown"), full.names = TRUE, recursive = FALSE)
-    sub_list_dir_2 <- grep("(data|metadata)", sub_list_dir_2, value=TRUE, invert=TRUE)
-    # details = file.info(paste0(sub_list_dir_2,"/Markdown"))
+
+    # sub_list_dir_2 <- list.dirs(path =sub_list_dir, full.names = TRUE, recursive = FALSE)
+    sub_list_dir_2 <- list.dirs(path =paste0(sub_list_dir,"/Markdown"), full.names = TRUE, recursive = FALSE)
+    # sub_list_dir_2 <- grep("(data|metadata)", sub_list_dir_2, value=TRUE, invert=TRUE)
+    details = file.info(paste0(sub_list_dir_2,"/Markdown"))
     details = file.info(sub_list_dir_2)
     details = details[with(details, order(as.POSIXct(mtime))), ]
     sub_list_dir_2 = rownames(details)
@@ -58,7 +68,7 @@ for (sub_list_dir in list_dir){
       sums <- read.csv(paste0(i,"/sums.csv"))
       Explanation <- readtext(paste0(i,"/explication.txt"))[2]
       Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
-      Options <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
+      Options <- pull(readtext(paste0(i,"/options.txt"))[2])
       step <- tail(str_split(paste0(i),"/")[[1]],n=1)
       loss_percent <- 100*((tons_init - pull(sums[1]))/tons_init)
       data_i <- cbind(step,Explanation, Fonctions, Options, sums, loss_percent)
@@ -67,18 +77,20 @@ for (sub_list_dir in list_dir){
       tons_init <- pull(sums[1])
 
     }
+  df = df[-1,]
   write_csv(df, paste0(sub_list_dir,"/table.csv"))
-  table <- flextable(df) %>% autofit() %>% fit_to_width(30)
-  add_header_lines(table, values = paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), top = TRUE)
-  assign(paste0("felxtable",sub_list_dir), table, envir = .GlobalEnv)
+  assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), df, envir = .GlobalEnv)
+  list <- append(list,tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1))
 
 }
+```
 
-FitFlextableToPage(`felxtable/home/grasset/Documents/Tunaatlas_level1/jobs/20220322194525/entities/global_catch_1deg_1m_ps_bb_ird_level1`)
 
-FitFlextableToPage(`felxtable/home/grasset/Documents/Tunaatlas_level1/jobs/20220322194525/entities/global_catch_5deg_1m_ird_level2`)
-
-FitFlextableToPage(`felxtable/home/grasset/Documents/Tunaatlas_level1/jobs/20220322194525/entities/global_catch_ird_level2`)
+```{r fig.height=15, fig.width=10, results='asis'}
+for (i in list){
+  FitFlextableToPage(eval(as.symbol(i)))
+}
+# lapply(list, FitFlextableToPage)
 
 ```
 
