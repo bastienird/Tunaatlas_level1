@@ -3,8 +3,9 @@ fonction_option = function(x){
   paste0(x, "= ", value)
 }
 
-function_option_assign = function(x){
+function_option_assing = function(x){
   t <- lapply(x, fonction_option)
+  print(t)
 }
 
 fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions=c(""), options="") {
