@@ -3,7 +3,7 @@ fonction_option = function(x){
   paste0(x, "= ", value)
 }
 
-function_option_assing = function(x){
+function_option_assign = function(x){
   t <- lapply(x, fonction_option)
   print(t)
 }
