@@ -1,5 +1,5 @@
 function_option_assign = function(x){
-  name <- substitute(x)[-1]
+  name <- eval(as.symb (x))
   paste(paste0(name, " = ", x), collapse = " ; ")
 }
 
@@ -11,8 +11,11 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
   somme_t <- sum((nomrds %>% filter(unit %in% c("t", "MTNO","MT")))$value, na.rm = TRUE)
   somme_no <- sum((nomrds %>% filter(unit %in% c("no", "NOMT","NO")))$value, na.rm = TRUE)
   write_csv(data.frame(somme_t, somme_no), paste0(nom_dossier,"/sums.csv"))
-  if (!is.null(options)){
-  options <- function_option_assign(options)} else {options = "NONE"}
+  # if (!is.null(options)){
+  # name <- eval(as.symbol(options))
+  # options <-   paste(paste0(name, " = ", o), collapse = " ; ")
+  # } else {options = "NONE"}
+
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
   write(fonctions, paste0(nom_dossier,"/fonctions.txt"))
