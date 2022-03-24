@@ -1,11 +1,8 @@
-fonction_option = function(x){
-  name <- as.character(substitute(x))
-  paste0(name, " = ", x)
+function_option_assign = function(x){
+  name <- substitute(x)[-1]
+  paste(paste0(name, " = ", x), collapse = " ; ")
 }
 
-function_option_assign = function(x){
-  paste(paste0(lapply(x, fonction_option)), collapse = " ; ")
-}
 
 fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", options=NULL) {
   dir.create("Markdown")
