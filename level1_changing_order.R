@@ -286,36 +286,6 @@ fonction_dossier("overlap_iotc_wcpfc",
                           "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
                           "spatial_curation_upgrade_resolution", c("options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg"))
          
-         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-         config$logger.info("LEVEL 0 => STEP 3/8: Apply filters on fishing gears if needed (Filter data by groups of gears) ")
-         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-         if (!is.null(options$gear_filter)){
-           gear_filter<-unlist(strsplit(options$gear_filter, split=","))
-           config$logger.info(sprintf("Filtering by gear(s) [%s]", paste(gear_filter, collapse=",")))	
-           georef_dataset<-georef_dataset %>% dplyr::filter(gear %in% gear_filter)
-           config$logger.info("Filtering gears OK")
-           config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
-           
-         }
-         fonction_dossier("filtering_on_gear",
-                          georef_dataset, 
-                          "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
-                          "", c("options$gear_filter"))
-         
-         dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
-         dataset<-data.frame(dataset)
-         
-         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-         config$logger.info("LEVEL 0 => STEP 3/8: Grid spatial resolution filter")
-         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-         
-         if (!is.null(options$resolution_filter)){
-           georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, options$resolution_filter),]
-         }
-         fonction_dossier("filtering_on_spatial_resolution",
-                          georef_dataset, 
-                          "Grid spatial resolution filter",
-                          "", c("options$resolution_filter"))
          
          if(!is.null(options$unit_conversion_convert)) if (options$unit_conversion_convert){
            config$logger.info("-----------------------------------------------------------------------------------------------------")
@@ -626,6 +596,38 @@ fonction_dossier("overlap_iotc_wcpfc",
                           "Test",
                           "",
                           c(""))
+         
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         config$logger.info("LEVEL 0 => STEP 3/8: Apply filters on fishing gears if needed (Filter data by groups of gears) ")
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         if (!is.null(options$gear_filter)){
+           gear_filter<-unlist(strsplit(options$gear_filter, split=","))
+           config$logger.info(sprintf("Filtering by gear(s) [%s]", paste(gear_filter, collapse=",")))	
+           georef_dataset<-georef_dataset %>% dplyr::filter(gear %in% gear_filter)
+           config$logger.info("Filtering gears OK")
+           config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
+           
+         }
+         fonction_dossier("filtering_on_gear",
+                          georef_dataset, 
+                          "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
+                          "", c("options$gear_filter"))
+         
+         dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
+         dataset<-data.frame(dataset)
+         
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         config$logger.info("LEVEL 0 => STEP 3/8: Grid spatial resolution filter")
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         
+         if (!is.null(options$resolution_filter)){
+           georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, options$resolution_filter),]
+         }
+         fonction_dossier("filtering_on_spatial_resolution",
+                          georef_dataset, 
+                          "Grid spatial resolution filter",
+                          "", c("options$resolution_filter"))
+         
 
 
          dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
