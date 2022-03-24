@@ -98,9 +98,9 @@ rm(dataset)
 fonction_dossier("rawdata",
                  georef_dataset, 
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-                  "get_rfmos_datasets_level0" , c( options$include_IOTC ,  options$include_ICCAT , 
-                                                 options$include_IATTC , options$include_WCPFC , 
-                                                 options$include_CCSBT ))
+                   "get_rfmos_datasets_level0"  , c( options$include_IOTC  ,   options$include_ICCAT  , 
+                                                  options$include_IATTC  ,  options$include_WCPFC  , 
+                                                  options$include_CCSBT  ))
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
