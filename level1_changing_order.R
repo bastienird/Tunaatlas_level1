@@ -69,17 +69,15 @@ j <- 1
 for (i in names(options)){
   if (i != ""){
   
-  assign(paste0("options_",i), paste0(options[[j]]))
-    if (substitute(paste0("options_",i)) == "TRUE"){
+  assign(paste0("options_",i), paste0(options[[j]]))}
+    if (options[[j]][1] == TRUE){
       assign(i, options[[j]])
-      print(i)
-    } else if (substitute(paste0("options_",i)) == "FALSE" ){
+    } else if (options[[j]][1] == FALSE){
       assign(i, options[[j]])
-      print(i)
     }
     
-  }
-  print(j)
+  
+  # print(j)
 
   j <-  j+1 
 }
