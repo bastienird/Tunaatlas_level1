@@ -58,7 +58,7 @@ source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R"))
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
-source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/function_overlapped")
+# source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/function_overlapped")
 
 # connect to Tuna atlas database
 con <- config$software$output$dbi
@@ -150,27 +150,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
 		                 "", paste0("options$gear_filter = ",options$gear_filter))
 		
-		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
-		config$logger.info("LEVEL 0 => STEP 6/8: Overlapping zone (IATTC/WCPFC): keep data from IATTC or WCPFC?")
-		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
-		if (options$include_IATTC && options$include_WCPFC && !is.null(options$overlapping_zone_iattc_wcpfc_data_to_keep)) {
-		  overlapping_zone_iattc_wcpfc_data_to_keep <- options$overlapping_zone_iattc_wcpfc_data_to_keep
-		  
-		  georef_dataset <- function_overlapped(dataset = georef_dataset , con =con , rfmo_to_keep = overlapping_zone_iattc_wcpfc_data_to_keep,
-		                                        rfmo_not_to_keep = (if (overlapping_zone_iattc_wcpfc_data_to_keep == "IATTC"){"WCPFC"} else {"IATTC"}))
-		  config$logger.info(paste0("Keeping only data from ",overlapping_zone_iattc_wcpfc_data_to_keep," in the IATTC/WCPFC overlapping zone..."))
-		  georef_dataset_level0_step6_ancient<- overlapping_ancient_method
-		  georef_dataset_level0_step6 <- georef_dataset
-		  georef_dataset_level0_step6_reverse <- reverse_overlapping
-		  
-		  fonction_dossier("overlap_iattc_wcpfc",
-		                   georef_dataset, 
-		                   "keep data from IATTC or WCPFC?",
-		                   "function_overlapped", paste0("include_IATTC = ",options$include_IATTC))
-		  
-		  config$logger.info(paste0("Keeping only data from ",overlapping_zone_iattc_wcpfc_data_to_keep," in the IATTC/WCPFC overlapping zone OK"))
-		}
-		
+
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 4/8: Southern Bluefin Tuna (SBF): SBF data: keep data from CCSBT or data from the other tuna RFMOs? ")
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
