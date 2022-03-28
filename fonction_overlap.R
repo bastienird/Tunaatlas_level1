@@ -36,14 +36,16 @@ overlapping_zone <- dbGetQuery(con, overlapping_zone_request)
 #        envir = .GlobalEnv)
 
 test <- dataset %>%
+  ungroup() %>% 
   select(c(geographic_identifier,species, time_start, time_end, unit)) %>%
   distinct() #checking if there are really duplicates for a same strate
 
 if (nrow(test)!= nrow(dataset)){
   georef_dataset <- dataset %>%
-    group_by(across(c(-source_authority,-value))) %>%
-    slice(which.max(value))
-} else { georef_dataset <- dataset}
+    ungroup() %>% 
+    group_by(across(-c(geographic_identifier,species, time_start, time_end, unit))) %>%
+    slice(which.max(value)) %>% ungroup()
+} else { georef_dataset <- dataset %>% ungroup()}
 
 # georef_dataset <- dataset %>%
 #   group_by(across(c(-source_authority,-value))) %>%
