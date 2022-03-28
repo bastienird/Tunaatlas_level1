@@ -68,8 +68,9 @@ config$logger.info(paste0(options, options[[1]]))
 #set parameterization
 j <- 1
 for (i in names(options)){
-  
-  assign(i, options[[j]])
+  if (i != ""){
+  assign(i, paste0(options[[j]]))
+  }
   j <-  j+1 
 }
 #Identify expected Level of processing
