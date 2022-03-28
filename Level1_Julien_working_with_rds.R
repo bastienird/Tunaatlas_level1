@@ -574,16 +574,11 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		fonction_dossier("level2raising",
 		                 georef_dataset, 
 		                 "Raise IRD gridded Level 1 (1 or 5 deg) input with FIRMS Level O total (nominal) catch dataset",
-		                 c("function_raising_georef_to_nominal","function_unit_conversion_convert","get_rfmos_datasets_level0"), 
-		                 paste0("raising_georef_to_nominal = ",
-		                        raising_georef_to_nominal ,"\n",
-		                        "iattc_ps_raise_flags_to_schooltype = ",
-		                        iattc_ps_raise_flags_to_schooltype ,"\n",
-		                        "iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype = ",
-		                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,"\n",
-		                        "iattc_ps_catch_billfish_shark_raise_to_effort = ",
-		                        iattc_ps_catch_billfish_shark_raise_to_effort ,"\n",
-		                        "iccat_ps_include_type_of_school = ",
+		                ("function_raising_georef_to_nominal,function_unit_conversion_convert,get_rfmos_datasets_level0"), 
+		                 c(raising_georef_to_nominal ,
+		                        iattc_ps_raise_flags_to_schooltype ,
+		                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,
+		                        iattc_ps_catch_billfish_shark_raise_to_effort ,
 		                        iccat_ps_include_type_of_school))
 
 
