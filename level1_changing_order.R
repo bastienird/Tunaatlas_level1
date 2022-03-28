@@ -58,7 +58,7 @@ source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R"))
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
-source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/function_overlapped.R")
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
 
 
 # connect to Tuna atlas database
