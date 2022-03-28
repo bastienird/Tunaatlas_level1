@@ -50,7 +50,7 @@ if(!require(data.table)){
   install.packages("data.table")
   require(data.table)
 }
-
+mapping_map_code_lists <- options$mapping_map_code_lists
 #scripts
 url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation"
 source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R")) #modified for geoflow
@@ -63,16 +63,27 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonct
 
 # connect to Tuna atlas database
 con <- config$software$output$dbi
-config$logger.info(paste0(options, options[[1]]))
 
 #set parameterization
 j <- 1
 for (i in names(options)){
   if (i != ""){
+  
   assign(paste0("options_",i), paste0(options[[j]]))
+    if (substitute(paste0("options_",i)) == "TRUE"){
+      assign(i, options[[j]])
+      print(i)
+    } else if (substitute(paste0("options_",i)) == "FALSE" ){
+      assign(i, options[[j]])
+      print(i)
+    }
+    
   }
+  print(j)
+
   j <-  j+1 
 }
+
 #Identify expected Level of processing
 DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 
@@ -293,6 +304,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             "spatial_curation_upgrade_resolution", 
                             c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
          }
+georef_dataset <- georef_dataset %>% ungroup()
+
 
 
 
@@ -639,7 +652,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
          fonction_dossier("filtering_on_spatial_resolution",
                           georef_dataset, 
                           "Grid spatial resolution filter",
-                          "", c(options_resolution_filter))
+                          "", c(optionsresolution_filter))
          
 
 
