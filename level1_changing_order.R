@@ -414,11 +414,6 @@ georef_dataset <- georef_dataset %>% ungroup()
                                                                                                    action_to_do=options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg)
            config$logger.info("STEP 4/5: END function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
            
-           fonction_dossier("level1disagreggate5deg",
-                            georef_dataset, 
-                            "Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons",
-                            "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                            c(options_disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
            
            georef_dataset<-georef_dataset$dataset
            ntons_after_disaggregation_5deg <- round(georef_dataset %>% select(value)  %>% sum())
@@ -431,7 +426,12 @@ georef_dataset <- georef_dataset %>% ungroup()
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
 
-         
+        fonction_dossier("level1disagreggate5deg",
+                         georef_dataset, 
+                         "Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons",
+                         "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
+                         c(options_disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
+        
          if (options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg %in% c("disaggregate","remove")) { 
            
            config$logger.info("-----------------------------------------------------------------------------------------------------")
@@ -449,11 +449,6 @@ georef_dataset <- georef_dataset %>% ungroup()
                                                                                                    action_to_do=options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg)
            config$logger.info("STEP 5/5: END function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
            
-           fonction_dossier("level1disagreggate1deg",
-                            georef_dataset, 
-                            "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
-                            "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                            c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            
            georef_dataset<-georef_dataset$dataset
            ntons_after_disaggregation_1deg <- round(georef_dataset %>% select(value)  %>% sum())
@@ -465,6 +460,12 @@ georef_dataset <- georef_dataset %>% ungroup()
            config$logger.info(sprintf("LEVEL 1 => STEP 5/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet): Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
+        fonction_dossier("level1disagreggate1deg",
+                         georef_dataset, 
+                         "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
+                         "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
+                         c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
+        
          #end switch LEVEL 1
 
        

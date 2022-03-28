@@ -43,7 +43,7 @@ test <- dataset %>%
 if (nrow(test)!= nrow(dataset)){
   georef_dataset <- dataset %>%
     ungroup() %>% 
-    group_by(across(-c(geographic_identifier,species, time_start, time_end, unit))) %>%
+    group_by(across(c(geographic_identifier,species, time_start, time_end, unit))) %>%
     slice(which.max(value)) %>% ungroup()
 } else { georef_dataset <- dataset %>% ungroup()}
 
@@ -52,5 +52,5 @@ if (nrow(test)!= nrow(dataset)){
 #   arrange(desc(value)) %>%
 #   filter(row_number() ==1)
 
-georef_dataset
+georef_dataset %>% ungroup()
 }
