@@ -63,6 +63,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonct
 
 # connect to Tuna atlas database
 con <- config$software$output$dbi
+config$logger.info(paste0(options, options[[1]]))
 
 #set parameterization
 j <- 1
