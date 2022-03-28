@@ -50,7 +50,7 @@ if(!require(data.table)){
   install.packages("data.table")
   require(data.table)
 }
-mapping_map_code_lists <- options$mapping_map_code_lists
+# mapping_map_code_lists <- options$mapping_map_code_lists
 #scripts
 url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation"
 source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R")) #modified for geoflow
@@ -69,12 +69,13 @@ j <- 1
 for (i in names(options)){
   if (i != ""){
   
-  assign(paste0("options_",i), paste0(options[[j]]))}
+  assign(paste0("options_",i), paste0(options[[j]]))
+    assign(i, paste0(options[[j]][1]))}
     if (options[[j]][1] == TRUE){
       assign(i, options[[j]])
     } else if (options[[j]][1] == FALSE){
       assign(i, options[[j]])
-    }
+    } 
     
   
   # print(j)
