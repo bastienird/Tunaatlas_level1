@@ -69,7 +69,7 @@ config$logger.info(paste0(options, options[[1]]))
 j <- 1
 for (i in names(options)){
   if (i != ""){
-  assign(i, paste0(options[[j]]))
+  assign(paste0("options_",i), paste0(options[[j]]))
   }
   j <-  j+1 
 }
@@ -99,9 +99,9 @@ rm(dataset)
 fonction_dossier("rawdata",
                  georef_dataset, 
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-                   "get_rfmos_datasets_level0"  , c(include_IOTC,include_ICCAT, 
-                                                  include_IATTC,include_WCPFC, 
-                                                  include_CCSBT))
+                   "get_rfmos_datasets_level0"  , c(options_include_IOTC,options_include_ICCAT, 
+                                                    options_include_IATTC,options_include_WCPFC, 
+                                                    options_include_CCSBT))
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
     fonction_dossier("mapping_codelist",
                      georef_dataset, 
                      "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
-                     "map_codelists",c(mapping_map_code_lists))
+                     "map_codelists",c(options_mapping_map_code_lists))
     
   }
 }
@@ -166,8 +166,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
            fonction_dossier("overlapIATTC_WCPFC",
                             georef_dataset, 
                             "Keeping data from IATTC or WCPFC ",
-                            "function_overlapped" , c( include_IATTC  , 
-                                                       include_WCPFC , overlapping_zone_iattc_wcpfc_data_to_keep ))
+                            "function_overlapped" , c(options_include_IATTC, 
+                                                      options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep))
            
            }
          
@@ -192,9 +192,9 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Keeping data from ccsbt or WCPFC ",
                             "function_overlapped", 
-                            c( include_CCSBT  , 
-                               include_WCPFC ,
-                               overlapping_zone_wcpfc_ccsbt_data_to_keep ))
+                            c( options_include_CCSBT  , 
+                               options_include_WCPFC ,
+                               options_overlapping_zone_wcpfc_ccsbt_data_to_keep ))
            
            }
          
@@ -217,7 +217,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Keeping data from ccsbt or iccat ",
                             "function_overlapped", 
-                            c(include_CCSBT,include_ICCAT, overlapping_zone_iccat_ccsbt_data_to_keep))
+                            c(options_include_CCSBT,
+                              options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep))
            
            
            
@@ -241,8 +242,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Keeping data from ccsbt or iotc ",
                             "function_overlapped", 
-                            c( include_CCSBT  , 
-                               include_IOTC , overlapping_zone_iotc_ccsbt_data_to_keep ))
+                            c( options_include_CCSBT  , 
+                               options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep ))
            
            }
          
@@ -266,8 +267,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Keeping data from wcpfc or iotc",
                             "function_overlapped",
-                            c(include_WCPFC, 
-                               include_IOTC, overlapping_zone_iotc_wcpfc_data_to_keep))
+                            c(options_include_WCPFC, 
+                              options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep))
            
            
            }
@@ -290,7 +291,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
                             "spatial_curation_upgrade_resolution", 
-                            c(aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
+                            c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
          }
 
 
@@ -315,7 +316,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                                                 fact=fact,
                                                 unit_conversion_csv_conversion_factor_url=options$unit_conversion_csv_conversion_factor_url,
                                                 unit_conversion_codelist_geoidentifiers_conversion_factors=options$unit_conversion_codelist_geoidentifiers_conversion_factors,
-                                                mapping_map_code_lists=mapping_map_code_lists,
+                                                mapping_map_code_lists=options$mapping_map_code_lists,
                                                 georef_dataset=georef_dataset)
            config$logger.info("STEP 2/5: END do_unit_conversion() function")
            
@@ -365,7 +366,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Reallocation of mislocated data",
                             "function_spatial_curation_data_mislocated",
-                            c(spatial_curation_data_mislocated))
+                            c(options_spatial_curation_data_mislocated))
            
          }else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
@@ -376,9 +377,10 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                  georef_dataset, 
                  "Convert units by using A. Fonteneau file",
                  "do_unit_conversion", 
-                 c( options$mapping_map_code_lists ,
-                    options$unit_conversion_csv_conversion_factor_url ,
-                    options$unit_conversion_codelist_geoidentifiers_conversion_factors , options$unit_conversion_convert ))
+                 c( options_mapping_map_code_lists ,
+                    options_unit_conversion_csv_conversion_factor_url ,
+                    options_unit_conversion_codelist_geoidentifiers_conversion_factors ,
+                    options_unit_conversion_convert ))
 
          
          
@@ -404,7 +406,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                            c(disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
+                            c(options_disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
            
            georef_dataset<-georef_dataset$dataset
            ntons_after_disaggregation_5deg <- round(georef_dataset %>% select(value)  %>% sum())
@@ -439,7 +441,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                            c(disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
+                            c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            
            georef_dataset<-georef_dataset$dataset
            ntons_after_disaggregation_1deg <- round(georef_dataset %>% select(value)  %>% sum())
@@ -622,7 +624,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
          fonction_dossier("filtering_on_gear",
                           georef_dataset, 
                           "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
-                          "", c(gear_filter))
+                          "", c(options_gear_filter))
          
          dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
          dataset<-data.frame(dataset)
@@ -637,7 +639,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
          fonction_dossier("filtering_on_spatial_resolution",
                           georef_dataset, 
                           "Grid spatial resolution filter",
-                          "", c(resolution_filter))
+                          "", c(options_resolution_filter))
          
 
 
