@@ -99,9 +99,9 @@ rm(dataset)
 fonction_dossier("rawdata",
                  georef_dataset, 
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-                   "get_rfmos_datasets_level0"  , c( include_IOTC  ,   include_ICCAT  , 
-                                                  include_IATTC  ,  include_WCPFC  , 
-                                                  include_CCSBT  ))
+                   "get_rfmos_datasets_level0"  , c(include_IOTC,include_ICCAT, 
+                                                  include_IATTC,include_WCPFC, 
+                                                  include_CCSBT))
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -266,8 +266,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             georef_dataset, 
                             "Keeping data from wcpfc or iotc",
                             "function_overlapped",
-                            c( include_WCPFC  , 
-                               include_IOTC , overlapping_zone_iotc_wcpfc_data_to_keep ))
+                            c(include_WCPFC, 
+                               include_IOTC, overlapping_zone_iotc_wcpfc_data_to_keep))
            
            
            }
