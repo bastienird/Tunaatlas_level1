@@ -9,8 +9,8 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
     options_substi <- as.list(substitute(options))[-1]
     options_written <- ""
     for (i in 1:length(options_substi)){
-      options_written <- paste(options_written, (paste0(options_substi[i], " = ", options[i])), 
-                               collapse = " ; ")
+      options_written <- paste0(options_written, (paste0(options_substi[i], " = ", options[i])), 
+                               sep = " ; ")
       
       
     }
