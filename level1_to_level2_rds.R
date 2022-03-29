@@ -88,7 +88,7 @@ dataset$time_end<-substr(as.character(dataset$time_end), 1, 10)
 georef_dataset<-dataset
 class(georef_dataset$value) <- "numeric"
 fonction_dossier("endlevel0data",
-                 dataset)
+                 georef_dataset)
 #@juldebar patch to fix errors due to the last step of Level 0 workflow
 if(any(georef_dataset$unit == "t")) georef_dataset[georef_dataset$unit == "t", ]$unit <- "MT"
 if(any(georef_dataset$unit == "no")) georef_dataset[georef_dataset$unit == "no", ]$unit <- "NO"
