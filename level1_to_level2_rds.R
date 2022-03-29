@@ -82,7 +82,7 @@ config$logger.info("LEVEL 1 => STEP 1/5: Extract and load IRD Level 0 gridded ca
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 dataset <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
 fonction_dossier("endlevel0data",
-                 georef_dataset)
+                 dataset)
 
 dataset$time_start<-substr(as.character(dataset$time_start), 1, 10)
 dataset$time_end<-substr(as.character(dataset$time_end), 1, 10)
