@@ -50,6 +50,12 @@ if(!require(data.table)){
   install.packages("data.table")
   require(data.table)
 }
+
+
+if(!require(readr)){
+  install.packages("readr")
+  require(readr)
+}
 # mapping_map_code_lists <- options$mapping_map_code_lists
 #scripts
 url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation"
@@ -507,13 +513,13 @@ gc()
            source(file.path(url_scripts_create_own_tuna_atlas, "raising_georef_to_nominal.R")) #modified for geoflow
            
            config$logger.info("Extract and load FIRMS Level 0 nominal catch data input (required if raising process is asked) ")
-           nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[2]]), guess_max = 0)
-           #@juldebar keep same units for all datatets
-           if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "t"
-           if(any(nominal_catch$unit == "no")) nominal_catch[nominal_catch$unit == "no", ]$unit <- "no"
-           class(nominal_catch$value) <- "numeric"
-           #@juldebar if not provided by Google drive line below should be used if nominal catch has to be extracted from the database
-           #nominal_catch <-retrieve_nominal_catch(entity, config, options)
+           # nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[2]]), guess_max = 0)
+           # #@juldebar keep same units for all datatets
+           # if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "t"
+           # if(any(nominal_catch$unit == "no")) nominal_catch[nominal_catch$unit == "no", ]$unit <- "no"
+           # class(nominal_catch$value) <- "numeric"
+           # #@juldebar if not provided by Google drive line below should be used if nominal catch has to be extracted from the database
+           # #nominal_catch <-retrieve_nominal_catch(entity, config, options)
            config$logger.info(sprintf("Nominal catch dataset has [%s] lines", nrow(nominal_catch)))	
            config$logger.info(paste0("Total of  nominal catch for file ",entity$data$source[[2]], "is : ",sum(nominal_catch$value),"  \n"))
            

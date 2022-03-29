@@ -302,7 +302,7 @@ t$Precision <-as.character(t$Precision)
 strates_perdues <- t %>% filter(`Loss (in %)` == 100)
 nombre_strates_perdues <- nrow(strates_perdues)
 nombres_de_strates_totales <- nrow(t)
-pourcentage_strates_perdues <- 100*((nombres_de_strates_totales-nombre_strates_perdues)/nombres_de_strates_totales)
+pourcentage_strates_perdues <- 100-(100*((nombres_de_strates_totales-nombre_strates_perdues)/nombres_de_strates_totales))
 
 ```
 
@@ -316,7 +316,7 @@ The final dataset has a total of  `r round(somme_final_t)` in tons and of `r rou
 
 The loss is `r perte_en_tonnes` in tons (**`r perte_en_tonnes_pourcent`%**). The loss is `r perte_en_nombre` in number of fish (**`r perte_en_nombre_pourcent`%**).
 
-The stratas loss between the first one and the second one are : `r pull(strates_perdues)`, representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
+The stratas loss between the first one and the second one are : `r pull(strates_perdues$Precision)`, representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
 
 ```{r}
 qflextable(strates_perdues)

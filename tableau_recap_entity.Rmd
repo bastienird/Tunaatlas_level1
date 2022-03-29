@@ -3,7 +3,7 @@ title: "Summary of the treatment for each entity of the global tuna atlas"
 output: html_document
 date: '2022-03-23'
 params: 
-  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220323153509"
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220329110124"
 ---
 
 ```{r setup, include=FALSE}
@@ -38,8 +38,7 @@ FitFlextableToPage <- function(ft, pgwidth = 6){
 table %>% 
   color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
   color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>% 
-  colformat_num(col_keys = c("`Difference (in % of tons)`"), digits = 2) 
-# %>% flextable_to_rmd()
+  colformat_num(col_keys = c("`Difference (in % of tons)`"), digits = 2) %>% flextable_to_rmd()
 
 }
 ```
@@ -90,8 +89,9 @@ for (sub_list_dir in list_dir){
 for (i in list){
   FitFlextableToPage(eval(as.symbol(i)))
 }
-# lapply(list, FitFlextableToPage)
 
+# lapply(list, FitFlextableToPage)
+# FitFlextableToPage(global_catch_1deg_1m_ps_bb_ird_level1)
 ```
 
 
