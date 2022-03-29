@@ -81,13 +81,14 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 config$logger.info("LEVEL 1 => STEP 1/5: Extract and load IRD Level 0 gridded catch data input")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 dataset <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
-fonction_dossier("endlevel0data",
-                 dataset)
+
 
 dataset$time_start<-substr(as.character(dataset$time_start), 1, 10)
 dataset$time_end<-substr(as.character(dataset$time_end), 1, 10)
 georef_dataset<-dataset
 class(georef_dataset$value) <- "numeric"
+fonction_dossier("endlevel0data",
+                 dataset)
 #@juldebar patch to fix errors due to the last step of Level 0 workflow
 if(any(georef_dataset$unit == "t")) georef_dataset[georef_dataset$unit == "t", ]$unit <- "MT"
 if(any(georef_dataset$unit == "no")) georef_dataset[georef_dataset$unit == "no", ]$unit <- "NO"
