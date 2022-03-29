@@ -10,7 +10,7 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
     options_written <- ""
     for (i in 1:length(options_substi)){
       options_written <- paste0(options_written, (paste0(options_substi[i], " = ", options[i])), 
-                               sep = " ; ")
+                               sep = " ; \n ")
       
       
     }
