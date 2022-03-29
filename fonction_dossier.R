@@ -12,13 +12,15 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
       options_written <- paste(options_written, (paste0(options_substi[i], " = ", options[i])), 
                                collapse = " ; ")
       
+      
     }
+    write(options_written, paste0(nom_dossier,"/options.txt"))
+    
     } else {options = "NONE"}
     
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
   write(fonctions, paste0(nom_dossier,"/fonctions.txt"))
-  write(options_written, paste0(nom_dossier,"/options.txt"))
 }
 
 
