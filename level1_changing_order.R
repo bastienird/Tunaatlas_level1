@@ -303,7 +303,6 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             "spatial_curation_upgrade_resolution", 
                             c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
          }
-georef_dataset <- georef_dataset %>% ungroup()
 
 
 
@@ -338,6 +337,14 @@ georef_dataset <- georef_dataset %>% ungroup()
            config$logger.info(sprintf("STEP 2/5 : Unit conversion generated [%s] additionnal tons", ntons_after_conversion-ntons_before_this_step))
            config$logger.info(sprintf("STEP 2/5 : Total number for 'NO' unit is now [%s] individuals", georef_dataset %>% filter(unit=="NO")  %>% select(value)  %>% sum()))
            config$logger.info("END STEP 2/5")
+           fonction_dossier("level1raising",
+                            georef_dataset, 
+                            "Convert units by using A. Fonteneau file",
+                            "do_unit_conversion", 
+                            c( options_mapping_map_code_lists ,
+                               options_unit_conversion_csv_conversion_factor_url ,
+                               options_unit_conversion_codelist_geoidentifiers_conversion_factors ,
+                               options_unit_conversion_convert ))
 
            
          }else{
@@ -379,20 +386,14 @@ georef_dataset <- georef_dataset %>% ungroup()
                             "Reallocation of mislocated data",
                             "function_spatial_curation_data_mislocated",
                             c(options_spatial_curation_data_mislocated))
+           gc()
            
          }else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
            config$logger.info(sprintf("LEVEL 1 => STEP 3/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet):  Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], options$spatial_curation_data_mislocated))
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
-        fonction_dossier("level1raising",
-                 georef_dataset, 
-                 "Convert units by using A. Fonteneau file",
-                 "do_unit_conversion", 
-                 c( options_mapping_map_code_lists ,
-                    options_unit_conversion_csv_conversion_factor_url ,
-                    options_unit_conversion_codelist_geoidentifiers_conversion_factors ,
-                    options_unit_conversion_convert ))
+
 
          
          
@@ -420,17 +421,18 @@ georef_dataset <- georef_dataset %>% ungroup()
            config$logger.info(sprintf("STEP 4/5 : Gridded catch dataset after Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_after_disaggregation_5deg))	
            config$logger.info(sprintf("STEP 4/5 : Disaggregate data on 5° generated [%s] additionnal tons", ntons_after_disaggregation_5deg-ntons_before_this_step))
            config$logger.info("END STEP 4/5")
+           fonction_dossier("level1disagreggate5deg",
+                            georef_dataset, 
+                            "Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons",
+                            "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
+                            c(options_disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
          }else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
            config$logger.info(sprintf("LEVEL 1 => STEP 4/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet):  Disaggregate data on 5° resolution quadrants (for 5deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
 
-        fonction_dossier("level1disagreggate5deg",
-                         georef_dataset, 
-                         "Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons",
-                         "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                         c(options_disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
+
         
          if (options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg %in% c("disaggregate","remove")) { 
            
@@ -455,16 +457,18 @@ georef_dataset <- georef_dataset %>% ungroup()
            config$logger.info(sprintf("STEP 5/5 : Gridded catch dataset after Disaggregate data on 1° has [%s] lines and total catch is now [%s] Tons", nrow(georef_dataset),ntons_after_disaggregation_1deg))	
            config$logger.info(sprintf("STEP 5/5 : Disaggregate data on 1° generated [%s] additionnal tons", ntons_after_disaggregation_1deg-ntons_before_this_step))
            config$logger.info("END STEP 5/5")
+           fonction_dossier("level1disagreggate1deg",
+                            georef_dataset, 
+                            "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
+                            "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
+                            c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
          } else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
            config$logger.info(sprintf("LEVEL 1 => STEP 5/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet): Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
-        fonction_dossier("level1disagreggate1deg",
-                         georef_dataset, 
-                         "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
-                         "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
-                         c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
+gc()
+
         
          #end switch LEVEL 1
 

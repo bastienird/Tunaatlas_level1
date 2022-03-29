@@ -52,7 +52,7 @@ if (nrow(test)!= nrow(dataset)){
 #   arrange(desc(value)) %>%
 #   filter(row_number() ==1)
 rm(test)
-
+rm(dataset)
 gc()
 
 georef_dataset %>% ungroup()

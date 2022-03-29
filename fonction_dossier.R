@@ -19,7 +19,6 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
   write(explication, paste0(nom_dossier,"/explication.txt")) 
   write(fonctions, paste0(nom_dossier,"/fonctions.txt"))
   write(options_written, paste0(nom_dossier,"/options.txt"))
-  
 }
 
 
