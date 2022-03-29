@@ -430,6 +430,8 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg", 
 		                 paste0("disaggregate_on_1deg_data_with_resolution_superior_to_1deg = ",
 		                        options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
+		georef_dataset$time_start <- as.Date(georef_dataset$time_start)
+		georef_dataset$time_end <- as.Date(georef_dataset$time_end)
 		
 	# 
 	# #-----------------------------------------------------------------------------------------------------------------------------------------------------------
