@@ -496,14 +496,14 @@ gc()
          config$logger.info("-----------------------------------------------------------------------------------------------------")
          config$logger.info("LEVEL 2 => STEP 2/3: Extract and load IRD Level 1 gridded catch data input")
          config$logger.info("-----------------------------------------------------------------------------------------------------")
-         dataset <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
-         dataset$time_start<-substr(as.character(dataset$time_start), 1, 10)
-         dataset$time_end<-substr(as.character(dataset$time_end), 1, 10)
-         georef_dataset<-dataset
-         class(georef_dataset$value) <- "numeric"
-         config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
-         rm(dataset)
-         config$logger.info(paste0("Total catch before raising  for file ",entity$data$source[[1]], "is :   ",sum(georef_dataset$value),"  \n"))
+         # dataset <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
+         # dataset$time_start<-substr(as.character(dataset$time_start), 1, 10)
+         # dataset$time_end<-substr(as.character(dataset$time_end), 1, 10)
+         # georef_dataset<-dataset
+         # class(georef_dataset$value) <- "numeric"
+         # config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
+         # rm(dataset)
+         # config$logger.info(paste0("Total catch before raising  for file ",entity$data$source[[1]], "is :   ",sum(georef_dataset$value),"  \n"))
          
          
          if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_nominal){  
@@ -621,10 +621,7 @@ gc()
            # metadata$supplemental_information<-paste0(metadata$supplemental_information,georef_dataset$supplemental_information)
            
            georef_dataset<-georef_dataset$dataset
-           config$logger.info(paste0("Total ",fact," after raising is now: ",sum(georef_dataset$value),"\n"))
-           config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
-           config$logger.info(paste0("Total catch for data after raising is ",sum(georef_dataset$value),"  \n"))
-           
+       
          }else{
            config$logger.info("LEVEL 2 => STEP 3/3 not executed (since not selected in the workflow options (see column 'Data' of geoflow entities spreadsheet)")
          } 
@@ -642,15 +639,15 @@ gc()
            georef_dataset<-georef_dataset %>% dplyr::filter(gear %in% gear_filter)
            config$logger.info("Filtering gears OK")
            config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
-           
+           fonction_dossier("filtering_on_gear",
+                            georef_dataset, 
+                            "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
+                            "", c(options_gear_filter))
          }
-         fonction_dossier("filtering_on_gear",
-                          georef_dataset, 
-                          "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
-                          "", c(options_gear_filter))
+
          
-         dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
-         dataset<-data.frame(dataset)
+         # dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
+         # dataset<-data.frame(dataset)
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: Grid spatial resolution filter")
@@ -658,11 +655,12 @@ gc()
          
          if (!is.null(options$resolution_filter)){
            georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, options$resolution_filter),]
-         }
-         fonction_dossier("filtering_on_spatial_resolution",
-                          georef_dataset, 
-                          "Grid spatial resolution filter",
-                          "", c(optionsresolution_filter))
+           fonction_dossier("filtering_on_spatial_resolution",
+                            georef_dataset, 
+                            "Grid spatial resolution filter",
+                            "", c(optionsresolution_filter))
+           }
+
          
 
 

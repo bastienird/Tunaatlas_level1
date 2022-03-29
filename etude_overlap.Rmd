@@ -4,12 +4,17 @@ output: html_document
 date: '2022-03-14'
 params:
   chemin_dacces: "data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds"
+  plotting: "view"
 ---
 
 ```{r setup, include=FALSE}
 #data/Les7entites_finies/entities/global_catch_5deg_1m_firms_level0/Rds/georef_dataset_level0_step11global_catch_5deg_1m_firms_level0.rds"
 #data/Les7entites_finies/entities/5deg_level1_reallocate/georef_dataset_step5.rds"
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
 library(DBI)
 library(RPostgres)
 library(RPostgreSQL)
@@ -25,7 +30,7 @@ library(tidyverse)
 ```{r}
 
 data <- readRDS(params$chemin_dacces)
-  data <- data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO")~ "Tons", unit %in% c("NO", "NOMT","no")~"Number of fish"))
+  data <- data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish")~"Number of fish"))
 
 
 drv <- dbDriver("PostgreSQL")      
@@ -68,9 +73,9 @@ inner_join <- data %>% inner_join(df, by = c("geographic_identifier"="code"))
 
 
 test <- inner_join %>% filter(area_competence == "continent") %>% ungroup() %>% group_by(geographic_identifier, st_area.x, unit, source_authority) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(df, by = c("geographic_identifier"="code")) %>% select(geographic_identifier, st_area.x.x, value, geom, unit, source_authority)
-tmap_mode("view")
+tmap_mode(params$plotting)
 
-tm_shape(st_as_sf(test %>% filter()))+tm_fill("value")+tm_facets(by=c("st_area.x.x","unit"))+tm_text("source_authority")+tm_shape(continent)+tm_borders()
+tm_shape(st_as_sf(test %>% mutate(st_area = as.factor(st_area.x.x))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_text("source_authority")+tm_shape(continent)+tm_borders()
 
 # tm_shape(df)+tm_polygons(col = "area_competence")+tm_facets("st_area.x")
 # test3 <- inner_join %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
@@ -92,29 +97,29 @@ test <- inner_join %>% ungroup() %>% group_by(geographic_identifier, st_area.x, 
 test_2 <- test %>% st_sf(sf_column_name = 'geom')
 # inner_join2 <- st_as_sf(inner_join)
 
-tmap_mode("view")
-tm_shape(test_2)+tm_polygons(col = "area_competence.x")+tm_facets("st_area.x.x")
-tm_shape(test_2 %>% filter(area_competence.x == "continent"))+tm_fill("value")
+# tmap_mode(params$plotting)
+# tm_shape(test_2)+tm_polygons(col = "area_competence.x")+tm_facets("st_area.x.x")
+# tm_shape(test_2 %>% filter(area_competence.x == "continent")%>% mutate(st_area = as.factor(st_area.x.x)))+tm_polygons(col = "value")+tm_shape(continent)+tm_borders()
 
 
 test3 <- test_2 %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
-# summary(test3)
-tm_shape(test3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))+tm_polygons(col = "value")+tm_facets("st_area")+tm_shape(continent)+tm_borders()
+# # summary(test3)
+# tm_shape(test3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))
 
 
 ```
 
 
 ```{r}
-# st_geometry(test3) <- NULL
+st_geometry(test3) <- NULL
 final <- test3 %>% group_by(continent, unit) %>% summarise(value = sum(value))
 test2_without_continent <- test_2 %>% filter(area_competence.x != "continent")
 value_without_continent <- sum(test2_without_continent$value, na.rm =TRUE)
 
-en_nombre_continent <- pull(final %>% filter(unit == "no") %>% filter(continent == "continent"))
-en_nombre_ocean <- pull(final %>% filter(unit == "no") %>% filter(continent == "ocean"))
-en_tonne_continent <- pull(final %>% filter(unit == "t") %>% filter(continent == "continent"))
-en_tonne_ocean <- pull(final %>% filter(unit == "t") %>% filter(continent == "ocean"))
+en_nombre_continent <- pull(final %>% filter(unit == "Number of fish") %>% filter(continent == "continent"))
+en_nombre_ocean <- pull(final %>% filter(unit == "Number of fish") %>% filter(continent == "ocean"))
+en_tonne_continent <- pull(final %>% filter(unit == "Tons") %>% filter(continent == "continent"))
+en_tonne_ocean <- pull(final %>% filter(unit == "Tons") %>% filter(continent == "ocean"))
 
 perte_en_nombre <- (en_nombre_continent / (en_nombre_ocean+en_nombre_continent))*100
 perte_en_tonne <- (en_tonne_continent/ (en_tonne_continent+en_tonne_ocean))*100
@@ -136,10 +141,10 @@ mislocated <- inner_join %>%filter(area_competence!="continent") %>%  ungroup() 
                               TRUE ~ FALSE))
 
 final <- mislocated %>% group_by(mislocated, unit) %>% summarise(value = sum(value))
-en_nombre_false<- pull(final %>% filter(unit == "no") %>% filter(mislocated == FALSE))
-en_nombre_true <- pull(final %>% filter(unit == "no") %>% filter(mislocated == TRUE))
-en_tonne_false <- pull(final %>% filter(unit == "t") %>% filter(mislocated == FALSE))
-en_tonne_true <- pull(final %>% filter(unit == "t") %>% filter(mislocated == TRUE))
+en_nombre_false<- pull(final %>% filter(unit == "Number of fish") %>% filter(mislocated == FALSE))
+en_nombre_true <- pull(final %>% filter(unit == "Number of fish") %>% filter(mislocated == TRUE))
+en_tonne_false <- pull(final %>% filter(unit == "Tons") %>% filter(mislocated == FALSE))
+en_tonne_true <- pull(final %>% filter(unit == "Tons") %>% filter(mislocated == TRUE))
 
 perte_en_nombre <- (en_nombre_false / (en_nombre_true+en_nombre_false))*100
 perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
@@ -148,7 +153,7 @@ perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
 ```
 
 ```{r}
-tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")+tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")
+tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")
 ```
 
 En retirant les données placées sur les continents, ainsi que les données d'une rfmo dans une zone hors de leur compétence, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre` % en nombre et à `r perte_en_tonne` % en tonnes. 
