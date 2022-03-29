@@ -642,7 +642,7 @@ if (!is.null(options$gear_filter)){
   fonction_dossier("filtering_on_gear",
                    georef_dataset, 
                    "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
-                   "", c(options_gear_filter))
+                   "")
 }
 
 
@@ -658,7 +658,7 @@ if (!is.null(options$resolution_filter)){
   fonction_dossier("filtering_on_spatial_resolution",
                    georef_dataset, 
                    "Grid spatial resolution filter",
-                   "", c(optionsresolution_filter))
+                   "")
 }
 
 
