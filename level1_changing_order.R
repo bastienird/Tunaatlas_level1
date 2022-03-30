@@ -118,6 +118,7 @@ fonction_dossier("rawdata",
                    "get_rfmos_datasets_level0"  , c(options_include_IOTC,options_include_ICCAT, 
                                                     options_include_IATTC,options_include_WCPFC, 
                                                     options_include_CCSBT))
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -154,6 +155,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
     
   }
 }
+
+georef_dataset %>% filter(unit != "NOMT") %>% mutate(unit = ifelse( unit == "MTNO", "MT", unit))
 
 
          
@@ -290,9 +293,18 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
            }
          
          
-         
+dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
+dataset<-data.frame(dataset)
 
+#----------------------------------------------------------------------------------------------------------------------------
+#@eblondel additional formatting for next time support
+dataset$time_start <- as.Date(dataset$time_start)
+dataset$time_end <- as.Date(dataset$time_end)
 
+fonction_dossier("thelinesafterlevel0",
+                 georef_dataset, 
+                 "addinglinesmaking",
+                 "function_overlapped","")
 
 
 

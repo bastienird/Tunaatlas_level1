@@ -34,26 +34,40 @@ function_overlapped =function(dataset, con, rfmo_to_keep, rfmo_not_to_keep){
 # assign("reverse_overlapping", 
 #        dataset[ which(!(dataset$geographic_identifier %in% overlapping_zone$codesource_area & dataset$source_authority == rfmo_to_keep)), ],
 #        envir = .GlobalEnv)
+  
+  rfmo_to_keep_DT <- nomrds %>% filter(source_authority == rfmo_to_keep)
+  rfmo_not_to_keep_DT <- nomrds %>% filter(source_authority == rfmo_not_to_keep)
+  rfmo_restant <- nomrds %>% 
+    filter(source_authority != rfmo_not_to_keep & source_authority!= rfmo_to_keep)
+  
+  rfmo_not_to_keep_without_equivalent <- dplyr::anti_join(rfmo_not_to_keep_DT, rfmo_to_keep_DT, 
+              by = c( "geographic_identifier",
+              "species", "time_start", "time_end", "unit"))
+  georef_dataset <- rbind(rfmo_restant, rfmo_not_to_keep_without_equivalent, rfmo_to_keep_DT)
+  rm(rfmo_to_keep_DT, rfmo_not_to_keep_DT, rfmo_restant, rfmo_restant)
+  gc()
+  
+# test <- dataset %>%
+#   ungroup() %>%
+#   group_by(source_authority, gear, fishingfleet,geographic_identifier,species, time_start, time_end, unit) %>%
+#   summarise(value = sum(value, na.rm = TRUE)) %>% ungroup()
 
-test <- dataset %>%
-  ungroup() %>% 
-  select(c(geographic_identifier,species, time_start, time_end, unit)) %>%
-  distinct() #checking if there are really duplicates for a same strate
+# test2 <- test %>%  select( geographic_identifier,species, time_start, time_end, unit,gear, fishingfleet) %>%
+#   arrange(desc(value)) %>% slice(1)
 
-if (nrow(test)!= nrow(dataset)){
-  georef_dataset <- dataset %>%
-    ungroup() %>% 
-    group_by(across(c(geographic_identifier,species, time_start, time_end, unit))) %>%
-    slice(which.max(value)) %>% ungroup()
-} else { georef_dataset <- dataset %>% ungroup()}
+
+# if (nrow(test)!= nrow(dataset)){
+#   georef_dataset <- dataset %>%
+#     ungroup() %>% 
+#     group_by( geographic_identifier,species, time_start, time_end, unit,gear, fishingfleet) %>%
+#     arrange(desc(value)) %>% slice(1)
+#     } else { georef_dataset <- dataset %>% ungroup()}
 
 # georef_dataset <- dataset %>%
 #   group_by(across(c(-source_authority,-value))) %>%
 #   arrange(desc(value)) %>%
 #   filter(row_number() ==1)
-rm(test)
-rm(dataset)
-gc()
+
 
 georef_dataset %>% ungroup()
 }
