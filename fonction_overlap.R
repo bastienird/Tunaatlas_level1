@@ -45,7 +45,7 @@ function_overlapped =function(dataset, con, rfmo_to_keep, rfmo_not_to_keep,
   rfmo_not_to_keep_without_equivalent <- dplyr::anti_join(rfmo_not_to_keep_DT, rfmo_to_keep_DT, 
               by = strata)
   georef_dataset <- rbind(rfmo_restant, rfmo_not_to_keep_without_equivalent, rfmo_to_keep_DT)
-  rm(rfmo_to_keep_DT, rfmo_not_to_keep_DT, rfmo_restant, rfmo_restant)
+  rm(rfmo_to_keep_DT, rfmo_not_to_keep_DT, rfmo_restant, rfmo_not_to_keep_without_equivalent)
   gc()
   
 # test <- dataset %>%
