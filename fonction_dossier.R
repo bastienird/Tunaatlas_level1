@@ -3,7 +3,7 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
   dir.create(paste0("Markdown/",nom_dossier))
   nom_dossier <- paste0("Markdown/",nom_dossier)
   rds_t <- (nomrds %>% filter(unit %in% c("t", "MTNO","MT"))) 
-  rds_t <- (nomrds %>% filter(unit %in% c("no", "NOMT","NO"))) 
+  rds_no <- (nomrds %>% filter(unit %in% c("no", "NOMT","NO"))) 
   somme_t <- sum(rds_t$value, na.rm = TRUE)
   somme_no <- sum(rds_no$value, na.rm = TRUE)
   lines <- nrow(nomrds)
