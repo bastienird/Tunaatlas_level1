@@ -291,24 +291,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
          
          
          
-         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-         config$logger.info("LEVEL 0 => STEP 11/8: Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)")
-         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-         if(!is.null(options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg)) if (options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg) {
-           
-           config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant...")
-           georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
-           georef_dataset<-georef_dataset$df
-           
-           
-           
-           config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant OK")
-           fonction_dossier("aggregation",
-                            georef_dataset, 
-                            "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
-                            "spatial_curation_upgrade_resolution", 
-                            c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
-         }
+
 
 
 
@@ -648,6 +631,25 @@ gc()
          
          # dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
          # dataset<-data.frame(dataset)
+         
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         config$logger.info("LEVEL 0 => STEP 11/8: Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)")
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         if(!is.null(options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg)) if (options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg) {
+           
+           config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant...")
+           georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
+           georef_dataset<-georef_dataset$df
+           
+           
+           
+           config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant OK")
+           fonction_dossier("aggregation",
+                            georef_dataset, 
+                            "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
+                            "spatial_curation_upgrade_resolution", 
+                            c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
+         }
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: Grid spatial resolution filter")

@@ -170,34 +170,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 "Southern Bluefin Tuna (SBF): SBF data: keep data from CCSBT or data from the other tuna RFMOs? ",
 		                 "", paste0("options$include_CCSBT = ",options$include_CCSBT, "options$SBF_data_rfmo_to_keep=",options$SBF_data_rfmo_to_keep))
 		
-		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
-		config$logger.info("LEVEL 0 => STEP 6/8: Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)")
-		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
-		if(!is.null(options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg)) if (options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg) {
-		 
-			config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant...")
-			georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
-			georef_dataset<-georef_dataset$df
-		
-			# fill metadata elements
-			# lineage<-"Data that were provided at spatial resolutions inferior to 5° x 5°  were aggregated to the corresponding 5° x 5°  quadrant."
-			# aggregate_step = geoflow_process$new()
-			# aggregate_step$setRationale(lineage)
-			# aggregate_step$setProcessor(firms_contact)  #TODO define who's the processor
-			# entity$provenance$processes <- c(entity$provenance$processes, aggregate_step)	
-			# entity$descriptions[["abstract"]] <- paste0(entity$descriptions[["abstract"]], "\n", "- Data that were provided at resolutions inferior to 5° x 5°  were aggregated to the corresponding 5° x 5°  quadrant.")
 
-			
-			config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant OK")
-			config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
-			
-		}
-		fonction_dossier("Aggregation",
-		                 georef_dataset, 
-		                 "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
-		                 "spatial_curation_upgrade_resolution", 
-		  paste0("options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg = ",
-		                           options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
 		
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 7/8: Overlapping zone (IATTC/WCPFC): keep data from IATTC or WCPFC?")
@@ -582,6 +555,34 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,
 		                        iattc_ps_catch_billfish_shark_raise_to_effort ,
 		                        iccat_ps_include_type_of_school))
+		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
+		config$logger.info("LEVEL 0 => STEP 6/8: Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)")
+		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
+		if(!is.null(options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg)) if (options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg) {
+		  
+		  config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant...")
+		  georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
+		  georef_dataset<-georef_dataset$df
+		  
+		  # fill metadata elements
+		  # lineage<-"Data that were provided at spatial resolutions inferior to 5° x 5°  were aggregated to the corresponding 5° x 5°  quadrant."
+		  # aggregate_step = geoflow_process$new()
+		  # aggregate_step$setRationale(lineage)
+		  # aggregate_step$setProcessor(firms_contact)  #TODO define who's the processor
+		  # entity$provenance$processes <- c(entity$provenance$processes, aggregate_step)	
+		  # entity$descriptions[["abstract"]] <- paste0(entity$descriptions[["abstract"]], "\n", "- Data that were provided at resolutions inferior to 5° x 5°  were aggregated to the corresponding 5° x 5°  quadrant.")
+		  
+		  
+		  config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant OK")
+		  config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
+		  
+		}
+		fonction_dossier("Aggregation",
+		                 georef_dataset, 
+		                 "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
+		                 "spatial_curation_upgrade_resolution", 
+		                 paste0("options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg = ",
+		                        options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
 
 
 config$logger.info("-----------------------------------------------------------------------------------------------------")
