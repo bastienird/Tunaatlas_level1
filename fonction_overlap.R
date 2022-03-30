@@ -37,9 +37,9 @@ function_overlapped =function(dataset, con, rfmo_to_keep, rfmo_not_to_keep,
 #        dataset[ which(!(dataset$geographic_identifier %in% overlapping_zone$codesource_area & dataset$source_authority == rfmo_to_keep)), ],
 #        envir = .GlobalEnv)
   
-  rfmo_to_keep_DT <- nomrds %>% filter(source_authority == rfmo_to_keep)
-  rfmo_not_to_keep_DT <- nomrds %>% filter(source_authority == rfmo_not_to_keep)
-  rfmo_restant <- nomrds %>% 
+  rfmo_to_keep_DT <- dataset %>% filter(source_authority == rfmo_to_keep)
+  rfmo_not_to_keep_DT <- dataset %>% filter(source_authority == rfmo_not_to_keep)
+  rfmo_restant <- dataset %>% 
     filter(source_authority != rfmo_not_to_keep & source_authority!= rfmo_to_keep)
   
   rfmo_not_to_keep_without_equivalent <- dplyr::anti_join(rfmo_not_to_keep_DT, rfmo_to_keep_DT, 
