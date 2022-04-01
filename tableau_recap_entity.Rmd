@@ -3,7 +3,7 @@ title: "Summary of the treatment for each entity of the global tuna atlas"
 output: html_document
 date: '2022-03-23'
 params: 
-  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220329114819"
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220331130831"
 ---
 
 ```{r setup, include=FALSE}
@@ -33,12 +33,15 @@ if(require("htmltools"))
 FitFlextableToPage <- function(ft, pgwidth = 6){
   # ft <- eval(as.symbol(ft))
     table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
-  add_header_lines(table, values = paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), top = TRUE)
+# test <- eval(as.symbol(paste0(substitute(ft), "list_options")))
+#     test2 <- flextable(test)%>% autofit() %>% fit_to_width(30)
+
 
 table %>% 
   color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
   color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>% 
   colformat_num(col_keys = c("`Difference (in % of tons)`"), digits = 2) %>% flextable_to_rmd()
+# test2%>% flextable_to_rmd()
 
 }
 ```
@@ -52,28 +55,33 @@ list_dir <- list.dirs(path =paste0(params$working_directory, "/entities"), full.
 ```{r}
 list <- c()
 for (sub_list_dir in list_dir){
-
-    # sub_list_dir_2 <- list.dirs(path =sub_list_dir, full.names = TRUE, recursive = FALSE)
+  # list_options <- read_csv(paste0(sub_list_dir,"/list_options.csv"))
+  #     assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1), "list_options"), list_options, envir = .GlobalEnv)
     sub_list_dir_2 <- list.dirs(path =paste0(sub_list_dir,"/Markdown"), full.names = TRUE, recursive = FALSE)
-    # sub_list_dir_2 <- grep("(data|metadata)", sub_list_dir_2, value=TRUE, invert=TRUE)
     details = file.info(paste0(sub_list_dir_2,"/Markdown"))
     details = file.info(sub_list_dir_2)
     details = details[with(details, order(as.POSIXct(mtime))), ]
     sub_list_dir_2 = rownames(details)
-  df <- data.frame(matrix(ncol = 7, nrow = 1))
-  colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), "Explanation", "Fonctions", "Options", "Sum in tons", "Sum in number of fish","Difference (in % of tons)")
+  df <- data.frame(matrix(ncol =9 , nrow = 1))
+  colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), "Explanation", "Fonctions", "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)", "Difference (in % of lines)"
+                    )
   tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
+  lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
     for (i in sub_list_dir_2){
       sums <- read.csv(paste0(i,"/sums.csv"))
       Explanation <- readtext(paste0(i,"/explication.txt"))[2]
       Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
-      Options <- pull(readtext(paste0(i,"/options.txt"))[2])
+      if (file.exists(paste0(i,"/options.txt"))){
+        Options <- pull(readtext(paste0(i,"/options.txt"))[2])} else {Options <- "Aucune"}
       step <- tail(str_split(paste0(i),"/")[[1]],n=1)
       loss_percent <- 100*((tons_init - pull(sums[1]))/tons_init)
-      data_i <- cbind(step,Explanation, Fonctions, Options, sums, loss_percent)
-      names(data_i) <- c(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), "Explanation", "Fonctions", "Options", "Sum in tons", "Sum in number of fish","Difference (in % of tons)")
+      loss_percent_lines <- 100*((lines_init - pull(sums[3]))/lines_init)
+      data_i <- cbind(step,Explanation, Fonctions, Options,
+                      sums, loss_percent, loss_percent_lines)
+      names(data_i) <- colnames(df)
       df <- rbind(df, data_i)
       tons_init <- pull(sums[1])
+      lines_init <- pull(sums[3])
 
     }
   df = df[-1,]

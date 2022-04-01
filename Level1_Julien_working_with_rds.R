@@ -432,11 +432,11 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		  source(file.path(url_scripts_create_own_tuna_atlas, "raising_georef_to_nominal.R")) #modified for geoflow
 			
 		config$logger.info("Extract and load FIRMS Level 0 nominal catch data input (required if raising process is asked) ")
-		# 	nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
+			nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
 		#         #@juldebar keep same units for all datatets
-		# 	if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "MT"
-		#         if(any(nominal_catch$unit == "no")) nominal_catch[nominal_catch$unit == "no", ]$unit <- "NO"
-		# 	class(nominal_catch$value) <- "numeric"
+			if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "MT"
+		        if(any(nominal_catch$unit == "no")) nominal_catch[nominal_catch$unit == "no", ]$unit <- "NO"
+			class(nominal_catch$value) <- "numeric"
 		        #@juldebar if not provided by Google drive line below should be used if nominal catch has to be extracted from the database
 			#nominal_catch <-retrieve_nominal_catch(entity, config, options)
 			config$logger.info(sprintf("Nominal catch dataset has [%s] lines", nrow(nominal_catch)))	
