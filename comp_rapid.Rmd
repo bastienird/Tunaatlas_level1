@@ -8,9 +8,8 @@ output:
     theme: united
     number_sections: true
 params: 
-  
-  final: "~/Documents/Tunaatlas_level1/jobs/20220331130831/entities/global_catch_ird_level1/Markdown/level1realocate_remove/rds.rds"
-  init: "~/Documents/Tunaatlas_level1/jobs/20220331130831/entities/global_catch_ird_level1/Markdown/level2_test_modifying_function_new_nominal_catch/rds.rds"
+  final: "~/Documents/Tunaatlas_level1/jobs/difference_L1_L2/entities/global_catch_5deg_1m_IRD_level2/Markdown/endlevel0data/rds.rds"
+  init: "~/Documents/Tunaatlas_level1/jobs/no_difference_L1_L2/entities/global_catch_5deg_1m_ird_level2/Markdown/OverlappingIATTCWCPFC/rds.rds"
   filter_species:  "NULL"
   filter_source_authority:  "NULL"
   filter_gear:  "NULL"
@@ -39,14 +38,6 @@ library(stringr)
 library(readr)
 library(ggplot2)
 library(shiny)
-library(DBI)
-library(RMySQL)
-library(dbplyr)
-library(RPostgreSQL)
-library(odbc)
-library(sf)
-library(tmap)
-library(leaflet)
 library(tidyr)
 library(DT)
 library(kableExtra)
@@ -59,17 +50,17 @@ set_flextable_defaults(
   digits = 0,
   theme_fun = "theme_box"
   )
-
-tmap_mode("view")
+options(scipen=999)
+# tmap_mode("view")
 ```
 
 
 ```{r}
-drv <- dbDriver("PostgreSQL")      
-con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
-                 port = 5432,
-                 user = "tunaatlas_u",
-                 password = "21c0551e7ed2911")
+# drv <- dbDriver("PostgreSQL")      
+# con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
+#                  port = 5432,
+#                  user = "tunaatlas_u",
+#                  password = "21c0551e7ed2911")
 
 
 
@@ -78,12 +69,12 @@ con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science
 
 # summary(con)
 # dbListTables(con)
-query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-world_sf <- st_read(con, query = query) 
+# query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+# world_sf <- st_read(con, query = query) 
 
-shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
-shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
-options(scipen=999)
+# shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
+# shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
+# options(scipen=999)
 
 kbl <- function(data) {
   knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
@@ -178,25 +169,11 @@ fonction_filtre = function(dataframe_tot_filter) {
   
 }
 
-# fonction_harmonization_unit = function(x){
-#   if(any(x$unit == "MT")) x[x$unit == "MT", ]$unit <- "tons"
-# 		if(any(x$unit == "NO")) x[x$unit == "NO", ]$unit <- "Number of fish"
-# 		if(any(x$unit == "MTNO")) x[x$unit == "MTNO", ]$unit <- "tons"
-# 		if(any(x$unit == "NOMT")) x[x$unit == "NOMT", ]$unit <- "Number of fish"
-# 
-# }
-  
-init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)))%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% inner_join(species_group, by = c("species"))
 
-# if(any(init$unit == "MT")) init[init$unit == "MT", ]$unit <- "Tons"
-# 		if(any(init$unit == "NO")) init[init$unit == "NO", ]$unit <- "Number of fish"
-# 		if(any(init$unit == "MTNO")) init[init$unit == "MTNO", ]$unit <- "Tons"
-# 		if(any(init$unit == "NOMT")) init[init$unit == "NOMT", ]$unit <- "Number of fish"
+init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)))%>% inner_join(species_group, by = c("species"))
 
 
-
-
-final <- fonction_filtre(readRDS(as.character(params$final))%>% select(all_of(colnames_to_keep)))%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% inner_join(species_group, by = c("species"))
+final <- fonction_filtre(readRDS(as.character(params$final))%>% select(all_of(colnames_to_keep)))%>% inner_join(species_group, by = c("species"))
 
 # if(any(final$unit == "MT")) final[final$unit == "MT", ]$unit <- "Tons"
 # if(any(final$unit == "NO")) final[final$unit == "NO", ]$unit <- "Number of fish"
@@ -258,7 +235,7 @@ fonction_groupement = function(x, init, final){
 
 
 ```{r}
-carte_init <- fonction_groupement(geographic_identifier,init, final)
+carte_init <- fonction_groupement(species_group,init, final)
 
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"]
@@ -288,7 +265,7 @@ final_no <- final %>% filter(unit == "Number of fish")
     perte_en_tonnes_pourcent <- round(100*(somme_init_t-somme_final_t)/somme_init_t,2)
     perte_en_nombre <- round(somme_init_no-somme_final_no)
     perte_en_nombre_pourcent <- round(100*(somme_init_no-somme_final_no)/somme_init_no,2)
-    try(if (perte_en_nombre_pourcent==-Inf) {perte_en_nombre_pourcent <- -100})
+    if (perte_en_nombre_pourcent==-Inf) {perte_en_nombre_pourcent <- -100}
 
   
 nb_ligne_init_millions <- nrow(init)/10^6
@@ -322,238 +299,12 @@ The loss is `r perte_en_tonnes` in tons (**`r perte_en_tonnes_pourcent`%**). The
 
 The stratas loss between the first one and the second one are : 
 
+```{r}
+qflextable(strates_perdues_first_10)
+```
+
 
 (only first 10 per Dimension showed), representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
-
-```{r}
-qflextable(head(strates_perdues,10))
-```
-
-
-# Introduction to the two datasets 
-
-We first present the main characteristics of each dimension for each dataset.
-
-## Comparison of the two catch evolutions
-
-For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish.
-
-```{r}
-captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>% mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
-
-
-ggplot(captures_par_time) +
-  aes(
-    x = Time,
-    y = Captures,
-    fill = Origin,
-    colour = Origin,
-    group = Origin
-  ) +
-  geom_line(size = 0.5) +
-  scale_fill_hue(direction = 1) +
-  scale_color_hue(direction = 1) +
-  theme_dark() +
-  theme(legend.position = "top") +
-  facet_wrap(vars(unit), nrow = 2L)+
-  labs(x = "Time", y = "Captures")+
-  facet_grid("unit", scales = "free_y")
-```
-
-## Comparison of the evolution of the cumulative catches
-
-```{r}
-
-captures_par_time <- captures_par_time %>% mutate(Time = as.Date(Precision))%>% arrange(Precision) %>% group_by(unit, Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
-
-ggplot_capt_par_time = function(x){
-  
-  ggplot(captures_par_time %>% filter(unit==x)) +
-  aes(
-    x = Time,
-    y = `Captures cumulées`,
-    colour = Origin
-  ) +
-  geom_line(size = 0.5) +
-  scale_color_hue(direction = 1) +
-  theme_minimal() +
-  facet_wrap(vars(unit)) +
-  labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
-}
-
-ggplot_capt_par_time("Tons")
-
-```
-
-```{r}
-try(ggplot_capt_par_time("Number of fish"))
-```
-
-## Comparison of the two datasets
-
-We check the distribution of the value of each dimension in tons and number of fish for each dataset.
-
-```{r}
-library(rlang)
-
-pie_chart_2 = function(x, init= init,final = final) {
-  r <- deparse(substitute(x))
-  colnames <- enquo(x)
-  provisoire_i <-init %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
-    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
-    select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
-    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
-  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
-    distinct()
-  
-  provisoire_t <- final %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
-    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
-    select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
-    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
-  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
-    distinct()
-  
-ggplot_i <- ggplot(provisoire_i) +
-  aes(
-    x = "",
-    fill = class,
-    colour = class,
-    group = class,
-    weight = pourcentage
-  ) +
-  geom_bar(position = "fill") +
-  scale_fill_hue(direction = 1) +
-  scale_color_hue(direction = 1) +
-  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
-                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank())+
-  labs(x = "", y="") + facet_wrap("unit")
-  
-ggplot_t <- ggplot(provisoire_t) +
-  aes(
-    x = "",
-    fill = class,
-    colour = class,
-    group = class,
-    weight = pourcentage
-  ) +
-  geom_bar(position = "fill") +
-  scale_fill_hue(direction = 1) +
-  scale_color_hue(direction = 1) +
-  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_t %>% mutate_if(is.numeric, round)), size = 3,
-                           aes( x = 1, y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank())+
-  labs(x = "", y="") + facet_wrap("unit")
-
-title <- ggdraw() + 
-  draw_label(
-    paste0("Distribution in value for the dimension : ",r),
-    fontface = 'bold',
-    x = 0,
-    hjust = 0
-  ) +
-  theme(
-    # add margin on the left of the drawing canvas,
-    # so title is aligned with left edge of first plot
-    plot.margin = margin(0, 0, 0, 7)
-  )
-
-graph <- plot_grid(ggplot_i, ggplot_t,nrow = 2,labels = c(paste0( titre_1), paste0(titre_2)),
-  label_size = 10)
-
-plot_grid(
-  title, graph,
-  ncol = 1,
-  # rel_heights values control vertical title margins
-  rel_heights = c(0.1, 1))+
-    theme(plot.background = element_rect(color = "black"))
-
-
-}
-
-
-# ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(class)))
-
-Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&
-                               colnames(init)!= "time_start"&
-                               colnames(init)!= "time_end"&
-                               colnames(init)!= "geographic_identifier"]
-  # t <- init[0,] 
-```
-
-```{r}
-library(cowplot)
-fishing_fleet <- pie_chart_2(fishingfleet, init, final)
-source_authority <- pie_chart_2(source_authority, init, final)
-cat_geo <- pie_chart_2(cat_geo, init, final)
-species <- pie_chart_2(species, init, final)
-species_group <- pie_chart_2(species_group, init, final)
-
-```
-
-```{r}
-species
-
-cat_geo
-
-fishing_fleet
-
-source_authority
-
-species_group
-
-
-# plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
-```
-
-
-## Spatial coverage
-
-```{r}
-library(gdata)
-fonction_empreinte_spatiale = function(variable_affichee){
-  selection = function(x){x %>% ungroup() %>% select(geographic_identifier, value, cat_geo, unit)}
-  Initial_dataframe <- selection(init)
-  Final_dataframe <- selection(final)
-  geo_data <- gdata::combine(`Initial_dataframe`, `Final_dataframe`)
-  rm(`Initial_dataframe`, `Final_dataframe`)
-  gc()
-inner_join <- st_as_sf(geo_data%>% group_by(geographic_identifier, unit,source)  %>%  summarise(value = sum(value, na.rm = TRUE))  %>% filter(value != 0) %>% inner_join(shapefile.fix, by = c("geographic_identifier"="code")))
-
-tm_shape(inner_join %>% filter(unit == variable_affichee))+
-  tm_fill("value", palette="RdYlGn", style="cont", n=8,
-				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"))
-
-tm_shape(inner_join %>% filter(unit == variable_affichee))+
-  tm_fill("value", palette="RdYlGn", style="cont", n=8,
-				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"))
-rm(inner_join)
-}
-tmap_mode("plot")
-
-number_of_cat_geo <- nrow(unique(t$cat_geo))
-cat_geo <- (unique(t$cat_geo))
-```
-
-We represent the spatial coverage, faceted by the geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).
-
-### Spatial coverage in tons
-
-```{r}
-fonction_empreinte_spatiale("Tons")
-```
-
-### Spatial coverage in number of fish
-
-```{r}
-fonction_empreinte_spatiale("Number of fish")
-```
 
 # Loss
 
@@ -599,61 +350,3 @@ qflextable(as_grouped_data(unit %>% ungroup(), groups = c("Dimension","unit")))
 ```
 
 
-
-
-
-<!-- ***In numbers*** -->
-
-<!-- ```{r paged.print=TRUE} -->
-<!-- qflextable(as_grouped_data(unit_no, groups = c("Dimension")))  -->
-<!-- ``` -->
-
-## Loss in geographical data
-
-```{r}
-tmap_mode("view")
-inner_join <- inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% mutate(cat_perte = as.factor(case_when(`Loss (in %)` == 0 ~ 'No loss', `Loss (in %)` == 100~'All data lost', TRUE ~ 'Partial loss')))
-# tm_shape(inner_join) +
-#   tm_fill("Loss (in %)", palette="RdYlGn", style="cont", n=8,
-# 				 id="name", midpoint = 0)+
-#   tm_layout(legend.outside = FALSE)+ tm_shape(inner_join %>% filter(cat_perte == 'No loss')) + tm_borders(col="skyblue")+tm_shape(inner_join %>% filter(cat_perte == 'All data lost')) +tm_borders(col="red") +tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE)
-
-
-
-
-
-
-tmap::tmap_mode("view")
-tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_perte = as.factor(case_when(`Loss (in %)` == 0 ~ 'No loss', `Loss (in %)` == 100~'All data lost', TRUE ~ 'Partial loss')))
-         # %>% filter(unit == "Tons")
-         )+
-  tm_fill( "cat_perte", palette="RdYlGn", style="cont", n=8,
-				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
-```
-
-## Loss in temporal data
-
-Here is represented the loss in percent for each year. 
-
-```{r}
-
-t %>%
- filter(Dimension == "time_start") %>% mutate(Time = as.Date(Precision)) %>% 
- ggplot() +
- aes(x = Time, weight = `Loss (in %)`) +
- geom_bar(fill = "#112446") +
- theme_minimal()+facet_wrap("unit")+labs(y = "Loss in %")
-
-# t %>%
-#  filter(Dimension %in% "time_end") %>%
-#  ggplot() +
-#  aes(x = Precision, weight = `Loss in millions of tons`) +
-#  geom_bar(fill = "#112446") +
-#  theme_minimal()+facet_wrap("unit")
-
-
-```
-
-
-Here we represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information.
