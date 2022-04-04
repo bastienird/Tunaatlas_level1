@@ -67,6 +67,8 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonct
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
 # source("~/Documents/Tunaatlas_level1/function_raising_georef_to_nominal_Bastien.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/disagregate_on_resdeg_Bastien.R")
+
 
 # connect to Tuna atlas database
 con <- config$software$output$dbi
@@ -578,14 +580,12 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
            config$logger.info(sprintf("LEVEL 1 => STEP 4/5  for file [%s] is executed: Disaggregate data on 5° resolution quadrants (for 5deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
            config$logger.info("-----------------------------------------------------------------------------------------------------")
            
-           source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
            
            ntons_before_this_step <- round(georef_dataset %>% select(value)  %>% sum())
            config$logger.info(sprintf("STEP 4/5 : Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
            
            config$logger.info("STEP 4/5: BEGIN function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
-           source("~/Documents/Tunaatlas_level1/disagregate_on_resdeg_Bastien.R")
-           
+
            georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,options,
                                                                                                    georef_dataset=georef_dataset,
                                                                                                    resolution=5,
@@ -620,8 +620,6 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
            ntons_before_this_step <- round(georef_dataset %>% select(value)  %>% sum())
            config$logger.info(sprintf("STEP 5/5 : Gridded catch dataset before Disaggregate data on 1° has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
            
-           source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
-           source("~/Documents/Tunaatlas_level1/disagregate_on_resdeg_Bastien.R")
            config$logger.info("STEP 5/5: BEGIN function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
            georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,options,
                                                                                                    georef_dataset=georef_dataset,

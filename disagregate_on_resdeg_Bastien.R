@@ -5,9 +5,9 @@ function_spatial_curation_upgrade_Bastien = function (con, df_input, resolution,
   dataset_distinct_area <- paste(unique(dataset_distinct_area), 
                                  collapse = "','")
   cwp_grid_data_with_resolution_to_downgrade <- dbGetQuery(con, 
-                                                           paste0("SELECT codesource_area as geographic_identifier,left(cwp_grid.code,7) as code FROM area.area_labels \n                                                                    JOIN area.cwp_grid\n                                                                    USING (geom)\n                                                                    WHERE codesource_area IN ('", 
-                                                                  dataset_distinct_area, "')\n                                                                    AND tablesource_area='areas_tuna_rfmos_task2'\n                                                                    and spatial_resolution='", 
-                                                                  resolution, "'"))
+    paste0("SELECT codesource_area as geographic_identifier,left(cwp_grid.code,7) as code FROM area.area_labels \n                                                                    JOIN area.cwp_grid\n                                                                    USING (geom)\n                                                                    WHERE codesource_area IN ('", 
+      dataset_distinct_area, "')\n                                                                    AND tablesource_area='areas_tuna_rfmos_task2'\n                                                                    and spatial_resolution='", 
+      resolution, "'"))
   if (nrow(cwp_grid_data_with_resolution_to_downgrade) > 0) {
     dataset_not_to_leave_as_so <- anti_join(df_input, cwp_grid_data_with_resolution_to_downgrade, 
                                             by = "geographic_identifier")
@@ -41,7 +41,7 @@ function_spatial_curation_upgrade_Bastien = function (con, df_input, resolution,
 
     library(sf)
     query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
-    world_sf <- st_make_valid(st_read(conn, query = query))%>% filter(!st_is_empty(.))
+    world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
     continent <- st_read(
       "data/continent.shp")
     world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
