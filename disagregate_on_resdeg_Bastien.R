@@ -20,7 +20,6 @@ function_spatial_curation_upgrade_Bastien = function (con, df_input, resolution,
                                    cwp_grid_data_with_resolution_to_downgrade$geographic_identifier)
   area_changeresolution <- paste(unique(area_changeresolution), 
                                  collapse = "','")
-  rm(cwp_grid_data_with_resolution_to_downgrade)
   gc()
   if (resolution == 1) {
     a1.size_grid = "'5'"
@@ -56,44 +55,18 @@ function_spatial_curation_upgrade_Bastien = function (con, df_input, resolution,
       group_by(input_geographic_identifier) %>% mutate(number = n())
     rm(world_sf)
     gc()
-    # dataset_to_disaggregate <- inner_join(df_input, areas_to_project_data_to_disaggregate, 
-    #                                       by = c(geographic_identifier = "input_geographic_identifier"))
     dataset_to_disaggregate <- inner_join(dataset_not_to_leave_as_so, areas_to_project_data_to_disaggregate, 
                                           by = c(geographic_identifier = "input_geographic_identifier"))
     
     rm(dataset_not_to_leave_as_so)
     rm(areas_to_project_data_to_disaggregate)
     gc()
-    # dataset_to_disaggregate <- dataset_to_disaggregate %>% group_by_all() %>% summarise(value = sum(value))
-    # dataset_to_disaggregate <- dataset_to_disaggregate %>% group_by_(.dots = columns_dataset_input) %>%   mutate(number = n()) %>% 
-    #   select(-geographic_identifier)
     dataset_to_disaggregate$value <- dataset_to_disaggregate$value/dataset_to_disaggregate$number
     dataset_to_disaggregate <- dataset_to_disaggregate %>% select(-number, -geographic_identifier)
     gc()
     dataset_to_disaggregate <- rename(dataset_to_disaggregate, geographic_identifier = geographic_identifier_project)
-    # dataset_to_disaggregate$geographic_identifier <- dataset_to_disaggregate$geographic_identifier_project
-    # dataset_to_disaggregate <- dataset_to_disaggregate %>% select(-geographic_identifier_project)
-    
-    # dataset_to_disaggregate <- dataset_to_disaggregate[, 
-    #                                                    columns_dataset_input]
-    # dataset_to_disaggregate <- data.frame(dataset_to_disaggregate)
     gc()
-    # dataset_to_disaggregate2 <- left_join(tbl(con, "dataset_to_disaggregate") ,
-    #                                       tbl(con, "dataset_to_disaggregate") %>% group_by_(.dots = columns_dataset_input) %>% 
-    #                                        mutate(number = n()) %>% ungroup(),
-    #       by = setdiff(columns_dataset_input, "geographic_identifier")) %>% head() %>% collect()
-    # rm(wxc2)
-    # gc()
-    # 
-    # dataset_to_disaggregate) %>% group_by_(.dots = columns_dataset_input) %>% 
-    #                                        mutate(number = n()) %>% ungroup()
-    
-    # dataset_to_disaggregate$value_realloc <- dataset_to_disaggregate$value/dataset_to_disaggregate$number
-    # dataset_to_disaggregate$value <- dataset_to_disaggregate$value_realloc
-    # dataset_to_disaggregate$geographic_identifier <- dataset_to_disaggregate$geographic_identifier_project
-    # dataset_to_disaggregate <- dataset_to_disaggregate[, 
-    #                                                    columns_dataset_input]
-    # dataset_to_disaggregate <- data.frame(dataset_to_disaggregate)
+
   }
   else {
     dataset_to_disaggregate = NULL
@@ -111,8 +84,7 @@ function_spatial_curation_upgrade_Bastien = function (con, df_input, resolution,
     else {
       dataset_areas_inf_to_resolution_to_disaggregate = NULL
     }
-  }
-  else if (resolution == 1) {
+  } else if (resolution == 1) {
     dataset_areas_inf_to_resolution_to_disaggregate = NULL
   }
   
