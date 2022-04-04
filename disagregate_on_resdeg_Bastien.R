@@ -1,7 +1,7 @@
 function_spatial_curation_upgrade_Bastien = function (con, df_input, resolution, remove = FALSE) {
   
   columns_dataset_input <- colnames(df_input)
-  dataset_distinct_area <- unique(df_input$geographic_identifier)[1:100]
+  dataset_distinct_area <- unique(df_input$geographic_identifier)
   dataset_distinct_area <- paste(unique(dataset_distinct_area), 
                                  collapse = "','")
   cwp_grid_data_with_resolution_to_downgrade <- dbGetQuery(con, 
