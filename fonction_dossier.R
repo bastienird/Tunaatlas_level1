@@ -1,4 +1,4 @@
-fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", options=NULL) {
+fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", options=NULL, options_written_total = options_written_total) {
   dir.create("Markdown")
   dir.create(paste0("Markdown/",nom_dossier))
   nom_dossier <- paste0("Markdown/",nom_dossier)
@@ -15,15 +15,21 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
       options_written <- paste0(options_written, (paste0(options_substi[i], " = ", options[i])), 
                                sep = " ; \n ")
       
+
+      
+      
       
     }
     write(options_written, paste0(nom_dossier,"/options.txt"))
+    options_written_total <- paste0(options_written, options_written_total)
     
     } else {options = "NONE"}
     
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
   write(fonctions, paste0(nom_dossier,"/fonctions.txt"))
+  write(options_written_total, paste0(nom_dossier,"/options_total.txt"))
+  
 }
 
 

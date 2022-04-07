@@ -1,0 +1,71 @@
+---
+title: "Number of strata with conversion factor"
+output: html_document
+date: '2022-03-23'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+library(readtext)
+library(flextable)
+set_flextable_defaults(
+  font.size = 30,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = NULL,
+  theme_fun = "theme_box"
+  )
+library(dplyr)
+library(stringr)
+library(readr)
+```
+
+```{r}
+rdslevel0 <- readRDS("~/Documents/Tunaatlas_level1/jobs/20220322194525/entities/global_catch_ird_level2/OverlappingIATTCWCPFC/rds.rds") 
+
+rds_level_0_strata <-rdslevel0 %>% select(-c(value, unit
+             # , schooltype, catchtype, fishingfleet
+                     ))%>% distinct()
+
+strata_no <- rdslevel0 %>% filter(unit %in% c("no","NO")) %>% select(-c(value, unit
+             # , schooltype, catchtype, fishingfleet
+                     ))%>% distinct()
+strata_t <- rdslevel0 %>% filter(unit %in% c("t","MT")) %>% select(-c(value, unit
+             # , schooltype, catchtype, fishingfleet
+                     ))%>% distinct()
+```
+
+There are `r nrow(strata_no)` strata at the end of level0 which are declared in number.
+There are `r nrow(strata_t)` strata at the end of level0 which are declared in tons.
+
+
+```{r}
+rdslevel1 <- readRDS("~/Documents/Tunaatlas_level1/jobs/20220322194525/entities/global_catch_ird_level2/level1conversion/rds.rds")
+
+rds_level_1_strata <- rdslevel1 %>% select(-c(value, unit
+                   # ,  schooltype, catchtype, fishingfleet
+         ))%>% distinct()
+
+percent_strata_loss_level0_level1 <- round(100*(nrow(rds_level_0_strata)-nrow(rds_level_1_strata))/nrow(rdslevel0))
+number_strata_loss_level0_level1 <- (nrow(rds_level_0_strata)-nrow(rds_level_1_strata))
+
+conversion_factors_num_to_weight_ird_2021 <- read_csv("data/conversion_factors_num_to_weight_ird_2021.csv") 
+
+  strata <- conversion_factors_num_to_weight_ird_2021 %>% select(-c(unit,conversion_factor, unit_target)) %>% distinct()
+
+  
+```
+
+There are `r number_strata_loss_level0_level1` strata that are loss between level0 and level 1 (`r percent_strata_loss_level0_level1` % of the total). This means there is no conversion done for those strata.
+
+```{r}
+strata_level1_converted <- round((nrow(rds_level_1_strata) - nrow(strata_t))/nrow(strata))
+
+```
+
+
+However, the number of strata in the file of Alain Biseau, is `r nrow(strata)`. Which means each conversion factor is used for (in means) `r strata_level1_converted` strata.

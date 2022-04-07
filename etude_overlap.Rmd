@@ -3,7 +3,7 @@ title: "Etude de l'overlap"
 output: html_document
 date: '2022-03-14'
 params:
-  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/20220331130831/entities/global_catch_ird_level1/Markdown/overlapiccat_ccsbt/rds.rds"
+  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/difference_L1_L2/entities/global_catch_5deg_1m_IRD_level2/Markdown/endlevel0data/rds.rds"
   plotting: "view"
 ---
 
@@ -45,17 +45,20 @@ world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.)
 
 query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
 competence_area <- st_make_valid(st_read(con, query = query_area)) %>% filter(!st_is_empty(.))
-IOTC <- competence_area %>% filter(code == "IOTC")
-IATTC <- competence_area %>% filter(code == "IATTC")
-WCPFC <- competence_area %>% filter(code == "WCPFC")
-ICCAT <- competence_area %>% filter(code == "ICCAT")
+IOTC_shape <- competence_area %>% filter(code == "IOTC")
+IATTC_shape <- competence_area %>% filter(code == "IATTC")
+WCPFC_shape <- competence_area %>% filter(code == "WCPFC")
+ICCAT_shape <- competence_area %>% filter(code == "ICCAT")
 continent <- st_read(
   "data/continent.shp")
 
-IOTC <- world_sf[IOTC,]%>% st_set_geometry(NULL) %>% mutate(iotc = "iotc")
-IATTC <- world_sf[IATTC,]%>% st_set_geometry(NULL) %>% mutate(iattc = "iattc")
-WCPFC <- world_sf[WCPFC,]%>% st_set_geometry(NULL) %>% mutate(wcpfc = "wcpfc")
-ICCAT <- world_sf[ICCAT,]%>% st_set_geometry(NULL) %>% mutate(iccat = "iccat")
+IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iotc = "iotc")
+
+IATTC <- world_sf[IATTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iattc = "iattc")
+
+WCPFC <- world_sf[WCPFC_shape,]%>% st_set_geometry(NULL) %>% mutate(wcpfc = "wcpfc")
+
+ICCAT <- world_sf[ICCAT_shape,]%>% st_set_geometry(NULL) %>% mutate(iccat = "iccat")
 
 
 
@@ -81,25 +84,25 @@ world_sf <- left_join(world_sf, full_join)
 #     world_sf[[i]] <- str_replace(world_sf[[i]], "TRUE", colnames(world_sf)[i])
 # }
 
-test <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
+world_sf_with_competence_area <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
 
-# df <- st_as_sf(inner_join(world_sf %>% as.data.frame() %>% select(-geom), test ,by = "code"))
-inner_join <- data %>% inner_join(world_sf, by = c("geographic_identifier"="code"))
+# df <- st_as_sf(inner_join(world_sf %>% as.data.frame() %>% select(-geom), all_the_data ,by = "code"))
+inner_join <- data %>% inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
 
 
-test <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(world_sf , by = c("geographic_identifier"="code", "st_area")) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
+all_the_data <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(world_sf%>% select(-area_competence) , by = c("geographic_identifier"="code", "st_area") ) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
 
-mislocated_continent <- test %>% filter(area_competence == "continent")
-if (nrow(mislocated_continent)==0){knitr::knit_exit()}
+mislocated_continent <- all_the_data %>% filter(str_detect(area_competence, "continent"))
+if (nrow(mislocated_continent)==0){knitr::knit_exit()}else{
 tmap_mode(params$plotting)
 
 tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_text("source_authority")+tm_shape(continent)+tm_borders() 
 
 # tm_shape(df)+tm_polygons(col = "area_competence")+tm_facets("st_area.x")
-# test3 <- inner_join %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
-# # summary(test3)
-# tm_shape(test3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))+tm_polygons(col = "value")+tm_facets("st_area")+tm_shape(continent)+tm_borders()
-
+# all_the_data3 <- inner_join %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
+# # summary(all_the_data3)
+# tm_shape(all_the_data3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))+tm_polygons(col = "value")+tm_facets("st_area")+tm_shape(continent)+tm_borders()
+}
 
 
 ```
@@ -108,11 +111,11 @@ tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area)))
 
 ```{r}
 
-test2 <- test %>% group_by(unit) %>% group_by(unit, source_authority) %>% arrange(desc(source_authority)) %>% summarise(value = sum(value, na.rm = TRUE))  %>% ungroup() %>% group_by(unit) %>%  mutate(pourcentage = prop.table(value)*100)%>%
-    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(source_authority)) %>% 
+mislocated_continent2 <- mislocated_continent %>% group_by(unit, source_authority) %>% arrange(unit,desc(source_authority)) %>% summarise(value = sum(value, na.rm = TRUE))  %>% ungroup() %>% group_by(unit) %>%  mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(unit,desc( source_authority)) %>% 
   mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
     distinct()
-ggplot(test2) +aes(
+ggplot(mislocated_continent2) +aes(
     x = "",
     fill = source_authority,
     colour = source_authority,
@@ -122,7 +125,7 @@ ggplot(test2) +aes(
   geom_bar(position = "fill") +
   scale_fill_hue(direction = 1) +
   scale_color_hue(direction = 1) +
-  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (test2 %>% mutate_if(is.numeric, round)), size = 3,
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (mislocated_continent2 %>% mutate_if(is.numeric, round)), size = 3,
                            aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
   theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank())+
@@ -134,16 +137,16 @@ ggplot(test2) +aes(
 ***This markdown is aimed to study the repartition of each unity for a specific dataset, in this case is `r params$chemin_dacces`.***
 
 ```{r}
-test3 <- test %>% mutate(continent = ifelse(area_competence != "continent", "ocean", "continent"))
+all_the_data3 <- all_the_data %>% mutate(continent = ifelse(area_competence != "continent", "ocean", "continent"))
 
 ```
 
 
 ```{r}
-# st_geometry(test3) <- NULL
-final <- test3 %>% group_by(continent, unit) %>% summarise(value = sum(value))
-# test2_without_continent <- test %>% filter(area_competence != "continent")
-# value_without_continent <- sum(test2_without_continent$value, na.rm =TRUE)
+# st_geometry(all_the_data3) <- NULL
+final <- all_the_data3 %>% group_by(continent, unit) %>% summarise(value = sum(value))
+# all_the_data2_without_continent <- all_the_data %>% filter(area_competence != "continent")
+# value_without_continent <- sum(all_the_data2_without_continent$value, na.rm =TRUE)
 
 en_nombre_continent <- pull(final %>% filter(unit == "Number of fish") %>% filter(continent == "continent"))
 en_nombre_ocean <- pull(final %>% filter(unit == "Number of fish") %>% filter(continent == "ocean"))
@@ -153,7 +156,7 @@ en_tonne_ocean <- pull(final %>% filter(unit == "Tons") %>% filter(continent == 
 perte_en_nombre <- (en_nombre_continent / (en_nombre_ocean+en_nombre_continent))*100
 perte_en_tonne <- (en_tonne_continent/ (en_tonne_continent+en_tonne_ocean))*100
 
-# value_with_continent <- sum(test$value, na.rm = TRUE)
+# value_with_continent <- sum(all_the_data$value, na.rm = TRUE)
 
 # perte_en_pourcent_conitnent <- ((value_with_continent-value_without_continent)/value_with_continent)*100
 ```
@@ -164,9 +167,12 @@ We are now interested in the mislocated data
 
 ```{r}
 
-mislocated <- inner_join %>%filter(area_competence!="continent") %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(area_competence = toupper(area_competence)) %>%  mutate(mislocated = case_when(source_authority =="CCSBT" ~TRUE, area_competence%in%c("IATTC", "ICCAT", "IOTC", "WCPFC") & area_competence == source_authority ~ TRUE,
-                              area_competence == "IOTCWCPFC" & source_authority %in% c("IOTC", "WCPFC")  ~ TRUE,
-                              area_competence == "IATTCWCPFC" & source_authority %in% c("IATTC", "WCPFC")  ~ TRUE, tolower(area_competence) == area_competence ~ TRUE, 
+# mislocated <- inner_join %>%filter(!str_detect(area_competence, "continent")) %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(area_competence = toupper(area_competence)) %>%  mutate(mislocated = case_when(source_authority =="CCSBT" ~TRUE, area_competence%in%c("IATTC", "ICCAT", "IOTC", "WCPFC") & area_competence == source_authority ~ TRUE,
+#                               area_competence == "IOTCWCPFC" & source_authority %in% c("IOTC", "WCPFC")  ~ TRUE,
+#                               area_competence == "IATTCWCPFC" & source_authority %in% c("IATTC", "WCPFC")  ~ TRUE, tolower(area_competence) == area_competence ~ TRUE, 
+#                               TRUE ~ FALSE))
+
+mislocated <- inner_join  %>% filter(!str_detect(area_competence, "continent")) %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(source_authority = tolower(source_authority)) %>%  mutate(mislocated = case_when(str_detect(area_competence, source_authority) == TRUE ~ TRUE, area_competence == source_authority ~ TRUE, source_authority == "CCSBT"~TRUE,
                               TRUE ~ FALSE))
 
 final <- mislocated %>% group_by(mislocated, unit) %>% summarise(value = sum(value))
@@ -182,12 +188,374 @@ perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
 ```
 
 ```{r eval=FALSE}
-tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")+tm_facets("unit")
+# tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")+tm_facets("unit")
 ```
 
 ```{r}
-tm_shape(WCPFC)+tm_borders( col = "red")+tm_shape(ICCAT)+tm_borders( col = "yellow")+tm_shape(IOTC)+tm_borders( col = "purple")+tm_shape(IATTC)+tm_borders( col = "skyblue")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")#+tm_facets("unit")
+tm_shape(WCPFC_shape)+tm_borders( col = "red")+tm_shape(ICCAT_shape)+tm_borders( col = "yellow")+tm_shape(IOTC_shape)+tm_borders( col = "purple")+tm_shape(IATTC_shape)+tm_borders( col = "skyblue")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="ccsbt")))+tm_polygons(col = "source_authority")+tm_text("area_competence")+tm_facets("unit")
 ```
 
 
-En retirant les données placées sur les continents, ainsi que les données d'une rfmo dans une zone hors de leur compétence, les pertes à la fin du niveau 0 s'élèvent à `r perte_en_nombre` % en nombre et à `r perte_en_tonne` % en tonnes. 
+Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
+ 
+## Study of overlapping zones
+
+Regarding the areas where there is more than one RFMO giving information, we need to choose a way to handle the data. 
+
+First we will describe the data of those areas and after we will provide the choice apropriate.
+
+### Brief description of overlapping data
+
+We consider only the overlap IOTC/WCPFC and the IATTC/WCPFC and the IATTC/ICCAT, the overlaps concerning the CCSBT we'll be handle differently. 
+
+```{r}
+overlapping_without_ccsbt <- inner_join %>% filter(area_competence %in% c("iotcwcpfc", "iattcwcpfc", "iattciccat", "iotciccat")) %>% filter(source_authority != "CCSBT")
+```
+
+```{r}
+tilesURL = "http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+library(leaflet.minicharts)
+library(leaflet)
+basemap = leaflet(width = "100%", height = "800px") %>%
+  addTiles(tilesURL)
+regions <-  c("IOTC", "WCPFC", "ICCAT", "IATTC")
+```
+
+
+```{r}
+t <- st_as_sf(overlapping_without_ccsbt%>% group_by(unit,geographic_identifier, source_authority) %>% summarise(value = sum(value, na.rm = TRUE))%>% pivot_wider(names_from = source_authority, values_from = value, values_fill = 0) %>% ungroup() %>% inner_join(world_sf, by = c("geographic_identifier"="code"))) %>% 
+  st_transform(4326)
+t_no <- t %>% filter(unit == "Number of fish")
+t_tons <- t %>% filter(unit == "Tons")
+region.tb_no = t_no  %>% 
+  st_point_on_surface() %>% 
+  st_coordinates() %>% 
+  as_tibble() %>% 
+  rename(lon = 1, lat = 2) %>% 
+  bind_cols(t_no %>% st_drop_geometry()) %>% 
+  mutate(total = IOTC + IATTC+ WCPFC + ICCAT)
+region.tb_tons = t_tons  %>% 
+  st_point_on_surface() %>% 
+  st_coordinates() %>% 
+  as_tibble() %>% 
+  rename(lon = 1, lat = 2) %>% 
+  bind_cols(t_tons %>% st_drop_geometry()) %>% 
+  mutate(total = IOTC + IATTC+ WCPFC + ICCAT)
+```
+
+In number of fish
+
+```{r}
+basemap  %>%
+  addMinicharts(lng = region.tb_no$lon, 
+                lat = region.tb_no$lat, 
+                type = "pie", 
+                chartdata = region.tb_no[,regions], 
+             
+                width = 60 * sqrt(region.tb_no$total) / sqrt(max(region.tb_no$total)), 
+                transitionTime = 0) 
+```
+
+In tons 
+
+```{r}
+
+basemap  %>%
+  addMinicharts(lng = region.tb_tons$lon, 
+                lat = region.tb_tons$lat, 
+                type = "pie", 
+                chartdata = region.tb_tons[,regions], 
+             
+                width = 60 * sqrt(region.tb_tons$total) / sqrt(max(region.tb_tons$total)), 
+                transitionTime = 0) 
+```
+
+
+
+```{r}
+count_na_func <- function(x) sum(is.na(x))
+
+
+
+differenciate_area_unique_autho_area_multiple <- st_as_sf(overlapping_without_ccsbt%>% group_by(unit,geographic_identifier, source_authority) %>% summarise(value = sum(value, na.rm = TRUE))%>% pivot_wider(names_from = source_authority, values_from = value) %>% ungroup() %>% inner_join(world_sf, by = c("geographic_identifier"="code"))) %>% 
+  st_transform(4326)
+st_geometry(differenciate_area_unique_autho_area_multiple) <- NULL
+  differenciate_area_unique_autho_area_multiple <- differenciate_area_unique_autho_area_multiple %>% mutate(count_na = apply(., 1, count_na_func)) %>% 
+mutate(From_where =case_when(count_na == 3 ~ "Only data from one source authority", TRUE~ "Data from multiple source authority"))  %>%  rowwise() %>% 
+  mutate(value = sum(c_across(c("IOTC", "WCPFC", "ICCAT", "IATTC")), na.rm = T))
+
+recap_multpile_unique_SA <- differenciate_area_unique_autho_area_multiple %>% group_by(unit,From_where) %>% summarise(nrow = n() ,value = sum(value, na.rm = TRUE))
+
+```
+
+
+```{r}
+table <- recap_multpile_unique_SA%>% mutate(pourcentage_value = prop.table(value)*100, pourcentage_row = prop.table(nrow)*100)%>%
+    mutate(labels_value = paste0(round(pourcentage_value),"  % "),
+                                 labels_row = paste0(round(pourcentage_row),"  % "))%>%  ungroup() %>% group_by(unit) %>%arrange(unit,desc(pourcentage_value)) %>%  
+  mutate(ypos_ligne_value = cumsum(pourcentage_value)- 0.5*pourcentage_value) %>% group_by(unit) %>%arrange(unit,desc(pourcentage_row)) %>% mutate(ypos_ligne_row =  cumsum(pourcentage_row)- 0.5*pourcentage_row ) %>%
+    distinct()
+```
+
+
+```{r}
+value <- ggplot(table) +
+  aes(
+    x = "",
+    fill = From_where,
+    colour = From_where,
+    group = From_where,
+    weight = pourcentage_value
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (table %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1 ,y = ypos_ligne_value/100, label = paste0(pourcentage_value,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="", title = "In value") +facet_wrap("unit")
+
+
+```
+
+```{r paged.print=TRUE}
+row <- ggplot(table) +
+  aes(
+    x = "",
+    fill = From_where,
+    colour = From_where,
+    group = From_where,
+    weight = pourcentage_row
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (table %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1 ,y = ypos_ligne_row/100, label = paste0(pourcentage_row,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="", title = "In rows") +facet_wrap("unit")
+value
+row
+```
+
+## Data from multiple sources
+
+We only analyse the data where two differents RFMOs coexist on the same geographic identifier first
+
+```{r}
+data_where_overlap <- differenciate_area_unique_autho_area_multiple
+# st_geometry(data_where_overlap) <- NULL
+data_where_overlap <- data_where_overlap %>% filter(From_where == "Data from multiple source authority")%>% group_by(unit,geographic_identifier, area_competence) %>% arrange(desc(value)) %>%  distinct()
+data_where_overlap[is.na(data_where_overlap)] <-  0
+t <- st_as_sf(data_where_overlap %>% inner_join(world_sf %>% select(code), by = c( "geographic_identifier"="code")))
+region.tb =  t%>% 
+  st_point_on_surface() %>% 
+  st_coordinates() %>% 
+  as_tibble() %>% 
+  rename(lon = 1, lat = 2) %>% 
+  bind_cols(t %>% st_drop_geometry()) %>% 
+  mutate(total = IOTC + IATTC+ WCPFC + ICCAT)
+
+tilesURL = "http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+library(leaflet.minicharts)
+library(leaflet)
+basemap = leaflet(width = "100%", height = "800px") %>%
+  addTiles(tilesURL)
+
+basemap  %>%
+  addMinicharts(lng = region.tb$lon, 
+                lat = region.tb$lat, 
+                type = "pie", 
+                chartdata = region.tb[, c("IOTC", "WCPFC", "ICCAT", "IATTC")], 
+               
+                width = 60 * sqrt(region.tb$total) / sqrt(max(region.tb$total)), 
+                transitionTime = 0) 
+
+```
+
+```{r}
+data_where_overlap_with_all_informations <- inner_join(data, data_where_overlap %>%ungroup() %>%  select(geographic_identifier,st_area, area_competence), by = "geographic_identifier") %>% mutate(time_start = as.Date(time_start), time_end = as.Date(time_end))
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,time_start, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>%  filter(source_authority != "CCSBT")) +
+  aes(x = time_start, y = value, colour = source_authority) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free_y")
+```
+
+
+```{r}
+library(readr)
+library(readxl)
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
+data_where_overlap_with_all_informations <- data_where_overlap_with_all_informations%>% inner_join(species_group, by = c("species"))%>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
+
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,species_group, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+  aes(
+    x = species_group,
+    colour = source_authority,
+    weight = value
+  ) +
+  geom_bar(fill = "#112446") +
+  scale_color_hue(direction = 1) +
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free")
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,cat_geo, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+  aes(
+    x = cat_geo,
+    colour = source_authority,
+    weight = value
+  ) +
+  geom_bar(fill = "#112446") +
+  scale_color_hue(direction = 1) +
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free")
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,gear, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+  aes(
+    x = gear,
+    colour = source_authority,
+    weight = value
+  ) +
+  geom_bar(fill = "#112446") +
+  scale_color_hue(direction = 1) +
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free")
+```
+
+## All data in overlap zones
+
+We make now, the analysis on the complete dataset of overlapping zones.
+
+```{r}
+data_where_overlap <- differenciate_area_unique_autho_area_multiple
+# st_geometry(data_where_overlap) <- NULL
+data_where_overlap <- data_where_overlap %>% group_by(unit,geographic_identifier, area_competence) %>% arrange(desc(value)) %>%  distinct()
+data_where_overlap[is.na(data_where_overlap)] <-  0
+t <- st_as_sf(data_where_overlap %>% inner_join(world_sf %>% select(code), by = c( "geographic_identifier"="code")))
+region.tb =  t%>% 
+  st_point_on_surface() %>% 
+  st_coordinates() %>% 
+  as_tibble() %>% 
+  rename(lon = 1, lat = 2) %>% 
+  bind_cols(t %>% st_drop_geometry()) %>% 
+  mutate(total = IOTC + IATTC+ WCPFC + ICCAT)
+
+tilesURL = "http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+library(leaflet.minicharts)
+library(leaflet)
+basemap = leaflet(width = "100%", height = "800px") %>%
+  addTiles(tilesURL)
+
+basemap  %>%
+  addMinicharts(lng = region.tb$lon, 
+                lat = region.tb$lat, 
+                type = "pie", 
+                chartdata = region.tb[, c("IOTC", "WCPFC", "ICCAT", "IATTC")], 
+               
+                width = 60 * sqrt(region.tb$total) / sqrt(max(region.tb$total)), 
+                transitionTime = 0) 
+
+```
+
+```{r}
+data_where_overlap_with_all_informations <- inner_join(data, data_where_overlap %>%ungroup() %>%  select(geographic_identifier,st_area, area_competence), by = "geographic_identifier") %>% mutate(time_start = as.Date(time_start), time_end = as.Date(time_end))
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,time_start, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>%  filter(source_authority != "CCSBT")) +
+  aes(x = time_start, y = value, colour = source_authority) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free_y")
+```
+
+
+```{r}
+library(readr)
+library(readxl)
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
+data_where_overlap_with_all_informations <- data_where_overlap_with_all_informations%>% inner_join(species_group, by = c("species"))%>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
+
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,species_group, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+  aes(
+    x = species_group,
+    colour = source_authority,
+    weight = value
+  ) +
+  geom_bar(fill = "#112446") +
+  scale_color_hue(direction = 1) +
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free")
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,cat_geo, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+  aes(
+    x = cat_geo,
+    colour = source_authority,
+    weight = value
+  ) +
+  geom_bar(fill = "#112446") +
+  scale_color_hue(direction = 1) +
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free")
+```
+
+```{r}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,gear, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+  aes(
+    x = gear,
+    colour = source_authority,
+    weight = value
+  ) +
+  geom_bar(fill = "#112446") +
+  scale_color_hue(direction = 1) +
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(vars(unit,area_competence), scales = "free")
+```
+
+
+The definition of the CCSBT competence authority area is not yet provided. Ancient way was to suppress all the SBF data coming from another source authority than CCSBT. In this section we will study the distribution of SBF depending on various factors. 
+
+## SBF data
+
+### Distribution of SBF data 
+
+```{r}
+data_only_sbf <- data %>% filter(species == "SBF")
+```
+
+```{r}
+ggplot(data_only_sbf) +
+  aes(x = source_authority, weight = value) +
+  geom_bar(fill = "#112446") +
+  theme_minimal()
+```
+
+SBF captures are declared only by CCSBT. 
+
+However they do not declare only SBF. 

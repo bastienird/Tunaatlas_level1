@@ -11,14 +11,23 @@ library(gsheet)
 library(rtunaatlas)
 library(DBI)
 library(readr)
-# if(!require(rtunaatlas)) {
-#   install_github("eblondel/rtunaatlas", force=TRUE)
-#   library(rtunaatlas)
-#   }
+library(data.table)
+# library(rpostgis)
+executeWorkflow("~/Documents/Tunaatlas_level1/level0_level2_changingorder.json")
+
+config <- initWorkflow("~/Documents/Tunaatlas_level1/level0_level2_changingorder.json")
+
+
+
+
+
+if(!require(rtunaatlas)) {
+  install_github("eblondel/rtunaatlas", force=TRUE)
+  library(rtunaatlas)
+  }
 setwd("~/Documents/Tunaatlas_level1")
 files <- "~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_2022.json"
 executeWorkflow(files)
-
 
 executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_dbmodel+codelists_d4science.json")
 executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_mappings_d4science.json")
@@ -41,33 +50,33 @@ executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_global_datasets_catch_d4sci
 
 # config$job <- jobdir
 # 
-# executeWorkflowJob(config)
+executeWorkflowJob(config)
 # 
 
 
 ############
 #1. Init the workflow based on configuration file
-config <- initWorkflow(files)
+config <- initWorkflow("~/Documents/Tunaatlas_level1/level0_level2_changingorder.json")
 #2. Inits workflow job (create directories)
 jobdir <- initWorkflowJob(config)
-# config$job <- "~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/20220311165011"
+config$job <- "~/Documents/Tunaatlas_level1/jobs/20220405132056"
 # config$job <- "~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/20220309152940"
 #3. le téléchargement de la donnée vers le dossier d'execution ne se fait  que lorsqu'on execute executeWorkflowJob. 
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
-config$job <- "~/Documents/Tunaatlas_level1/jobs/20220315173538"
+# config$job <- "~/Documents/Tunaatlas_level1/jobs/20220315173538"
 config$job <- jobdir
 executeWorkflowJob(config)
 executeWorkflow(files)
 
 
 entities <- config$metadata$content$entities
-entities <- config$getEntities()
+# entities <- config$getEntities()
 
 contacts <- config$metadata$content$contacts 
-contacts <- config$getContacts()
+# contacts <- config$getContacts()
 
 entity <- config$metadata$content$entities[[1]]
-entity <- entities[[4]]
+# entity <- entities[[1]]
 
 options <- entity$data$actions[[1]]$options
 #options <-config$actions[[1]]$options

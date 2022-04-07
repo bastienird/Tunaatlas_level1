@@ -56,6 +56,8 @@ if(!require(readr)){
   install.packages("readr")
   require(readr)
 }
+
+
 # mapping_map_code_lists <- options$mapping_map_code_lists
 #scripts
 url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation"
@@ -102,7 +104,7 @@ for (i in names(options)){
 }
 list_options = list_options[-1,]
 gear_filter <- options$gear_filter
-# write_csv(list_options, "list_options.csv")
+write_csv(list_options, "list_options.csv")
 
 #Identify expected Level of processing
 DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
@@ -143,11 +145,13 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
   mapping_csv_mapping_datasets_url <- entity$getJobDataResource(config, entity$data$source[[2]])
   mapping_dataset <- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
   mapping_keep_src_code <- FALSE
-  if(!is.null(options$mapping_keep_src_code)) mapping_keep_src_code = options$mapping_keep_src_code
+  if(!is.null(options$mapping_keep_src_code)) if (mapping_keep_src_code == options$mapping_keep_src_code) {
   
   config$logger.info("Mapping code lists of georeferenced datasets...")
-  georef_dataset <- map_codelists(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
-  config$logger.info("Mapping code lists of georeferenced datasets OK")
+  try(georef_dataset <- map_codelists(con, "catch", mapping_dataset, dataset_to_map=georef_dataset, mapping_keep_src_code))
+  if(nrow(georef_dataset == 0)){georef_dataset_after_mapping_codelist <- read_csv("data/georef_dataset_after_mapping_codelist.csv")}
+    config$logger.info("Mapping code lists of georeferenced datasets OK")
+  }
   
   if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_nominal){
     config$logger.info("Retrieving RFMOs nominal catch...")
@@ -622,7 +626,7 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
            
            config$logger.info("STEP 5/5: BEGIN function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
            georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,options,
-                                                                                                   georef_dataset=georef_dataset,
+                                                georef_dataset=georef_dataset,
                                                                                                    resolution=1,
                                                                                                    action_to_do=options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg)
            config$logger.info("STEP 5/5: END function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
@@ -634,10 +638,11 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
            config$logger.info(sprintf("STEP 5/5 : Disaggregate data on 1° generated [%s] additionnal tons", ntons_after_disaggregation_1deg-ntons_before_this_step))
            config$logger.info("END STEP 5/5")
            fonction_dossier("disagreggateallin1deg",
-                            dataset_final_disaggregated_on_resolution_to_disaggregate, 
+                            georef_dataset, 
                             "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
                             c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
+           gc()
          } else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
            config$logger.info(sprintf("LEVEL 1 => STEP 5/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet): Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
@@ -754,6 +759,6 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
          config$logger.info("-----------------------------------------------------------------------------------------------------")
          config$logger.info("End: Your tuna atlas dataset has been created!")
          config$logger.info("-----------------------------------------------------------------------------------------------------")
-         write.csv(options)
+         # write.csv(options)
          rm(georef_dataset)
          gc()

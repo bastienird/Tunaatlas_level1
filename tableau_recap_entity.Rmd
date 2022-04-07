@@ -3,7 +3,7 @@ title: "Summary of the treatment for each entity of the global tuna atlas"
 output: html_document
 date: '2022-03-23'
 params: 
-  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220331130831"
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/withJulienscode_from_wendsdaynight"
 ---
 
 ```{r setup, include=FALSE}
