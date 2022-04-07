@@ -1,4 +1,5 @@
 fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", options=NULL, options_written_total = options_written_total) {
+  if(!exists("options_written_total")){options_written_total <<- ""}
   dir.create("Markdown")
   dir.create(paste0("Markdown/",nom_dossier))
   nom_dossier <- paste0("Markdown/",nom_dossier)
@@ -21,7 +22,7 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
       
     }
     write(options_written, paste0(nom_dossier,"/options.txt"))
-    options_written_total <- paste0(options_written, options_written_total)
+    options_written_total <<- paste0(options_written, options_written_total)
     
     } else {options = "NONE"}
     
