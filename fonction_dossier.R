@@ -1,3 +1,30 @@
+fonction_creation_options = function(){
+
+j <- 1
+
+list_options <-assign("list_options", data.frame(matrix(ncol =2 , nrow = 1)), envir= .GlobalEnv)
+colnames(list_options) <- c("Options", "Position")
+
+
+for (i in names(options)){
+  if (i != ""){
+    
+    assign(paste0("options_",i), paste(options[[j]], collapse = ' ; '), envir= .GlobalEnv)
+    assign(i, paste0(options[[j]]), envir= .GlobalEnv)}
+  if (options[[j]][1] == TRUE){
+    assign(i, options[[j]], envir= .GlobalEnv)
+  } else if (options[[j]][1] == FALSE){
+    assign(i, options[[j]], envir= .GlobalEnv)
+  } 
+  data_i <-   data.frame(i, paste(options[[j]], collapse = ' ; '))
+  names(data_i) <- colnames(list_options)
+  list_options <- rbind(list_options, data_i)
+  
+  j <-  j+1 
+}
+list_options = list_options[-1,]
+}
+
 fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", options=NULL) {
   if(!exists("options_written_total")){assign("options_written_total", "", envir = .GlobalEnv)}
   dir.create("Markdown")
@@ -24,7 +51,7 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
     write(options_written, paste0(nom_dossier,"/options.txt"))
     assign("options_written_total", paste0(options_written, options_written_total), envir = .GlobalEnv)
     
-    } else {options = "NONE"}
+    } else {options_written = "NONE"}
     
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
@@ -32,5 +59,7 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
   write(options_written_total, paste0(nom_dossier,"/options_total.txt"))
   
 }
+
+
 
 
