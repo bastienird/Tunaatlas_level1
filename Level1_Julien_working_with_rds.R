@@ -58,6 +58,7 @@ source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R"))
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
+function_creation_options()
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/function_overlapped")
 
 # connect to Tuna atlas database
@@ -95,7 +96,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
 		                 "get_rfmos_datasets_level0", 
-		                 c(paste0("include_IOTC =", options$include_IOTC),"include_IATTC","include_ICCAT"))
+	                 c(options_include_IOTC, options_include_IATTC, options_include_ICCAT ,options_include_WCPFC, options_include_CCSBT))
 
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
@@ -132,7 +133,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		fonction_dossier("mapping_codelist",
 		                 georef_dataset, 
 		                 "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
-		                 "map_codelists", paste0("mapping_map_code_lists = ",options$mapping_map_code_lists))
+		                 "map_codelists",c(options_mapping_map_code_lists))
 
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 3/8: Apply filters on fishing gears if needed (Filter data by groups of gears) ")
@@ -148,7 +149,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		fonction_dossier("filtering_on_gear",
 		                 georef_dataset, 
 		                 "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
-		                 "", paste0("options$gear_filter = ",options$gear_filter))
+		                 "", c(options_gear_filter))
 		
 
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -168,7 +169,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		fonction_dossier("SBF",
 		                 georef_dataset, 
 		                 "Southern Bluefin Tuna (SBF): SBF data: keep data from CCSBT or data from the other tuna RFMOs? ",
-		                 "", paste0("options$include_CCSBT = ",options$include_CCSBT, "options$SBF_data_rfmo_to_keep=",options$SBF_data_rfmo_to_keep))
+		                 "", c(options_include_CCSBT, options_fact, options_SBF_data_rfmo_to_keep))
 		
 
 		
@@ -226,11 +227,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		fonction_dossier("OverlappingIATTCWCPFC",
 		                 georef_dataset, 
 		                 "Overlapping zone (IATTC/WCPFC): keep data from IATTC or WCPFC?",
-		                 "", 
-		                 paste0("overlapping_zone_iattc_wcpfc_data_to_keep = ",
-		                        if(exists("options$overlapping_zone_iattc_wcpfc_data_to_keep")){
-		                          options$overlapping_zone_iattc_wcpfc_data_to_keep
-		                          }else{"not filled out"}  ))
+		                 "", c(options_overlapping_zone_iattc_wcpfc_data_to_keep,options_include_IATTC,options_include_WCPFC ))
 		                          
 		                      
 		
@@ -282,8 +279,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Convert units by using A. Fonteneau file",
 		                 "do_unit_conversion", 
-		                 paste0("unit_conversion_convert = ",
-		                        options$unit_conversion_convert))
+		                        c(options_unit_conversion_convert))
 			
 
 		if (options$spatial_curation_data_mislocated %in% c("reallocate","remove")){
@@ -322,8 +318,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA')",
 		                 "function_spatial_curation_data_mislocated", 
-		                 paste0("spatial_curation_data_mislocated = ",
-		                        options$spatial_curation_data_mislocated))
+		                 c(options_spatial_curation_data_mislocated))
 		
 		if (options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg %in% c("disaggregate","remove")) {
 		  
@@ -362,8 +357,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Disaggregate data on 5° resolution quadrants (for 5deg resolution datasets only)",
 		                 "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg", 
-		                 paste0("disaggregate_on_5deg_data_with_resolution_superior_to_5deg = ",
-		                        options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
+		                 c(options_disaggregate_on_5deg_data_with_resolution_superior_to_5deg))
 		
 		
 		if (options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg %in% c("disaggregate","remove")) { 
@@ -401,8 +395,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only)",
 		                 "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg", 
-		                 paste0("disaggregate_on_1deg_data_with_resolution_superior_to_1deg = ",
-		                        options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
+		                 c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
 		georef_dataset$time_start <- as.Date(georef_dataset$time_start)
 		georef_dataset$time_end <- as.Date(georef_dataset$time_end)
 		
@@ -550,11 +543,11 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Raise IRD gridded Level 1 (1 or 5 deg) input with FIRMS Level O total (nominal) catch dataset",
 		                ("function_raising_georef_to_nominal,function_unit_conversion_convert,get_rfmos_datasets_level0"), 
-		                 c(raising_georef_to_nominal ,
-		                        iattc_ps_raise_flags_to_schooltype ,
-		                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,
-		                        iattc_ps_catch_billfish_shark_raise_to_effort ,
-		                        iccat_ps_include_type_of_school))
+		                 c(options_raising_georef_to_nominal ,
+		                   options_iattc_ps_raise_flags_to_schooltype ,
+		                   options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,
+		                   options_iattc_ps_catch_billfish_shark_raise_to_effort ,
+		                   options_iccat_ps_include_type_of_school))
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
 		config$logger.info("LEVEL 0 => STEP 6/8: Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)")
 		#-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -581,8 +574,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 		                 georef_dataset, 
 		                 "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
 		                 "spatial_curation_upgrade_resolution", 
-		                 paste0("options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg = ",
-		                        options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
+		                 c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
 
 
 config$logger.info("-----------------------------------------------------------------------------------------------------")

@@ -1,4 +1,4 @@
-fonction_creation_options = function(){
+function_creation_options = function(){
 
 j <- 1
 
@@ -16,8 +16,9 @@ for (i in names(options)){
   } else if (options[[j]][1] == FALSE){
     assign(i, options[[j]], envir= .GlobalEnv)
   } 
-  data_i <-   data.frame(i, paste(options[[j]], collapse = ' ; '))
+  assign("data_i",  data.frame(i, paste(options[[j]], collapse = ' ; ')))
   names(data_i) <- colnames(list_options)
+  assign("data_i",data_i, envir= .GlobalEnv)
   list_options <- rbind(list_options, data_i)
   
   j <-  j+1 

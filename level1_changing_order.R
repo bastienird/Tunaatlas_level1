@@ -65,7 +65,6 @@ source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R
 source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
-source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
 # source("~/Documents/Tunaatlas_level1/function_raising_georef_to_nominal_Bastien.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
@@ -77,33 +76,8 @@ con <- config$software$output$dbi
 
 #set parameterization
 
-j <- 1
-
-list_options <-   data.frame(matrix(ncol =2 , nrow = 1))
-colnames(list_options) <- c("Options", "Position")
-
-  
-for (i in names(options)){
-  if (i != ""){
-  
-  assign(paste0("options_",i), paste0(options[[j]]))
-    assign(i, paste0(options[[j]][1]))}
-    if (options[[j]][1] == TRUE){
-      assign(i, options[[j]])
-    } else if (options[[j]][1] == FALSE){
-      assign(i, options[[j]])
-    } 
-  data_i <-   data.frame(i, options[[j]])
-  names(data_i) <- colnames(list_options)
-  list_options <- rbind(list_options, data_i)
-  
-  
-  # print(j)
-
-  j <-  j+1 
-}
-list_options = list_options[-1,]
-gear_filter <- options$gear_filter
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
+function_creation_options()
 write_csv(list_options, "list_options.csv")
 
 #Identify expected Level of processing
