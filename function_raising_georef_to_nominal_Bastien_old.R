@@ -1,4 +1,4 @@
-function(entity,
+function_raising_georef_to_nominal_Bastien_old =function(entity,
          config,
          dataset_to_raise,
          dataset_to_compute_rf,
