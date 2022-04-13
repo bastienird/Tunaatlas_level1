@@ -77,7 +77,34 @@ con <- config$software$output$dbi
 #set parameterization
 
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
-function_creation_options()
+# function_creation_options()
+
+  
+  j <- 1
+  
+  list_options <-assign("list_options", data.frame(matrix(ncol =2 , nrow = 1)), envir= .GlobalEnv)
+  colnames(list_options) <- c("Options", "Position")
+  
+  
+  for (i in names(options)){
+    if (i != ""){
+      
+      assign(paste0("options_",i), paste(options[[j]], collapse = ' ; '), envir= .GlobalEnv)
+      assign(i, paste0(options[[j]]), envir= .GlobalEnv)}
+    if (options[[j]][1] == TRUE){
+      assign(i, options[[j]], envir= .GlobalEnv)
+    } else if (options[[j]][1] == FALSE){
+      assign(i, options[[j]], envir= .GlobalEnv)
+    } 
+    assign("data_i",  data.frame(i, paste(options[[j]], collapse = ' ; ')))
+    names(data_i) <- colnames(list_options)
+    assign("data_i",data_i, envir= .GlobalEnv)
+    list_options <- rbind(list_options, data_i)
+    
+    j <-  j+1 
+  }
+  list_options = list_options[-1,]
+
 write_csv(list_options, "list_options.csv")
 
 #Identify expected Level of processing
@@ -119,35 +146,24 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
   mapping_csv_mapping_datasets_url <- entity$getJobDataResource(config, entity$data$source[[2]])
   mapping_dataset <- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
   mapping_keep_src_code <- FALSE
-  if(!is.null(options$mapping_keep_src_code)) if (mapping_keep_src_code == options$mapping_keep_src_code) {
+  if(!is.null(options$mapping_keep_src_code)) mapping_keep_src_code = options$mapping_keep_src_code
   
   config$logger.info("Mapping code lists of georeferenced datasets...")
-  try(georef_dataset <- map_codelists(con, "catch", mapping_dataset, dataset_to_map=georef_dataset, mapping_keep_src_code))
-  if(nrow(georef_dataset == 0)){georef_dataset_after_mapping_codelist <- read_csv("data/georef_dataset_after_mapping_codelist.csv")}
-    config$logger.info("Mapping code lists of georeferenced datasets OK")
-  }
+  georef_dataset <- map_codelists(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
+  config$logger.info("Mapping code lists of georeferenced datasets OK")
   
-  if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_nominal){
-    config$logger.info("Retrieving RFMOs nominal catch...")
-    nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
-    #@juldebar keep same units for all datatets
-    if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "MT"
-    if(any(nominal_catch$unit == "no")) nominal_catch[nominal_catch$unit == "no", ]$unit <- "NO"
-    class(nominal_catch$value) <- "numeric"
-    config$logger.info("Retrieving RFMOs nominal catch OK")
-    
-    config$logger.info("Mapping code lists of nominal catch datasets...")
-    nominal_catch <- map_codelists(con, "catch", mapping_dataset, nominal_catch, mapping_keep_src_code)
-    config$logger.info("Mapping code lists of nominal catch datasets OK")
-    config$logger.info(sprintf("nominal catch dataset has [%s] lines", nrow(nominal_catch)))	
-    config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))
-    fonction_dossier("mapping_codelist",
-                     georef_dataset, 
-                     "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
-                     "map_codelists",c(options_mapping_map_code_lists))
+  fonction_dossier("mapping_codelist",
+                   georef_dataset, 
+                   "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
+                   "map_codelists", c(options_mapping_map_code_lists))
+  
+  # if(!is.null(options$raising_georef_to_nominal)) if(options$raising_georef_to_nominal){
+  #   config$logger.info("Mapping code lists of nominal catch datasets...")
+  #   nominal_catch <- map_codelists(con, "catch", mapping_dataset, nominal_catch, mapping_keep_src_code)
+  #   config$logger.info("Mapping code lists of nominal catch datasets OK")
     
   }
-}
+
 
 # georef_dataset <- georef_dataset %>% filter(unit != "NOMT") %>% mutate(unit = ifelse( unit == "MTNO", "MT", unit))
 
@@ -422,14 +438,15 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
   
   config$logger.info("Extract and load FIRMS Level 0 nominal catch data input (required if raising process is asked) ")
   	nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
+  	
   #         #@juldebar keep same units for all datatets
   	if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "MT"
           if(any(nominal_catch$unit == "no")) nominal_catch[nominal_catch$unit == "no", ]$unit <- "NO"
   	class(nominal_catch$value) <- "numeric"
   #@juldebar if not provided by Google drive line below should be used if nominal catch has to be extracted from the database
-  #nominal_catch <-retrieve_nominal_catch(entity, config, options)
+  if(nrow(nominal_catch)==0){nominal_catch <-retrieve_nominal_catch(entity, config, options)}
   config$logger.info(sprintf("Nominal catch dataset has [%s] lines", nrow(nominal_catch)))	
-  config$logger.info(paste0("Total of  nominal catch for file ",entity$data$source[[2]], "is : ",sum(nominal_catch$value),"  \n"))
+  config$logger.info(paste0("Total of  nominal catch for file ",entity$data$source[[1]], "is : ",sum(nominal_catch$value),"  \n"))
   
   config$logger.info("Start raising process")
   
@@ -514,7 +531,7 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
   config$logger.info(paste0("Total ",fact," before raising is : ",sum(georef_dataset$value),"\n"))
   config$logger.info(paste0("Total ",fact," in nominal data is : ",sum(nominal_catch$value),"\n"))
   
-  georef_dataset_test<-function_raising_georef_to_nominal(entity=entity,
+  georef_dataset<-function_raising_georef_to_nominal(entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,
@@ -530,8 +547,8 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
   # metadata$lineage<-c(metadata$lineage,georef_dataset$lineage)
   # metadata$supplemental_information<-paste0(metadata$supplemental_information,georef_dataset$supplemental_information)
   
-  georef_dataset<-georef_dataset_test$dataset
-  config$logger.info(paste0("Total ",fact," after raising is now: ",sum(georef_dataset_test$value),"\n"))
+  georef_dataset<-georef_dataset$dataset
+  config$logger.info(paste0("Total ",fact," after raising is now: ",sum(georef_dataset$value),"\n"))
   config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
   config$logger.info(paste0("Total catch for data after raising is ",sum(georef_dataset$value),"  \n"))
          }else{
@@ -636,7 +653,7 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
            fonction_dossier("filtering_on_gear",
                             georef_dataset, 
                             "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
-                            "", c(gear_filter))
+                            "", c(options_gear_filter))
          }
 
          

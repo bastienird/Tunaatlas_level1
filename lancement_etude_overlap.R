@@ -9,8 +9,14 @@ fonction_markdown_overlap = function(chemin_dacces, output = paste0("overlap",ta
                     output_file = output)
 }
 
-fonction_markdown_overlap("data/Les7entites_finies/entities/global_catch_firms_level0/Rds/georef_dataset_level0_step11global_catch_firms_level0.rds",
-                          output = "level0_global_catch_study_mislocated")
+fonction_markdown_overlap("~/Documents/Tunaatlas_level1/jobs/mycode_second/entities/global_catch_firms_Bastien_rds_level0/Markdown/mapping_codelist/rds.rds",
+                          output = "level0_global_catch_study_mislocated_after_mapping")
 
-fonction_markdown_overlap("~/Documents/Tunaatlas_level1/jobs/no_difference_L1_L2/entities/global_catch_ird_level2/Markdown/level1reallocation/rds.rds",
-                          output = "level1_global_catch_study_mislocated")
+fonction_markdown_overlap("~/Documents/Tunaatlas_level1/jobs/old_with_correction_maybe/entities/global_catch_firms_Old_with_step_rds_level0/Markdown/unit_harmonization/rds.rds",
+                          output = "level0_global_catch_study_mislocated_at_the_end_old")
+
+fonction_markdown_overlap("data/test_end_level0_after_function_realocate.rds",
+                          output = "level0_global_catch_study_mislocated_afterrealocation")
+
+fonction_markdown_overlap("data/test_end_level0_after_function_remove.rds",
+                          output = "level0_global_catch_study_mislocated_after_remove")

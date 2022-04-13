@@ -3,8 +3,9 @@ title: "Etude de l'overlap"
 output: html_document
 date: '2022-03-14'
 params:
-  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/difference_L1_L2/entities/global_catch_5deg_1m_IRD_level2/Markdown/endlevel0data/rds.rds"
+  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/my_code/entities/global_catch_firms_Bastien_rds_level0/Markdown/mapping_codelist/rds.rds"
   plotting: "view"
+  world_coastline: "gshhs_world_coastlines"
 ---
 
 ```{r setup, include=FALSE}
@@ -23,6 +24,7 @@ library(dplyr, warn.conflicts = FALSE)
 library(sf)
 library(tmap)
 library(tidyverse)
+library(leaflet.minicharts)
 
 ```
 
@@ -49,8 +51,8 @@ IOTC_shape <- competence_area %>% filter(code == "IOTC")
 IATTC_shape <- competence_area %>% filter(code == "IATTC")
 WCPFC_shape <- competence_area %>% filter(code == "WCPFC")
 ICCAT_shape <- competence_area %>% filter(code == "ICCAT")
-continent <- st_read(
-  "data/continent.shp")
+query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+continent <- st_read(con, query = query)%>% filter(!st_is_empty(.))
 
 IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iotc = "iotc")
 
@@ -172,7 +174,7 @@ We are now interested in the mislocated data
 #                               area_competence == "IATTCWCPFC" & source_authority %in% c("IATTC", "WCPFC")  ~ TRUE, tolower(area_competence) == area_competence ~ TRUE, 
 #                               TRUE ~ FALSE))
 
-mislocated <- inner_join  %>% filter(!str_detect(area_competence, "continent")) %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(source_authority = tolower(source_authority)) %>%  mutate(mislocated = case_when(str_detect(area_competence, source_authority) == TRUE ~ TRUE, area_competence == source_authority ~ TRUE, source_authority == "CCSBT"~TRUE,
+mislocated <- inner_join %>% mutate(area_competence = as.character(area_competence)) %>% filter(!str_detect(inner_join$area_competence, "continent")) %>% filter(!is.null(area_competence))%>% filter(area_competence != "")%>% mutate(area_competence= as.factor(area_competence)) %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(source_authority = tolower(source_authority)) %>%  mutate(mislocated = case_when(str_detect(area_competence, source_authority) == TRUE ~ TRUE, area_competence == source_authority ~ TRUE, source_authority == "CCSBT"~TRUE,
                               TRUE ~ FALSE))
 
 final <- mislocated %>% group_by(mislocated, unit) %>% summarise(value = sum(value))
@@ -192,7 +194,8 @@ perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
 ```
 
 ```{r}
-tm_shape(WCPFC_shape)+tm_borders( col = "red")+tm_shape(ICCAT_shape)+tm_borders( col = "yellow")+tm_shape(IOTC_shape)+tm_borders( col = "purple")+tm_shape(IATTC_shape)+tm_borders( col = "skyblue")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="ccsbt")))+tm_polygons(col = "source_authority")+tm_text("area_competence")+tm_facets("unit")
+tm_shape(WCPFC_shape %>% mutate(name = "WCPFC"))+tm_borders( col = "red")+tm_text("name")+tm_shape(ICCAT_shape%>% mutate(name = "ICCAT"))+tm_borders( col = "yellow")+tm_text("name")+tm_shape(IOTC_shape%>% mutate(name = "IOTC"))+tm_borders( col = "purple")+tm_text("name")+tm_shape(IATTC_shape%>% mutate(name = "IATTC"))+tm_borders( col = "skyblue")+tm_text("name")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="ccsbt") %>%  filter(area_competence != "") %>% filter(!is.null(area_competence))))+tm_polygons(col = "source_authority")+tm_text("source_authority")+tm_facets("unit")
+
 ```
 
 
