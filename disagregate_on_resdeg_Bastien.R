@@ -38,8 +38,9 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
     dataset_to_leave_as_so <- NULL
     dataset_not_to_leave_as_so <- NULL
   }
-  area_changeresolution <- setdiff(unique(georef_dataset$geographic_identifier), 
-                                   cwp_grid_data_with_resolution_to_downgrade$geographic_identifier)
+  # area_changeresolution <- setdiff(unique(georef_dataset$geographic_identifier),
+  #                                  cwp_grid_data_with_resolution_to_downgrade$geographic_identifier)
+  area_changeresolution <- unique(dataset_not_to_leave_as_so$geographic_identifier)
   area_changeresolution <- paste(unique(area_changeresolution), 
                                  collapse = "','")
   gc()
@@ -57,14 +58,15 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
                                                              " and \n    ST_Within(a1.geom, a2.geom)\n    UNION\n    SELECT\n    a2.code as input_geographic_identifier,\n    left(a1.code,7) as geographic_identifier_project\n    from\n    area.cwp_grid a1,\n    area.irregular_areas_task2_iotc a2\n    where\n    a2.code IN ( '", 
                                                              area_changeresolution, "') and\n    a1.size_grid=", 
                                                              a1.size_grid, " and \n    ST_Within(a1.geom, a2.geom)"))
+  
   if (nrow(areas_to_project_data_to_disaggregate) > 0) {
     
     library(sf)
     query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
     world_sf <- dbGetQuery(con, query)
     world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
-    continent <- st_read(
-      "data/continent.shp")
+    query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+    continent <- st_read(con, query = query)%>% filter(!st_is_empty(.))
     world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
     
     st_geometry(world_sf) <- NULL
@@ -72,19 +74,17 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
     areas_to_project_data_to_disaggregate <- inner_join(areas_to_project_data_to_disaggregate %>% 
                                                           mutate(geographic_identifier_project = as.character(geographic_identifier_project)),world_sf,  
                                                         by = c("geographic_identifier_project"="code"))%>% 
-      filter(continent == FALSE) %>% 
-      select(geographic_identifier_project, input_geographic_identifier) %>%
-      group_by(input_geographic_identifier) %>% mutate(number = n())
+      select(geographic_identifier_project, input_geographic_identifier, continent) %>%       filter(continent == FALSE)%>%
+      group_by(input_geographic_identifier) %>% mutate(number = n()) 
     rm(world_sf)
     gc()
     dataset_to_disaggregate <- inner_join(dataset_not_to_leave_as_so, areas_to_project_data_to_disaggregate, 
                                           by = c(geographic_identifier = "input_geographic_identifier"))
-    
     rm(dataset_not_to_leave_as_so)
     rm(areas_to_project_data_to_disaggregate)
     gc()
     dataset_to_disaggregate$value <- dataset_to_disaggregate$value/dataset_to_disaggregate$number
-    dataset_to_disaggregate <- dataset_to_disaggregate %>% select(-number, -geographic_identifier)
+    dataset_to_disaggregate <- dataset_to_disaggregate %>% select(-number, -geographic_identifier, -continent)
     dataset_to_disaggregate <- rename(dataset_to_disaggregate, geographic_identifier = geographic_identifier_project)
     gc()
     
@@ -95,7 +95,8 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
     areas_to_project_data_to_aggregate <- dbGetQuery(con, 
                                                      paste0("SELECT\n        left(a2.code,7) as input_geographic_identifier,\n        left(a1.code,7) as geographic_identifier_project\n        from\n        area.cwp_grid a1,\n        area.cwp_grid a2\n        where\n        a2.code IN ('", 
                                                             area_changeresolution, "') and\n        a1.size_grid = '6' and a2.size_grid = '5' and \n        ST_Within(a2.geom, a1.geom)\n        UNION\n        SELECT\n        a2.code as input_geographic_identifier,\n        left(a1.code,7) as geographic_identifier_project\n        from\n        area.cwp_grid a1,\n        area.irregular_areas_task2_iotc a2\n        where\n        a2.code IN ('", 
-                                                            area_changeresolution, "') and\n        a1.size_grid='6' and \n        ST_Within(a2.geom, a1.geom)"))
+                                                            area_changeresolution, "') and\n        a1.size_grid='6' and \n        ST_Within(a2.geom, a1.geom)")) %>% distinct()
+    areas_to_project_data_to_aggregate <- anti_join(areas_to_project_data_to_aggregate, areas_to_project_data_to_disaggregate)
     if (nrow(areas_to_project_data_to_aggregate) > 0) {
       areas_inf_to_resolution_to_disaggregate <- unique(areas_to_project_data_to_aggregate$input_geographic_identifier)
       dataset_areas_inf_to_resolution_to_disaggregate <- georef_dataset %>% 
