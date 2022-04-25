@@ -82,8 +82,8 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
                                           by = c(geographic_identifier = "input_geographic_identifier"))
     dataset_to_aggregate <- anti_join(dataset_not_to_leave_as_so, areas_to_project_data_to_disaggregate2, 
                                       by = c(geographic_identifier = "input_geographic_identifier"))
-    # rm(dataset_not_to_leave_as_so)
-    # rm(areas_to_project_data_to_disaggregate)
+    rm(dataset_not_to_leave_as_so)
+    rm(areas_to_project_data_to_disaggregate)
     gc()
     dataset_to_disaggregate$value <- dataset_to_disaggregate$value/dataset_to_disaggregate$number
     dataset_to_disaggregate <- dataset_to_disaggregate %>% select(-number, -geographic_identifier, -continent)
