@@ -71,7 +71,7 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
     
     st_geometry(world_sf) <- NULL
     
-    areas_to_project_data_to_disaggregate2 <- inner_join(areas_to_project_data_to_disaggregate %>% 
+    areas_to_project_data_to_disaggregate <- inner_join(areas_to_project_data_to_disaggregate %>% 
                                                           mutate(geographic_identifier_project = as.character(geographic_identifier_project)),world_sf,  
                                                         by = c("geographic_identifier_project"="code"))%>% 
       select(geographic_identifier_project, input_geographic_identifier, continent) %>%       filter(continent == FALSE)%>%
