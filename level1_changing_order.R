@@ -61,7 +61,7 @@ if(!require(readr)){
 # mapping_map_code_lists <- options$mapping_map_code_lists
 #scripts
 url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation"
-source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R")) #modified for geoflow
+# source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
@@ -69,7 +69,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonct
 # source("~/Documents/Tunaatlas_level1/function_raising_georef_to_nominal_Bastien.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/disagregate_on_resdeg_Bastien.R")
-
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/get_rfmos_dataset_leve0_bastien.R")
 
 # connect to Tuna atlas database
 con <- config$software$output$dbi
@@ -144,7 +144,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
   
   config$logger.info("Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.")
   mapping_csv_mapping_datasets_url <- entity$getJobDataResource(config, entity$data$source[[2]])
-  mapping_dataset <- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
+  mapping_<- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
   mapping_keep_src_code <- FALSE
   if(!is.null(options$mapping_keep_src_code)) mapping_keep_src_code = options$mapping_keep_src_code
   
@@ -165,7 +165,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
   }
 
 
-# georef_dataset <- georef_dataset %>% filter(unit != "NOMT") %>% mutate(unit = ifelse( unit == "MTNO", "MT", unit))
+georef_dataset <- georef_dataset %>% filter(unit != "NOMT") %>% mutate(unit = ifelse( unit == "MTNO", "MT", unit))
 
 
          
@@ -198,7 +198,27 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                                                       options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep))
            
            }
-         
+if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlapping_zone_iotc_wcpfc_data_to_keep)) {
+  # overlapping_zone_iotc_wcpfc_data_to_keep <- options$overlapping_zone_iotc_wcpfc_data_to_keep
+  
+  georef_dataset <- function_overlapped(georef_dataset, con, rfmo_to_keep = overlapping_zone_iotc_wcpfc_data_to_keep,
+                                        rfmo_not_to_keep = (if (overlapping_zone_iotc_wcpfc_data_to_keep == "IOTC"){"WCPFC"} else {"IOTC"}))
+  config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_wcpfc_data_to_keep," in the IOTC/WCPFC overlapping zone..."))
+  # georef_dataset_level0_step10 <- georef_dataset
+  # georef_dataset_level0_step10_ancient<- overlapping_ancient_method
+  # georef_dataset_level0_step10_reverse <- reverse_overlapping
+  
+  config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_wcpfc_data_to_keep," in the IOTC/WCPFC overlapping zone OK"))
+  fonction_dossier("overlap_iotc_wcpfc",
+                   georef_dataset, 
+                   "Keeping data from wcpfc or iotc",
+                   "function_overlapped",
+                   c(options_include_WCPFC, 
+                     options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep))
+  
+  
+}
+
          
          
          
@@ -280,26 +300,6 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 10/8: Overlapping zone (IOTC/WCPFC): keep data from IOTC or WCPFC?")
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-         if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlapping_zone_iotc_wcpfc_data_to_keep)) {
-           # overlapping_zone_iotc_wcpfc_data_to_keep <- options$overlapping_zone_iotc_wcpfc_data_to_keep
-           
-           georef_dataset <- function_overlapped(georef_dataset, con, rfmo_to_keep = overlapping_zone_iotc_wcpfc_data_to_keep,
-                                                 rfmo_not_to_keep = (if (overlapping_zone_iotc_wcpfc_data_to_keep == "IOTC"){"WCPFC"} else {"IOTC"}))
-           config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_wcpfc_data_to_keep," in the IOTC/WCPFC overlapping zone..."))
-           # georef_dataset_level0_step10 <- georef_dataset
-           # georef_dataset_level0_step10_ancient<- overlapping_ancient_method
-           # georef_dataset_level0_step10_reverse <- reverse_overlapping
-
-           config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_wcpfc_data_to_keep," in the IOTC/WCPFC overlapping zone OK"))
-           fonction_dossier("overlap_iotc_wcpfc",
-                            georef_dataset, 
-                            "Keeping data from wcpfc or iotc",
-                            "function_overlapped",
-                            c(options_include_WCPFC, 
-                              options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep))
-           
-           
-           }
          
          
 # georef_dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
@@ -347,7 +347,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
            config$logger.info(sprintf("STEP 2/5 : Unit conversion generated [%s] additionnal tons", ntons_after_conversion-ntons_before_this_step))
            config$logger.info(sprintf("STEP 2/5 : Total number for 'NO' unit is now [%s] individuals", georef_dataset %>% filter(unit=="NO")  %>% select(value)  %>% sum()))
            config$logger.info("END STEP 2/5")
-           fonction_dossier("level1raising",
+           fonction_dossier("raising",
                             georef_dataset, 
                             "Convert units by using A. Fonteneau file", fonctions = 
                             "do_unit_conversion \n unit_conversion_csv_conversion_factor_url \n rtunaatlas::extract_dataset \n 
@@ -376,6 +376,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
            config$logger.info(sprintf("STEP 3/5 : Gridded catch dataset before Reallocation of mislocated data has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
            
            source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated.R")) #modified for geoflow
+           # source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated_bastien.R")) #modified for geoflow
            config$logger.info("STEP 3/5: BEGIN function_spatial_curation_data_mislocated() function")
            georef_dataset<-function_spatial_curation_data_mislocated(entity=entity,
                                                                      config=config,
@@ -582,9 +583,9 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
            config$logger.info("STEP 4/5: BEGIN function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
 
            georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,options,
-                                                                                                   georef_dataset=georef_dataset,
-                                                                                                   resolution=5,
-                                                                                                   action_to_do=options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg)
+                             georef_dataset=georef_dataset,
+                                        resolution=5,
+                                      action_to_do=options$disaggregate_on_5deg_data_with_resolution_superior_to_5deg)
            config$logger.info("STEP 4/5: END function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
            
            
@@ -649,12 +650,31 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
            config$logger.info(sprintf("Filtering by gear(s) [%s]", paste(gear_filter, collapse=",")))	
            georef_dataset<-georef_dataset %>% dplyr::filter(gear %in% gear_filter)
            config$logger.info("Filtering gears OK")
-           config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
+           config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))
+           
            fonction_dossier("filtering_on_gear",
                             georef_dataset, 
                             "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
                             "", c(options_gear_filter))
+           
          }
+         
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         config$logger.info("LEVEL 0 => STEP 3/8: WCPFC at the end")
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         if (!is.null(options$filter_WCPFC_at_the_end)){
+           config$logger.info(("Filtering WCPFC_at_the_end [%s]"))
+           georef_dataset<-georef_dataset %>% dplyr::filter(source_authority != "WCPFC")
+           config$logger.info("Filtering WCPFC OK")
+           config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))
+           
+           fonction_dossier("Filtering_on_WCPFC_at_the_end",
+                            georef_dataset, 
+                            "Apply filters on WCPFC at the end to see what's lost ",
+                            "", c(options_filter_WCPFC_at_the_end))
+           
+         }
+         
 
          
          # dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
@@ -666,7 +686,9 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
          if(!is.null(options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg)) if (options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg) {
            
            config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant...")
-           georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
+           source("~/Documents/Tunaatlas_level1/spatial_curation_upgrade_resolution_Bastien.R")
+           georef_dataset<-spatial_curation_bastien(con, georef_dataset, 5)
+           # georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
            georef_dataset<-georef_dataset$df
            
            
