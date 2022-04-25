@@ -71,21 +71,24 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
     
     st_geometry(world_sf) <- NULL
     
-    areas_to_project_data_to_disaggregate <- inner_join(areas_to_project_data_to_disaggregate %>% 
+    areas_to_project_data_to_disaggregate2 <- inner_join(areas_to_project_data_to_disaggregate %>% 
                                                           mutate(geographic_identifier_project = as.character(geographic_identifier_project)),world_sf,  
                                                         by = c("geographic_identifier_project"="code"))%>% 
       select(geographic_identifier_project, input_geographic_identifier, continent) %>%       filter(continent == FALSE)%>%
       group_by(input_geographic_identifier) %>% mutate(number = n()) 
     rm(world_sf)
     gc()
-    dataset_to_disaggregate <- inner_join(dataset_not_to_leave_as_so, areas_to_project_data_to_disaggregate, 
+    dataset_to_disaggregate <- inner_join(dataset_not_to_leave_as_so, areas_to_project_data_to_disaggregate2, 
                                           by = c(geographic_identifier = "input_geographic_identifier"))
-    rm(dataset_not_to_leave_as_so)
-    rm(areas_to_project_data_to_disaggregate)
+    dataset_to_aggregate <- anti_join(dataset_not_to_leave_as_so, areas_to_project_data_to_disaggregate2, 
+                                      by = c(geographic_identifier = "input_geographic_identifier"))
+    # rm(dataset_not_to_leave_as_so)
+    # rm(areas_to_project_data_to_disaggregate)
     gc()
     dataset_to_disaggregate$value <- dataset_to_disaggregate$value/dataset_to_disaggregate$number
     dataset_to_disaggregate <- dataset_to_disaggregate %>% select(-number, -geographic_identifier, -continent)
     dataset_to_disaggregate <- rename(dataset_to_disaggregate, geographic_identifier = geographic_identifier_project)
+    dataset_disaggregated <- rbind(dataset_to_aggregate, dataset_to_disaggregate)
     gc()
     
   }  else {
@@ -114,8 +117,7 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
     dataset_final_disaggregated_on_resolution_to_disaggregate <- rbind(data.frame(dataset_to_leave_as_so), 
                                                                        data.frame(dataset_areas_inf_to_resolution_to_disaggregate))
   }  else {
-    dataset_final_disaggregated_on_resolution_to_disaggregate <- rbind(data.frame(dataset_to_leave_as_so), 
-                                                                       data.frame(dataset_to_disaggregate), data.frame(dataset_areas_inf_to_resolution_to_disaggregate))
+    dataset_final_disaggregated_on_resolution_to_disaggregate <- rbind(data.frame(dataset_to_leave_as_so), data.frame(dataset_disaggregated))
   }
   rm(dataset_to_leave_as_so)
   gc()
