@@ -25,7 +25,7 @@ library(readr)
 ```
 
 ```{r}
-rdslevel0 <- readRDS("~/Documents/Tunaatlas_level1/jobs/20220322194525/entities/global_catch_ird_level2/OverlappingIATTCWCPFC/rds.rds") 
+rdslevel0 <- readRDS("~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_firms_Old_with_step_rds_level0/Markdown/OverlappingIATTCWCPFC/rds.rds")
 
 rds_level_0_strata <-rdslevel0 %>% select(-c(value, unit
              # , schooltype, catchtype, fishingfleet
@@ -44,8 +44,7 @@ There are `r nrow(strata_t)` strata at the end of level0 which are declared in t
 
 
 ```{r}
-rdslevel1 <- readRDS("~/Documents/Tunaatlas_level1/jobs/20220322194525/entities/global_catch_ird_level2/level1conversion/rds.rds")
-
+rdslevel1 <- readRDS("~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_firms_Old_with_step_rds_level0/Markdown/level1raising/rds.rds")
 rds_level_1_strata <- rdslevel1 %>% select(-c(value, unit
                    # ,  schooltype, catchtype, fishingfleet
          ))%>% distinct()
@@ -60,12 +59,107 @@ conversion_factors_num_to_weight_ird_2021 <- read_csv("data/conversion_factors_n
   
 ```
 
-There are `r number_strata_loss_level0_level1` strata that are loss between level0 and level 1 (`r percent_strata_loss_level0_level1` % of the total). This means there is no conversion done for those strata.
+There are `r number_strata_loss_level0_level1` strata that are loss while raising on level 1 (`r percent_strata_loss_level0_level1` % of the total). This means there is no conversion done for those strata.
 
 ```{r}
 strata_level1_converted <- round((nrow(rds_level_1_strata) - nrow(strata_t))/nrow(strata))
-
 ```
 
 
 However, the number of strata in the file of Alain Biseau, is `r nrow(strata)`. Which means each conversion factor is used for (in means) `r strata_level1_converted` strata.
+
+```{r}
+mapping_codelist <- readRDS("~/Documents/Tunaatlas_level1/data/mapping_codelist.rds")
+MTNO <- mapping_codelist %>% filter(unit == "MTNO")
+NOMT <- mapping_codelist %>% filter(unit == "NOMT")
+unique(MTNO$source_authority)
+unique(NOMT$source_authority)
+setdiff <- setdiff(NOMT %>% select(-c(value, unit)), MTNO %>% select(-c(value, unit)))
+setdiff2 <- setdiff(MTNO %>% select(-c(value, unit)), NOMT %>% select(-c(value, unit)))
+unique(setdiff$source_authority)
+unique(setdiff2$source_authority)
+
+conversion_factors_num_to_weight_ird_2021 <- read_csv("data/conversion_factors_num_to_weight_ird_2021.csv")%>% mutate_if(is.Date, as.character)
+```
+
+There are `r nrow(conversion_factors_num_to_weight_ird_2021)` stratas converted in level 1.
+
+```{r}
+converted_level0 <- rbind(full_join(NOMT , MTNO, by = setdiff(colnames(MTNO), c("value", "unit") )) %>% rename(NO =value.x, MT = value.y) %>% select(-c(unit.y, unit.x)), full_join(MTNO , NOMT, by = setdiff(colnames(MTNO), c("value", "unit") )) %>% rename(MT =value.x, NO = value.y) %>% select(-c(unit.y, unit.x)))%>% distinct() %>% mutate(conversion_factor = MT/NO) %>% full_join(test, by = c("geographic_identifier"="code")) %>% mutate(geographic_identifier = source) 
+
+converted <- converted_level0 %>% select(setdiff(colnames(conversion_factors_num_to_weight_ird_2021),c("unit", "unit_target")))%>% distinct()
+```
+
+There are `r nrow(converted)` stratas converted in level 0.
+
+```{r}
+tesst <- inner_join(conversion_factors_num_to_weight_ird_2021, converted, by = c("gear", "source_authority", "species", "geographic_identifier", "time_start", "time_end")) %>% rename(alain_conversion_factor =conversion_factor.x, rfmo_conversion_factor = conversion_factor.y)
+
+testtt_verif <- tesst %>% select("gear",                 "source_authority",     "species",              "geographic_identifier","time_start",  "time_end"  ) %>% mutate(geographic_identifier = as.character(geographic_identifier))
+
+testttttt <- mapping_codelist %>%full_join(test ,by = c("geographic_identifier"= "code")) %>% mutate(geographic_identifier2 = geographic_identifier, geographic_identifier = as.character(source))
+
+test2tttt <- testttttt%>% inner_join(testtt_verif)
+
+```
+
+
+
+```{r}
+comparison_converted_factor <- inner_join(conversion_factors_num_to_weight_ird_2021%>% mutate_if(is.Date, as.character),converted_level0, by = c("gear", "time_start", "time_end", "geographic_identifier", "species"))
+
+comparison_converted_factor_test <- inner_join(conversion_factors_num_to_weight_ird_2021%>% mutate_if(is.Date, as.character),converted_level0, by = c("gear", "time_start", "time_end", "species"))
+
+
+```
+
+# Comparison (for the data available) of the conversion factor of RFMOs and the conversion factor of Alain Biseau
+
+```{r}
+all_strata_only_one_unit_conversion <- rbind(setdiff, setdiff2) %>% inner_join(rbind(NOMT, MTNO))
+```
+
+First it is important to notice that on the data given by RFMO, several stratas are present only in NOMT or in NTMO.
+Problem : Data in NOMT was removed in level 1 because it was hypothetically the same than in NTMO.
+Those stratas are only provided by ICCAT.
+
+```{r}
+all_strata_converted <- anti_join(before_raising_no %>% select(-c(value, unit)),all_strata_only_one_unit_conversion %>% select(-c(value, unit))) %>% distinct()
+```
+
+```{r}
+query <- paste("SELECT \n               u1.codesource_area as geographic_identifier,\n               u2.codesource_area as conv_factor_df_geo_id\n             FROM\n               area.area_labels u1,\n               area.area_labels u2\n             WHERE \n               u2.tablesource_area='", 
+               "areas_conversion_factors_numtoweigth_ird", 
+               "' \n               AND u2.codesource_area IN ('", 
+               unique(conversion_factors_num_to_weight_ird_2021$geographic_identifier), 
+               "') \n               AND u1.tablesource_area='", 
+               "areas_tuna_rfmos_task2", "' \n               AND u1.codesource_area IN ('", 
+               unique(before_raising_no$geographic_identifier), "') \n               AND ST_Contains(u2.geom, u1.geom)", 
+               sep = "")
+library(dbplyr)
+query <- "SELECT  code,st_area(geom), geom from area.areas_ <- conversion_factors_numtoweigth_ird"
+area_conversion <- st_make_valid(st_read(con, query = query))
+query <- "SELECT  code,st_area(geom), geom from area.areas_tuna_rfmos_task2"
+area_converted <- st_make_valid(st_read(con, query = query)%>% filter(!st_is_empty(.)))
+tmap_mode("view")
+tm_shape(area_conversion)+tm_polygons()
+tm_shape(area_converted)+tm_polygons()
+
+area1 <- area_converted[st_within(st_as_sf(area_converted),st_as_sf(area_conversion %>% filter(code == 1))) %>% lengths >0,]
+area2 <- area_converted[st_within(st_as_sf(area_converted),st_as_sf(area_conversion %>% filter(code == 2))) %>% lengths >0,]
+area3 <- area_converted[st_within(st_as_sf(area_converted),st_as_sf(area_conversion %>% filter(code == 3))) %>% lengths >0,]
+area0 <- area_converted[st_within(st_as_sf(area_converted),st_as_sf(area_conversion %>% filter(code == 0))) %>% lengths >0,]
+
+test <- gdata::combine(area1, area2, area3, area0) %>% mutate(source = case_when(source == "area1" ~ 1, source == "area2"~2, source == "area3"~3, TRUE ~ 0))
+
+
+all_strata_converted2 <- left_join(all_strata_converted, test %>% rename(geographic_identifier = code), by ="geographic_identifier")
+```
+
+
+```{r}
+left_join <- left_join(all_strata_converted2%>% mutate(geographic_identifier = (source)), conversion_factors_num_to_weight_ird_2021 %>% mutate_if(is.Date, as.character) )
+
+inner_join <- inner_join(all_strata_converted2%>% mutate(geographic_identifier = (source)), conversion_factors_num_to_weight_ird_2021 %>% mutate_if(is.Date, as.character) )
+```
+

@@ -8,21 +8,19 @@ output:
     theme: united
     number_sections: true
 params: 
-  
-  final: "~/Documents/Tunaatlas_level1/jobs/20220331130831/entities/global_catch_ird_level1/Markdown/level1realocate_remove/rds.rds"
-  init: "~/Documents/Tunaatlas_level1/jobs/20220331130831/entities/global_catch_ird_level1/Markdown/level2_test_modifying_function_new_nominal_catch/rds.rds"
-  filter_species:  "NULL"
-  filter_source_authority:  "NULL"
-  filter_gear:  "NULL"
-  filter_fishingfleet:   "NULL"
-  filter_time_start:   "NULL"
-  filter_time_end:  "NULL"
-  filter_cat_geo:   "NULL"
-  filter_catchtype:   "NULL"
-  filter_schooltype: "NULL"
-  titre_dataset_1: "endlevel0noraising"
-  titre_dataset_2: "endlevel0raising"
-
+  init: "~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level0/Markdown/level2_test_modifying_function_new_nominal_catch/rds.rds"
+  final: "~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level0/Markdown/disagreggateallin1deg/rds.rds"
+  filter_species: 
+  filter_source_authority:  
+  filter_gear:  
+  filter_fishingfleet:  
+  filter_time_start:  
+  filter_time_end:  
+  filter_cat_geo:  
+  filter_catchtype:  
+  filter_schooltype:  
+  titre_dataset_1: "Not disagregated"
+  titre_dataset_2: "Disaggregated"
 ---
 
 ```{r setup, include=FALSE}
@@ -66,7 +64,7 @@ tmap_mode("view")
 
 ```{r}
 drv <- dbDriver("PostgreSQL")      
-con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
+con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox", host = "db-tunaatlas.d4science.org", 
                  port = 5432,
                  user = "tunaatlas_u",
                  password = "21c0551e7ed2911")
@@ -81,7 +79,7 @@ con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 world_sf <- st_read(con, query = query) 
 
-shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
+shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom)
 options(scipen=999)
 
@@ -109,19 +107,19 @@ It describes the differences between the initial data and the final data, and is
 # The data compared
 
 The analyzed data are :
-- ***`r params$init`*** for the initial data 
-- ***`r params$final`*** for the final data.
+- ***`r params$init` for the initial data***
+- ***`r params$final` for the final data***
 
 The filters used are:
 
 - on species: `r params$filter_species`
 - on gears: `r params$filter_gear`
-- on rfmos: `r params$source_authority`
-- on fleets: `r params$fishing_fleet`
-- on initial dates: `r params$time_start`
-- on final dates: `r params$time_end`
-- on geographical categories: `r params$cat_geo`
-- on catch types: `r params$catchtype`
+- on rfmos: `r params$filter_source_authority`
+- on fleets: `r params$filter_fishing_fleet`
+- on initial dates: `r params$filter_time_start`
+- on final dates: `r params$filter_time_end`
+- on geographical categories: `r params$filter_cat_geo`
+- on catch types: `r params$filter_catchtype`
 
 
 ```{r}
@@ -131,72 +129,65 @@ last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
 
 fonction_filtre = function(dataframe_tot_filter) {
-  if (!(params$filter_species == "NULL")){
+  if (!is.null(params$filter_species)){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   species %in% params$filter_species)
   }
-    if (!(params$filter_gear == "NULL")){
+    if (!is.null(params$filter_gear)){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   gear %in% params$filter_gear)
     }    
-  if (!(params$filter_source_authority == "NULL")){
+  if (!is.null(params$filter_source_authority )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   source_authority %in% params$filter_source_authority)
   }  
-  if (!(params$filter_fishingfleet == "NULL")){
+  if (!is.null(params$filter_fishingfleet )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   fishingfleet %in% params$filter_fishingfleet)
   }
-    if (!(params$filter_time_start == "NULL")){
+    if (!is.null(params$filter_time_start )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   time_start %in% params$filter_time_start)
     }
-      if (!(params$filter_time_end == "NULL")){
+      if (!is.null(params$filter_time_end )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   time_end %in% params$filter_time_end)
       }
-    if (!(params$filter_schooltype == "NULL")){
+    if (!is.null(params$filter_schooltype )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   schooltype %in% params$filter_schooltype)
   }
-    if (!(params$filter_catchtype == "NULL")){
+    if (!is.null(params$filter_catchtype )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   catchtype %in% params$filter_catchtype)
     }
   
-  if (!(params$filter_cat_geo == "NULL")){
+  if (!is.null(params$filter_cat_geo )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   cat_geo %in% params$filter_cat_geo)
   }
-    if (!(params$filter_catchtype == "NULL")){
+    if (!is.null(params$filter_catchtype )){
     dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
   cat_geo %in% params$filter_catchtype)
     }
 
   # dataframe_tot_filter <- dataframe_tot_filter 
-  dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO")~ "Tons", unit %in% c("NO", "NOMT","no")~"Number of fish"))
+  dataframe_tot_filter <- dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish"))
+  cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+    col_types = cols(Identifier = col_skip(), 
+        Abbreviation = col_skip(), Name_Fr = col_skip(), 
+        Name_Es = col_skip(), Name_Ar = col_skip()))
+
+dataframe_tot_filter <- dataframe_tot_filter %>% full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
   
 }
 
-# fonction_harmonization_unit = function(x){
-#   if(any(x$unit == "MT")) x[x$unit == "MT", ]$unit <- "tons"
-# 		if(any(x$unit == "NO")) x[x$unit == "NO", ]$unit <- "Number of fish"
-# 		if(any(x$unit == "MTNO")) x[x$unit == "MTNO", ]$unit <- "tons"
-# 		if(any(x$unit == "NOMT")) x[x$unit == "NOMT", ]$unit <- "Number of fish"
-# 
-# }
   
-init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)))%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% inner_join(species_group, by = c("species"))
+init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep))%>%
+                          left_join(shape_without_geom, by = c("geographic_identifier"="code")))%>% left_join(species_group, by = c("species"))%>% distinct()
 
-# if(any(init$unit == "MT")) init[init$unit == "MT", ]$unit <- "Tons"
-# 		if(any(init$unit == "NO")) init[init$unit == "NO", ]$unit <- "Number of fish"
-# 		if(any(init$unit == "MTNO")) init[init$unit == "MTNO", ]$unit <- "Tons"
-# 		if(any(init$unit == "NOMT")) init[init$unit == "NOMT", ]$unit <- "Number of fish"
-
-
-
-
-final <- fonction_filtre(readRDS(as.character(params$final))%>% select(all_of(colnames_to_keep)))%>% inner_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% inner_join(species_group, by = c("species"))
+final <- fonction_filtre(readRDS(as.character(params$final))%>% select(all_of(colnames_to_keep))%>%
+                            left_join(shape_without_geom, by = c("geographic_identifier"="code"))) %>% left_join(species_group, by = c("species")) %>% distinct() %>% mutate(time_start =as.character(time_start))%>% mutate(time_end =as.character(time_end))
 
 # if(any(final$unit == "MT")) final[final$unit == "MT", ]$unit <- "Tons"
 # if(any(final$unit == "NO")) final[final$unit == "NO", ]$unit <- "Number of fish"
@@ -363,7 +354,6 @@ ggplot(captures_par_time) +
 ## Comparison of the evolution of the cumulative catches
 
 ```{r}
-
 captures_par_time <- captures_par_time %>% mutate(Time = as.Date(Precision))%>% arrange(Precision) %>% group_by(unit, Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
 
 ggplot_capt_par_time = function(x){
@@ -386,7 +376,7 @@ ggplot_capt_par_time("Tons")
 ```
 
 ```{r}
-try(ggplot_capt_par_time("Number of fish"))
+# try(ggplot_capt_par_time("Number of fish"))
 ```
 
 ## Comparison of the two datasets
@@ -492,6 +482,8 @@ source_authority <- pie_chart_2(source_authority, init, final)
 cat_geo <- pie_chart_2(cat_geo, init, final)
 species <- pie_chart_2(species, init, final)
 species_group <- pie_chart_2(species_group, init, final)
+# gear <- pie_chart_2(gear, init, final)
+Name_En <- pie_chart_2(Name_En, init, final)
 
 ```
 
@@ -506,6 +498,7 @@ source_authority
 
 species_group
 
+Name_En
 
 # plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
 ```
@@ -585,7 +578,8 @@ ligne_totale <- nrow(init)
 # 
 # unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
-unit <- t %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension, unit) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,Precision, unit) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id, -number_lines2)%>%group_by(unit,Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
+unit <- t %>% filter(Dimension == "species" ) %>%  filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group",# "gear", 
+                                                                           "Name_En")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension, unit) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,Precision, unit) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id, -number_lines2)%>%group_by(unit,Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
 # %>% ungroup()%>% group_by(test,Dimension) %>% mutate_all(sum) %>% ungroup() %>% mutate(`Loss (in %)` =`Loss in millions of tons`/sum(`Loss in millions of tons`)) %>% mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(test,id)) %>%  group_by(Dimension) %>%arrange(Dimension,desc(`Loss (in %)`))
 
@@ -657,3 +651,40 @@ t %>%
 
 
 Here we represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information.
+
+We'll analyse now, only the lines where there are differences between the data. 
+
+```{r}
+setdiff_init_final <- setdiff(init, final)
+
+setdiff_final_init <- setdiff(final, init)
+
+
+all_different_row <- gdata::combine(setdiff_final_init, setdiff_init_final)
+test <- head(all_different_row,15)
+```
+
+```{r}
+ggplot(all_different_row)+geom_bar(aes(x = source))
+```
+
+# The species lost (to help for new analysis)
+
+The data that was in initial table but not in final is: 
+
+```{r}
+setdiff_i_a <- setdiff(init, final) %>% select(-value)
+```
+
+The data in final dataset but not in initial is: 
+
+```{r}
+setdiff_a_i <- setdiff(final, init) %>% select(-value)
+```
+
+```{r}
+tes <- rbind(setdiff_i_a,setdiff_a_i)
+species_filtered <- unique(tes$species)
+
+```
+

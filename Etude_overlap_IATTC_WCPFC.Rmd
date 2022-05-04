@@ -1,0 +1,280 @@
+---
+title: "Study of the management of data on the overlapp zone between IATTC and WCPFC"
+output:
+  html_document: default
+  word_document: default
+date: '2022-03-23'
+---
+
+This document give a quick analysis of different way to handle the overlapping zone between IATTC and WCPFC. 
+
+It explains how it was done before and how we propose it to be done now, showing the differences and remains open to modification/proposition.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = TRUE,
+	warning = TRUE
+)
+library(readtext)
+library(flextable)
+set_flextable_defaults(
+  font.size = 30,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = NULL,
+  theme_fun = "theme_box"
+  )
+options(scipen=999)
+library(dplyr)
+library(stringr)
+library(readr)
+library(webshot)
+if(require("htmltools"))
+div(flextable_html_dependency())
+library(DBI)
+drv <- dbDriver("PostgreSQL")      
+con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
+                      port = 5432,
+                      user = "tunaatlas_u",
+                      password = "21c0551e7ed2911")
+
+```
+
+```{r}
+mapping_codelist <- readRDS("data/mapping_codelist.rds")
+query_areas_overlapping_zone_iattc_wcpfc <- "SELECT codesource_area from \n 			(WITH iattc_area_of_competence AS ( \n SELECT rfmos_convention_areas_fao.geom \n FROM area.rfmos_convention_areas_fao \n WHERE code::text = 'iattc'::text\n), wcpfc_area_of_competence AS (\nSELECT rfmos_convention_areas_fao.geom\n FROM area.rfmos_convention_areas_fao\n WHERE code::text = 'WCPFC'::text\n	), geom_iattc_wcpfc_intersection AS (\nSELECT st_collectionextract(st_intersection(iattc_area_of_competence.geom,\n wcpfc_area_of_competence.geom), 3) AS geom\n FROM iattc_area_of_competence,\n	wcpfc_area_of_competence\n)\n SELECT\narea_labels.id_area,\narea_labels.codesource_area\nFROM area.area_labels,\ngeom_iattc_wcpfc_intersection\nWHERE\narea_labels.tablesource_area = 'cwp_grid'::text AND\nst_within(area_labels.geom, geom_iattc_wcpfc_intersection.geom))tab;\n"
+
+overlapping_zone_iattc_wcpfc <- dbGetQuery(con, query_areas_overlapping_zone_iattc_wcpfc)
+           
+
+Initial_zone_overlapped<-mapping_codelist %>% filter(geographic_identifier%in%overlapping_zone_iattc_wcpfc$codesource_area)
+```
+
+# Current treatment
+
+```{r}
+#Paul treatment 
+ Actual<-Initial_zone_overlapped[ which(!Initial_zone_overlapped$source_authority == "WCPFC"), ]
+           
+```
+
+The current way to handle this area is to keep only data from IATTC as it is the only one to give fishingfleet information.
+
+# Issue with the current method
+
+Some areas of the overlapping zone have information coming only from one source authority.
+On the border of this zone, catches seems to be reported only to the nearest source authority (see analyse_of_overlapped_areas)
+
+```{r}
+tilesURL = "http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+library(leaflet.minicharts)
+library(leaflet)
+basemap = leaflet(width = "100%", height = "800px") %>%
+  addTiles(tilesURL)
+```
+
+# Proposition
+
+```{r}
+# My treatment
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
+
+Proposition <- function_overlapped(dataset = Initial_zone_overlapped, con =con, rfmo_to_keep = "IATTC",
+                                                 rfmo_not_to_keep = "WCPFC", 
+                                                 strata =c("geographic_identifier",    "species", "time_start", "time_end",  "unit"))
+
+```
+
+What we propose is for this area, as it seems that data is equivalent at the middle and completely different on the border, is to keep the data coming from WCPFC only if there is no equivalent for the same area, species, month. 
+The gear dimension is not kept because there is a conflict between 09.31 and 09.39 (see analyse_of_overlapped_areas)
+
+```{r}
+comp <- gdata::combine(Initial_zone_overlapped, Actual, Proposition)
+comp$unit <- str_replace(comp$unit, "MTNO","MT")
+comp$unit <- str_replace(comp$unit, "NOMT","NO")
+comp <-  comp%>% group_by(source, time_start, unit) %>% summarise(Value = sum(value)) %>% mutate(time_start = as.Date(time_start)) 
+```
+
+# Comparison of the methods on the overlap zone
+
+```{r}
+library(ggplot2)
+library(lubridate)
+comp_year <- comp %>% mutate(Year =lubridate::year(time_start)) %>%ungroup() %>%  group_by(Year, unit, source) %>% summarise(Value = sum(Value))
+```
+```{r}
+library(ggplot2)
+ggplot(comp_year)+
+  aes(x = Year, y = Value, colour = source) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit), scales = "free_y")
+```
+
+```{r}
+library(readxl)
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
+
+join_ancient <- inner_join(Initial_zone_overlapped %>% left_join(species_group, by = c("species"))%>% distinct() %>% group_by(geographic_identifier, species_group, unit) %>% summarise(value = sum(value)), Actual%>% left_join(species_group, by = c("species"))%>% distinct() %>% group_by(geographic_identifier, species_group, unit) %>% summarise(value = sum(value)), by= "geographic_identifier")
+
+query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+library(sf)
+world_sf <- st_read(con, query = query) 
+
+shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
+
+join_ancient_mapped <- inner_join(shapefile.fix,(join_ancient %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% mutate(cat_perte = as.factor(case_when(`Loss (in %)` == 0 ~ 'No loss', `Loss (in %)` == 100~'All data lost', TRUE ~ 'Partial loss')))
+
+```
+
+The difference between the two dat---
+title: "Etude SBF"
+output:
+  html_document: default
+  word_document: default
+date: '2022-03-23'
+params:
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220428104014"
+---
+
+This document give a quick analysis of different way to handle the treatment of the Southern Bluefin Tuna in the Global Tuna Atlas. 
+
+It explains how it was done before and how we propose it to be done now, showing the differences and remains open to modification/proposition.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = TRUE,
+	warning = TRUE
+)
+library(readtext)
+library(flextable)
+set_flextable_defaults(
+  font.size = 30,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = NULL,
+  theme_fun = "theme_box"
+  )
+options(scipen=999)
+library(dplyr)
+library(stringr)
+library(readr)
+library(webshot)
+if(require("htmltools"))
+div(flextable_html_dependency())
+```
+
+```{r}
+mapping_codelist <- readRDS("data/mapping_codelist.rds")
+initial_SBF <- mapping_codelist%>% filter(species == "SBF")
+```
+
+# Current version
+
+For now, what is done is remove all the SBF catches (in tons and numbers) coming from a source authority different than CCSBT.
+
+```{r}
+#Paul treatment 
+Actual  <- initial_SBF[ which(!(initial_SBF$species %in% "SBF" & initial_SBF$source_authority %in% c("ICCAT","iattc","IATTC","WCPFC"))), ]%>% filter(species == "SBF")
+
+```
+
+# Issue with this method
+
+For some years, or gears, the availibility of SBF catches is only coming from CTOI or ICCAT.
+
+```{r}
+# My treatment
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
+
+georef_dataset <- function_overlapped(dataset = initial_SBF, con =con, rfmo_to_keep = "CCSBT",
+                                                 rfmo_not_to_keep = "iattc", 
+                                                 strata =c(   "species", "time_start", "time_end",  "unit"))
+georef_dataset <- function_overlapped(dataset = georef_dataset, con =con, rfmo_to_keep = "CCSBT",
+                                                 rfmo_not_to_keep = "CCSBT", 
+                                                 strata =c(    "species", "time_start", "time_end",
+                                                                                                                                "unit"))
+
+Proposition <- georef_dataset %>% filter(species == "SBF")
+```
+
+```{r}
+comp <- gdata::combine(initial_SBF, Actual, Proposition)
+comp$unit <- str_replace(comp$unit, "MTNO","MT")
+comp$unit <- str_replace(comp$unit, "NOMT","NO")
+comp <-  comp%>% group_by(source, time_start, unit) %>% summarise(Value = sum(value)) %>% mutate(time_start = as.Date(time_start)) 
+```
+
+
+```{r}
+library(lubridate)
+comp_year <- comp %>% mutate(Year =lubridate::year(time_start)) %>%ungroup() %>%  group_by(Year, unit, source) %>% summarise(Value = sum(Value))
+```
+```{r}
+library(ggplot2)
+
+ggplot(comp_year)+
+  aes(x = Year, y = Value, colour = source) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit), scales = "free_y")
+```
+
+
+
+The difference between the two dataset is `r sum((Actual %>% filter(unit == "MT"))$value) - sum((Proposition %>% filter(unit == "MT"))$value)` in tons and `r sum((Actual %>% filter(unit == "NO"))$value) - sum((Proposition %>% filter(unit == "NO"))$value)` in number of fish.
+
+# Other proposition 
+
+We could also decide to keep the data from other rfmo's if there is no equivalent in year, area. 
+
+The results would be the following : 
+
+```{r}
+# My treatment
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
+
+georef_dataset <- function_overlapped(dataset = mapping_codelist, con =con, rfmo_to_keep = "CCSBT",
+                                                 rfmo_not_to_keep = "iattc", 
+                                                 strata =c("geographic_identifier",    "species", "time_start", "time_end",  "unit"))
+georef_dataset <- function_overlapped(dataset = georef_dataset, con =con, rfmo_to_keep = "CCSBT",
+                                                 rfmo_not_to_keep = "CCSBT", 
+                                                 strata =c("geographic_identifier",    "species", "time_start", "time_end",
+                                                                                                                                "unit"))
+
+Proposition <- georef_dataset %>% filter(species == "SBF")
+
+
+```
+
+
+```{r}
+comp <- gdata::combine(initial_SBF, Actual, Proposition)
+comp$unit <- str_replace(comp$unit, "MTNO","MT")
+comp$unit <- str_replace(comp$unit, "NOMT","NO")
+comp <-  comp%>% group_by(source, time_start, unit) %>% summarise(Value = sum(value)) %>% mutate(time_start = as.Date(time_start)) 
+```
+
+```{r}
+
+comp_year <- comp %>% mutate(Year =lubridate::year(time_start)) %>%ungroup() %>%  group_by(Year, unit, source) %>% summarise(Value = sum(Value))
+ggplot(comp_year)+
+  aes(x = Year, y = Value, colour = source) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit), scales = "free_y")
+```
+
+
+The difference between the two dataset is `r sum((Actual %>% filter(unit == "MT"))$value) - sum((Proposition %>% filter(unit == "MT"))$value)` in tons and `r sum((Actual %>% filter(unit == "NO"))$value) - sum((Proposition %>% filter(unit == "NO"))$value)` in number of fish.aset is `r sum((Actual %>% filter(unit == "MT"))$value) - sum((Proposition %>% filter(unit == "MT"))$value)` in tons and `r sum((Actual %>% filter(unit == "NO"))$value) - sum((Proposition %>% filter(unit == "NO"))$value)` in number of fish.
+
+```{r}
+
+```
+
+For more advanced comparison between the two dataset, please check:

@@ -1,0 +1,74 @@
+---
+title: "no_raising_to_fishing_fleet"
+output: html_document
+date: '2022-04-29'
+---
+
+
+This document give a quick analysis of different way raise IATTC data at the beginning of the process.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = TRUE,
+	warning = TRUE
+)
+library(readtext)
+library(flextable)
+set_flextable_defaults(
+  font.size = 30,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = NULL,
+  theme_fun = "theme_box"
+  )
+options(scipen=999)
+library(dplyr)
+library(stringr)
+library(readr)
+library(webshot)
+if(require("htmltools"))
+div(flextable_html_dependency())
+```
+
+```{r}
+mapping_codelist <- readRDS("data/mapping_codelist.rds")
+raising_fishingfleet_to_schooltype <- readRDS("data/raising_fishing_fleet_to_schooltype.rds")
+raising_schooltype_to_fishingfleet <- readRDS("data/raising_schooltype_to_fishingfleet.rds")
+```
+
+# Raising to fishing fleet
+
+```{r}
+comp <- gdata::combine(mapping_codelist, raising_fishingfleet_to_schooltype, raising_schooltype_to_fishingfleet)
+comp$unit <- str_replace(comp$unit, "MTNO","MT")
+comp$unit <- str_replace(comp$unit, "NOMT","NO")
+comp <-  comp%>% group_by(source, time_start, unit) %>% summarise(Value = sum(value)) %>% mutate(time_start = as.Date(time_start)) 
+```
+
+
+```{r}
+library(lubridate)
+comp_year <- comp %>% mutate(Year =lubridate::year(time_start)) %>%ungroup() %>%  group_by(Year, unit, source) %>% summarise(Value = sum(Value))
+```
+```{r}
+library(ggplot2)
+
+ggplot(comp_year)+
+  aes(x = Year, y = Value, colour = source) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit), scales = "free_y")
+```
+
+
+
+The difference between the two dataset is `r sum((raising_fishingfleet_to_schooltype %>% filter(unit == "MT"))$value) - sum((raising_schooltype_to_fishingfleet %>% filter(unit == "MT"))$value)` in tons and `r sum((raising_fishingfleet_to_schooltype %>% filter(unit == "NO"))$value) - sum((raising_schooltype_to_fishingfleet %>% filter(unit == "NO"))$value)` in number of fish.
+
+# Other raising_schooltype_to_fishingfleet 
+
+We could also decide to keep the data from other rfmo's if there is no equivalent in year, area. 
+
+The results would be the following : 
+

@@ -8,19 +8,19 @@ output:
     theme: united
     number_sections: true
 params: 
-  final: "~/Documents/Tunaatlas_level1/jobs/difference_L1_L2/entities/global_catch_5deg_1m_IRD_level2/Markdown/endlevel0data/rds.rds"
-  init: "~/Documents/Tunaatlas_level1/jobs/no_difference_L1_L2/entities/global_catch_5deg_1m_ird_level2/Markdown/OverlappingIATTCWCPFC/rds.rds"
-  filter_species:  "NULL"
-  filter_source_authority:  "NULL"
-  filter_gear:  "NULL"
-  filter_fishingfleet:   "NULL"
-  filter_time_start:   "NULL"
-  filter_time_end:  "NULL"
-  filter_cat_geo:   "NULL"
-  filter_catchtype:   "NULL"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220501202640/entities/global_nominal_catch_firms_level0/Markdown/mapping/rds.rds"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220501202640/entities/global_nominal_catch_firms_level0/Markdown/SBF_filter/rds.rds"
+  filter_species: "SBF"
+  filter_source_authority: "NULL"
+  filter_gear: "NULL"
+  filter_fishingfleet: "NULL"
+  filter_time_start: "NULL"
+  filter_time_end: "NULL"
+  filter_cat_geo: "NULL"
+  filter_catchtype: "NULL"
   filter_schooltype: "NULL"
-  titre_dataset_1: "endlevel0noraising"
-  titre_dataset_2: "endlevel0raising"
+  titre_dataset_1: "Old_method"
+  titre_dataset_2: "New_method"
 
 ---
 
@@ -107,12 +107,12 @@ The filters used are:
 
 - on species: `r params$filter_species`
 - on gears: `r params$filter_gear`
-- on rfmos: `r params$source_authority`
-- on fleets: `r params$fishing_fleet`
-- on initial dates: `r params$time_start`
-- on final dates: `r params$time_end`
-- on geographical categories: `r params$cat_geo`
-- on catch types: `r params$catchtype`
+- on rfmos: `r params$filter_source_authority`
+- on fleets: `r params$filter_fishing_fleet`
+- on initial dates: `r params$filter_time_start`
+- on final dates: `r params$filter_time_end`
+- on geographical categories: `r params$filter_cat_geo`
+- on catch types: `r params$filter_catchtype`
 
 
 ```{r}
@@ -165,29 +165,16 @@ fonction_filtre = function(dataframe_tot_filter) {
     }
 
   # dataframe_tot_filter <- dataframe_tot_filter 
-  dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO")~ "Tons", unit %in% c("NO", "NOMT","no")~"Number of fish"))
+  dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish"))
   
 }
 
 
-init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)))%>% inner_join(species_group, by = c("species"))
+init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)))%>% left_join(species_group, by = c("species")) %>% distinct()
 
 
-final <- fonction_filtre(readRDS(as.character(params$final))%>% select(all_of(colnames_to_keep)))%>% inner_join(species_group, by = c("species"))
+final <- fonction_filtre(readRDS(as.character(params$final))%>% select(all_of(colnames_to_keep)))%>% left_join(species_group, by = c("species"))%>% distinct()
 
-# if(any(final$unit == "MT")) final[final$unit == "MT", ]$unit <- "Tons"
-# if(any(final$unit == "NO")) final[final$unit == "NO", ]$unit <- "Number of fish"
-# if(any(final$unit == "MTNO")) final[final$unit == "MTNO", ]$unit <- "Tons"
-# if(any(final$unit == "NOMT")) final[final$unit == "NOMT", ]$unit <- "Number of fish"
-
-
-#just_for_this one before fixing th eunit problem 
-# final <- final %>% mutate(unit = "Tons")
-
-# summary(final)
-# summary(init)
-
-# test2 <- fonction_groupement(species, init, final)
 
   if ((params$titre_dataset_1 == "NULL")){
     titre_1 <- last_path_reduced(as.character(params$init))
@@ -264,8 +251,10 @@ final_no <- final %>% filter(unit == "Number of fish")
     perte_en_tonnes <- round(somme_init_t-somme_final_t)
     perte_en_tonnes_pourcent <- round(100*(somme_init_t-somme_final_t)/somme_init_t,2)
     perte_en_nombre <- round(somme_init_no-somme_final_no)
-    perte_en_nombre_pourcent <- round(100*(somme_init_no-somme_final_no)/somme_init_no,2)
-    if (perte_en_nombre_pourcent==-Inf) {perte_en_nombre_pourcent <- -100}
+    perte_en_nombre_pourcent <-round(100*(somme_init_no-somme_final_no)/somme_init_no,2)
+    # if(!is.null(perte_en_nombre_pourcent)){
+    #   (if(perte_en_nombre_pourcent==-Inf) {perte_en_nombre_pourcent <- -100}
+    #                               }
 
   
 nb_ligne_init_millions <- nrow(init)/10^6
@@ -291,9 +280,9 @@ strates_perdues_first_10 <- strates_perdues %>%ungroup %>%  group_by(Dimension)%
 
 The number of lines goes from  `r nb_ligne_init_millions` millions in `r titre_1` to `r nb_ligne_final_millions` millions in `r titre_2`, which correspond to a difference of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
 
-The initial dataset has a total of `r round(somme_init_t)` in tons and of `r round(somme_init_no)` in number of fish.
+The initial dataset has a total of `r somme_init_t` in tons and of `r round(somme_init_no)` in number of fish.
     
-The final dataset has a total of  `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
+The final dataset has a total of  `r somme_final_t` in tons and of `r round(somme_final_no)` in number of fish.
 
 The loss is `r perte_en_tonnes` in tons (**`r perte_en_tonnes_pourcent`%**). The loss is `r perte_en_nombre` in number of fish (**`r perte_en_nombre_pourcent`%**).
 
@@ -336,7 +325,7 @@ ligne_totale <- nrow(init)
 # 
 # unit_no <- t %>% filter(unit == "Number of fish") %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(test = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,test) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id)%>%group_by(Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
-unit <- t %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension, unit) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,Precision, unit) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id, -number_lines2)%>%group_by(unit,Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
+unit <- t %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group", "gear")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension, unit) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,Precision, unit) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% select(-id, -number_lines2)%>%group_by(unit,Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
 
 # %>% ungroup()%>% group_by(test,Dimension) %>% mutate_all(sum) %>% ungroup() %>% mutate(`Loss (in %)` =`Loss in millions of tons`/sum(`Loss in millions of tons`)) %>% mutate(Precision = test) %>%  mutate_if(is.character, as.factor)%>%select(-c(test,id)) %>%  group_by(Dimension) %>%arrange(Dimension,desc(`Loss (in %)`))
 
@@ -349,4 +338,15 @@ unit <- t %>% filter(Dimension %in% c("species", "source_authority","cat_geo", "
 qflextable(as_grouped_data(unit %>% ungroup(), groups = c("Dimension","unit"))) 
 ```
 
+What's missing in the smaller
+
+```{r}
+
+missing_small <- setdiff(final %>% select(-value), init%>% select(-value)) #%>% filter(gear %in% c("09.1" , "09.2" , "01.1" , "01.2" ))
+
+lost_small <- setdiff(final, init)#%>% filter(gear %in% c("09.1" , "09.2" , "01.1" , "01.2" ))
+
+missing_big <- setdiff(init %>% select(-value), final%>% select(-value))#%>% filter(gear %in% c("09.1" , "09.2" , "01.1" , "01.2" ))
+params$init
+```
 

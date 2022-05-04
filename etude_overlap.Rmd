@@ -3,7 +3,7 @@ title: "Etude de l'overlap"
 output: html_document
 date: '2022-03-14'
 params:
-  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/my_code/entities/global_catch_firms_Bastien_rds_level0/Markdown/mapping_codelist/rds.rds"
+  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/lastoneeeeeeeeeeeeeeeeeeee/entities/global_catch_1deg_1m_Bastien_include_wcpfc_level0/Markdown/mapping_codelist/rds.rds"
   plotting: "view"
   world_coastline: "gshhs_world_coastlines"
 ---
@@ -33,7 +33,12 @@ library(leaflet.minicharts)
 
 data <- readRDS(params$chemin_dacces)
   data <- data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
+cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+    col_types = cols(Identifier = col_skip(), 
+        Abbreviation = col_skip(), Name_Fr = col_skip(), 
+        Name_Es = col_skip(), Name_Ar = col_skip()))
 
+data <- data %>% full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
 drv <- dbDriver("PostgreSQL")      
 con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
@@ -53,7 +58,31 @@ WCPFC_shape <- competence_area %>% filter(code == "WCPFC")
 ICCAT_shape <- competence_area %>% filter(code == "ICCAT")
 query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
 continent <- st_read(con, query = query)%>% filter(!st_is_empty(.))
+query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
+irregular_iotc <- st_read(con, query = query)%>% filter(!st_is_empty(.))
+irregular_iotc <-irregular_iotc  %>% distinct()
+# test <- data %>% inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% mutate(geographic_identifier = code_cwp)
+irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
+irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
+irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
+if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
 
+world_sf <- world_sf %>% mutate(code_cwp = code)
+
+tmap_mode("view")
+# tm_shape(st_as_sf(test %>% inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
+pakistan <- irregular_iotc %>% filter(code_cwp== "3120060")
+world_sf_combined <- rbind(pakistan, world_sf)
+# world_sf_combined <- gdata::combine(world_sf, irregular_iotc) %>% distinct()
+# t <- rbind(world_sf_combined[duplicated(world_sf_combined$code_cwp),],world_sf_combined[duplicated(world_sf_combined$code_cwp, fromLast = TRUE),] )
+
+data <- left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% select(-c(code_cwp, st_area))
+
+# testtt <- setdiff(irregular_iotc$code_cwp, world_sf$code_cwp)
+# 
+# test <- t %>% group_by(code, source) %>% slice(1)
+# tm_shape(st_as_sf(t))+tm_polygons()+tm_fill(col = "source")
+# 
 IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iotc = "iotc")
 
 IATTC <- world_sf[IATTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iattc = "iattc")
@@ -70,26 +99,16 @@ full_join <- full_join(full_join(full_join(full_join(world_sf, IOTC), IATTC), WC
 full_join[is.na(full_join)] <-  FALSE
 
 full_join <- full_join %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat))))
-
-# world_sf$iotc <-as.logical(floor((st_within(world_sf,IOTC) %>% lengths >0) + (st_intersects(world_sf,IOTC)%>% lengths >0) /2))
-# world_sf$iattc <- as.logical(floor((st_within(world_sf,IATTC) %>% lengths >0) + (st_intersects(world_sf,IATTC)%>% lengths >0) /2))
-# world_sf$wcpfc <- as.logical(floor((st_within(world_sf,WCPFC) %>% lengths >0) + (st_intersects(world_sf,WCPFC)%>% lengths >0) /2))
-# world_sf$iccat <- as.logical(floor((st_within(world_sf,ICCAT) %>% lengths >0) + (st_intersects(world_sf,ICCAT)%>% lengths >0) /2))
-
 world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
 world_sf$continent <- str_replace(world_sf$continent, "TRUE","continent")
 
 world_sf <- left_join(world_sf, full_join)
 
-
-# for (i in 4:length(world_sf)) {
-#     world_sf[[i]] <- str_replace(world_sf[[i]], "TRUE", colnames(world_sf)[i])
-# }
-
 world_sf_with_competence_area <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
 
-# df <- st_as_sf(inner_join(world_sf %>% as.data.frame() %>% select(-geom), all_the_data ,by = "code"))
+
 inner_join <- data %>% inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
+
 
 
 all_the_data <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(world_sf%>% select(-area_competence) , by = c("geographic_identifier"="code", "st_area") ) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
@@ -98,12 +117,8 @@ mislocated_continent <- all_the_data %>% filter(str_detect(area_competence, "con
 if (nrow(mislocated_continent)==0){knitr::knit_exit()}else{
 tmap_mode(params$plotting)
 
-tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_text("source_authority")+tm_shape(continent)+tm_borders() 
+tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
 
-# tm_shape(df)+tm_polygons(col = "area_competence")+tm_facets("st_area.x")
-# all_the_data3 <- inner_join %>% mutate(continent = ifelse(area_competence.x != "continent", "ocean", "continent"))
-# # summary(all_the_data3)
-# tm_shape(all_the_data3 %>% mutate(st_area = as.factor(st_area.x.x)) %>% filter(continent == "continent"))+tm_polygons(col = "value")+tm_facets("st_area")+tm_shape(continent)+tm_borders()
 }
 
 
@@ -296,7 +311,7 @@ recap_multpile_unique_SA <- differenciate_area_unique_autho_area_multiple %>% gr
 table <- recap_multpile_unique_SA%>% mutate(pourcentage_value = prop.table(value)*100, pourcentage_row = prop.table(nrow)*100)%>%
     mutate(labels_value = paste0(round(pourcentage_value),"  % "),
                                  labels_row = paste0(round(pourcentage_row),"  % "))%>%  ungroup() %>% group_by(unit) %>%arrange(unit,desc(pourcentage_value)) %>%  
-  mutate(ypos_ligne_value = cumsum(pourcentage_value)- 0.5*pourcentage_value) %>% group_by(unit) %>%arrange(unit,desc(pourcentage_row)) %>% mutate(ypos_ligne_row =  cumsum(pourcentage_row)- 0.5*pourcentage_row ) %>%
+  mutate(ypos_ligne_value = cumsum(pourcentage_value)- 0.5*pourcentage_value) %>% ungroup() %>% group_by(unit) %>%arrange(unit,desc(pourcentage_row)) %>% mutate(ypos_ligne_row =  cumsum(pourcentage_row)- 0.5*pourcentage_row ) %>%
     distinct()
 ```
 
@@ -396,7 +411,7 @@ ggplot(data_where_overlap_with_all_informations %>% group_by(unit,time_start, so
 library(readr)
 library(readxl)
 species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
-data_where_overlap_with_all_informations <- data_where_overlap_with_all_informations%>% inner_join(species_group, by = c("species"))%>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
+data_where_overlap_with_all_informations <- data_where_overlap_with_all_informations%>% inner_join(species_group, by = c("species"))%>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 
 ```
 
@@ -428,10 +443,10 @@ ggplot(data_where_overlap_with_all_informations %>% group_by(unit,cat_geo, sourc
   facet_wrap(vars(unit,area_competence), scales = "free")
 ```
 
-```{r}
-ggplot(data_where_overlap_with_all_informations %>% group_by(unit,gear, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+```{r fig.asp = 0.8, fig.width = 10}
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,gear, Name_En,source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
   aes(
-    x = gear,
+    x = Name_En,
     colour = source_authority,
     weight = value
   ) +
@@ -495,7 +510,7 @@ ggplot(data_where_overlap_with_all_informations %>% group_by(unit,time_start, so
 library(readr)
 library(readxl)
 species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
-data_where_overlap_with_all_informations <- data_where_overlap_with_all_informations%>% inner_join(species_group, by = c("species"))%>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
+data_where_overlap_with_all_informations <- data_where_overlap_with_all_informations%>% inner_join(species_group, by = c("species"))%>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 
 ```
 
@@ -528,9 +543,9 @@ ggplot(data_where_overlap_with_all_informations %>% group_by(unit,cat_geo, sourc
 ```
 
 ```{r}
-ggplot(data_where_overlap_with_all_informations %>% group_by(unit,gear, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
+ggplot(data_where_overlap_with_all_informations %>% group_by(unit,gear,Name_En, source_authority, area_competence) %>% summarise(value = sum(value, na.rm = TRUE)) %>% filter(source_authority != "CCSBT")) +
   aes(
-    x = gear,
+    x = Name_En,
     colour = source_authority,
     weight = value
   ) +

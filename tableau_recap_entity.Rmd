@@ -1,10 +1,14 @@
 ---
 title: "Summary of the treatment for each entity of the global tuna atlas"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 date: '2022-03-23'
-params: 
-  working_directory: "~/Documents/Tunaatlas_level1/jobs/withJulienscode_from_wendsdaynight"
+params:
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/all_25_avril"
 ---
+
+Analyse of the entity : `r params$working_directory`
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -26,30 +30,27 @@ library(stringr)
 library(readr)
 library(webshot)
 if(require("htmltools"))
-  div(flextable_html_dependency())
+div(flextable_html_dependency())
 ```
 
 ```{r results='asis'}
 FitFlextableToPage <- function(ft, pgwidth = 6){
-  # ft <- eval(as.symbol(ft))
     table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
-# test <- eval(as.symbol(paste0(substitute(ft), "list_options")))
-#     test2 <- flextable(test)%>% autofit() %>% fit_to_width(30)
-
 
 table %>% 
   color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
   color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>% 
-  colformat_num(col_keys = c("`Difference (in % of tons)`"), digits = 2) %>% flextable_to_rmd()
-# test2%>% flextable_to_rmd()
+  colformat_num(col_keys = c("`Difference (in % of fish)`"), digits = 2) %>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
+  color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>% 
+  colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2) %>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
+  color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)%>% 
+  colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2) %>% flextable_to_rmd()
 
 }
 ```
 
-
 ```{r}
 list_dir <- list.dirs(path =paste0(params$working_directory, "/entities"), full.names = TRUE, recursive = FALSE)
-
 ```
 
 ```{r}
@@ -62,12 +63,18 @@ for (sub_list_dir in list_dir){
     details = file.info(sub_list_dir_2)
     details = details[with(details, order(as.POSIXct(mtime))), ]
     sub_list_dir_2 = rownames(details)
-  df <- data.frame(matrix(ncol =9 , nrow = 1))
-  colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), "Explanation", "Fonctions", "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)", "Difference (in % of lines)"
+  df <- data.frame(matrix(ncol =10, nrow = 1))
+  colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)),
+                    # "Explanation", "Fonctions", 
+                    "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
                     )
   tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
   lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
+  nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])
     for (i in sub_list_dir_2){
+      nominal <- 227382101
+
+
       sums <- read.csv(paste0(i,"/sums.csv"))
       Explanation <- readtext(paste0(i,"/explication.txt"))[2]
       Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
@@ -75,12 +82,18 @@ for (sub_list_dir in list_dir){
         Options <- pull(readtext(paste0(i,"/options.txt"))[2])} else {Options <- "Aucune"}
       step <- tail(str_split(paste0(i),"/")[[1]],n=1)
       loss_percent <- 100*((tons_init - pull(sums[1]))/tons_init)
+      loss_tons <- (tons_init - pull(sums[1]))
       loss_percent_lines <- 100*((lines_init - pull(sums[3]))/lines_init)
-      data_i <- cbind(step,Explanation, Fonctions, Options,
-                      sums, loss_percent, loss_percent_lines)
+      loss_percent_no <- 100*((nofish_init - pull(sums[2]))/nofish_init)
+      percentage_of_nominal <- (pull(sums[1])*100)/nominal
+      data_i <- cbind(step,
+                      # Explanation, Fonctions, 
+                      Options,
+                      sums, loss_percent,loss_tons,loss_percent_no, loss_percent_lines, percentage_of_nominal)
       names(data_i) <- colnames(df)
       df <- rbind(df, data_i)
       tons_init <- pull(sums[1])
+      nofish_init <- pull(sums[2])
       lines_init <- pull(sums[3])
 
     }
@@ -92,8 +105,7 @@ for (sub_list_dir in list_dir){
 }
 ```
 
-
-```{r fig.height=15, fig.width=10, results='asis'}
+```{r results='asis'}
 for (i in list){
   FitFlextableToPage(eval(as.symbol(i)))
 }
@@ -101,6 +113,3 @@ for (i in list){
 # lapply(list, FitFlextableToPage)
 # FitFlextableToPage(global_catch_1deg_1m_ps_bb_ird_level1)
 ```
-
-
-
