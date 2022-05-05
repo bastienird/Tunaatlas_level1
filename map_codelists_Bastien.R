@@ -7,9 +7,9 @@ function(con, fact, mapping_dataset,dataset_to_map, mapping_keep_src_code = FALS
     dimension_to_map<-c("gear","fishingfleet","schooltype","unit")
   }
   # One by one, map the dimensions
+  df_mapping_all_dimensions <- NULL
   for (i in 1:length(dimension_to_map)){ # i takes the values of the dimensions to map
     dimension <- dimension_to_map[i]
-    df_mapping_all_dimensions <- NULL
     if (dimension %in% colnames(dataset_to_map)){
       mapping_dataset_this_dimension<-mapping_dataset %>% filter (dimensions_to_map == dimension)  
       df_mapping_final_this_dimension<-NULL
@@ -20,9 +20,10 @@ function(con, fact, mapping_dataset,dataset_to_map, mapping_keep_src_code = FALS
       }
       df_mapping_all_dimensions<-rbind(df_mapping_all_dimensions,df_mapping_final_this_dimension)
       
-      dataset_to_map <- rtunaatlas::map_codelist(dataset_to_map,df_mapping_all_dimensions,dimension,mapping_keep_src_code)$df  # Codes are mapped by tRFMOs (source_authority) 
       }
   }
+  dataset_to_map <- rtunaatlas::map_codelist(dataset_to_map,df_mapping_all_dimensions,dimension,mapping_keep_src_code)$df  # Codes are mapped by tRFMOs (source_authority) 
+  
   
   return(dataset_to_map)
 }

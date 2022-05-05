@@ -251,7 +251,7 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
 }
 
          
-        if(!is.null(options$SBF_treatment)) if(options$SBF_treatment == geographical){
+        if(!is.null(options$SBF_treatment)){
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 7/: Overlapping zone (WCPFC/CCSBT): keep data from WCPFC or CCSBT?")
@@ -366,9 +366,9 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
                            georef_dataset, 
                            "Treatment on time only",
                            "function_overlapped")
-        }
+        }^
 
-    ##### unit treatment 
+# #### unit treatment
 # if(is.null(options$unit_treatment)) {
 # georef_dataset <- georef_dataset %>% filter(unit != "NOMT") %>% mutate(unit = ifelse( unit == "MTNO", "MT", unit))
 # 
@@ -378,7 +378,7 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
 #                  "map_codelists", c())
 # 
 # } else {
-#   
+# 
 # }
          
          
@@ -741,6 +741,228 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
          }else{
            config$logger.info("LEVEL 2 => STEP 3/3 not executed (since not selected in the workflow options (see column 'Data' of geoflow entities spreadsheet)")
          } 
+
+options$raising_do_not_raise_wcfpc_data <- FALSE
+
+
+if (fact=="catch"){
+  config$logger.info("Fact=catch !")
+  dataset_to_compute_rf=georef_dataset
+  #@juldebar why do we use "year' as time dimension here ?
+  if (is.null(options$x_raising_dimensions)){
+    x_raising_dimensions=c("gear", "species","year","source_authority")}
+  
+  
+} else if (fact=="effort"){    ## If we raise the efforts, the RF is calculated using the georeferenced catch data. Hence, we need to retrieve the georeferenced catch data.
+  cat("Catch datasets must be retrieved and processed in order to raise efforts. \nRetrieving georeferenced catch datasets from the Tuna atlas database...\n")
+  dataset_catch<-NULL
+  if (include_IOTC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("IOTC","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_WCPFC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("WCPFC","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_CCSBT=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("CCSBT","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_IATTC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("IATTC",
+                                                        "catch",
+                                                        datasets_year_release,
+                                                        iattc_ps_raise_flags_to_schooltype=iattc_ps_raise_flags_to_schooltype,
+                                                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype=iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+                                                        iattc_ps_catch_billfish_shark_raise_to_effort=TRUE)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_ICCAT=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("ICCAT",
+                                                        "catch",
+                                                        datasets_year_release,
+                                                        iccat_ps_include_type_of_school=iccat_ps_include_type_of_school)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  
+  
+  if (mapping_map_code_lists=="TRUE"){
+    dataset_catch<-function_map_code_lists("catch",mapping_csv_mapping_datasets_url,dataset_catch,mapping_keep_src_code)$dataset
+  }
+  
+  if (!is.null(gear_filter)){
+    dataset_catch<-function_gear_filter(gear_filter,dataset_catch)$dataset
+  }
+  dataset_catch$time_start<-substr(as.character(dataset_catch$time_start), 1, 10)
+  dataset_catch$time_end<-substr(as.character(dataset_catch$time_end), 1, 10)
+  if (unit_conversion_convert=="TRUE"){ 
+    # We use our conversion factors (IRD). This should be an input parameter of the script
+    #@juldebar URL for unit_conversion_csv_conversion_factor_url of should not be hard coded, temporary patch
+    dataset_catch<-function_unit_conversion_convert(con,
+                                                    fact="catch",
+                                                    unit_conversion_csv_conversion_factor_url="https://drive.google.com/open?id=1csQ5Ww8QRTaYd1DG8chwuw0UVUOGkjNL",
+                                                    unit_conversion_codelist_geoidentifiers_conversion_factors="areas_conversion_factors_numtoweigth_ird",
+                                                    mapping_map_code_lists,
+                                                    dataset_catch)$dataset
+  }
+  
+  dataset_to_compute_rf=dataset_catch
+  #@juldebar insert patch below to fix error in rtunaatlas::raise_get_rf function
+  
+  rm(dataset_catch)
+  #@juldebar : update with the new name of "flag" dimension (now "fishingfleet")
+  x_raising_dimensions=c("fishingfleet","gear","year","source_authority")
+}
+
+class(dataset_to_compute_rf$value) <- "numeric"
+source("~/Documents/Tunaatlas_level1/function_raising_georef_to_nominal_B.R")
+georef_dataset<-function_raising_georef_to_nominal_B(entity=entity,
+                                                     config=config,
+                                                     dataset_to_raise=georef_dataset,
+                                                     nominal_dataset_df=nominal_catch,
+                                                     # nominal_catch,
+                                                     # dataset_to_compute_rf=nominal_catch,
+                                                     dataset_to_compute_rf=dataset_to_compute_rf,
+                                                     x_raising_dimensions=x_raising_dimensions)
+
+rm(dataset_to_compute_rf)
+
+#@juldebar: pending => metadata elements below to be managed (commented for now)
+# metadata$description<-paste0(metadata$description,georef_dataset$description)
+# metadata$lineage<-c(metadata$lineage,georef_dataset$lineage)
+# metadata$supplemental_information<-paste0(metadata$supplemental_information,georef_dataset$supplemental_information)
+
+georef_dataset<-georef_dataset$dataset
+config$logger.info(paste0("Total ",fact," after raising is now: ",sum(georef_dataset$value),"\n"))
+config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
+config$logger.info(paste0("Total catch for data after raising is ",sum(georef_dataset$value),"  \n"))
+
+fonction_dossier("Level2_RFraisingwcpfc",
+                 georef_dataset, 
+                 "function_raising_georef_to_nominal, \n",
+                 "", c(raising_georef_to_nominal ,
+                       iattc_ps_raise_flags_to_schooltype ,
+                       iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,
+                       iattc_ps_catch_billfish_shark_raise_to_effort ,
+                       iccat_ps_include_type_of_school, include_IATTC, include_IOTC, 
+                       include_ICCAT, include_CCSBT, include_WCPFC, 
+                       fact, raising_do_not_raise_wcfpc_data, raising_raise_only_for_PS_LL
+                 ))
+options$raising_raise_only_for_PS_LL <- FALSE
+if (fact=="catch"){
+  config$logger.info("Fact=catch !")
+  dataset_to_compute_rf=georef_dataset
+  #@juldebar why do we use "year' as time dimension here ?
+  if (is.null(options$x_raising_dimensions)){
+    x_raising_dimensions=c("gear", "species","year","source_authority")}
+  
+  
+} else if (fact=="effort"){    ## If we raise the efforts, the RF is calculated using the georeferenced catch data. Hence, we need to retrieve the georeferenced catch data.
+  cat("Catch datasets must be retrieved and processed in order to raise efforts. \nRetrieving georeferenced catch datasets from the Tuna atlas database...\n")
+  dataset_catch<-NULL
+  if (include_IOTC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("IOTC","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_WCPFC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("WCPFC","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_CCSBT=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("CCSBT","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_IATTC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("IATTC",
+                                                        "catch",
+                                                        datasets_year_release,
+                                                        iattc_ps_raise_flags_to_schooltype=iattc_ps_raise_flags_to_schooltype,
+                                                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype=iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+                                                        iattc_ps_catch_billfish_shark_raise_to_effort=TRUE)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_ICCAT=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("ICCAT",
+                                                        "catch",
+                                                        datasets_year_release,
+                                                        iccat_ps_include_type_of_school=iccat_ps_include_type_of_school)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  
+  
+  if (mapping_map_code_lists=="TRUE"){
+    dataset_catch<-function_map_code_lists("catch",mapping_csv_mapping_datasets_url,dataset_catch,mapping_keep_src_code)$dataset
+  }
+  
+  if (!is.null(gear_filter)){
+    dataset_catch<-function_gear_filter(gear_filter,dataset_catch)$dataset
+  }
+  dataset_catch$time_start<-substr(as.character(dataset_catch$time_start), 1, 10)
+  dataset_catch$time_end<-substr(as.character(dataset_catch$time_end), 1, 10)
+  if (unit_conversion_convert=="TRUE"){ 
+    # We use our conversion factors (IRD). This should be an input parameter of the script
+    #@juldebar URL for unit_conversion_csv_conversion_factor_url of should not be hard coded, temporary patch
+    dataset_catch<-function_unit_conversion_convert(con,
+                                                    fact="catch",
+                                                    unit_conversion_csv_conversion_factor_url="https://drive.google.com/open?id=1csQ5Ww8QRTaYd1DG8chwuw0UVUOGkjNL",
+                                                    unit_conversion_codelist_geoidentifiers_conversion_factors="areas_conversion_factors_numtoweigth_ird",
+                                                    mapping_map_code_lists,
+                                                    dataset_catch)$dataset
+  }
+  
+  dataset_to_compute_rf=dataset_catch
+  #@juldebar insert patch below to fix error in rtunaatlas::raise_get_rf function
+  
+  rm(dataset_catch)
+  #@juldebar : update with the new name of "flag" dimension (now "fishingfleet")
+  x_raising_dimensions=c("fishingfleet","gear","year","source_authority")
+}
+
+class(dataset_to_compute_rf$value) <- "numeric"
+
+source("~/Documents/Tunaatlas_level1/function_raising_georef_to_nominal_B.R")
+georef_dataset<-function_raising_georef_to_nominal_B(entity=entity,
+                                                     config=config,
+                                                     dataset_to_raise=georef_dataset,
+                                                     nominal_dataset_df=nominal_catch,
+                                                     # nominal_catch,
+                                                     # dataset_to_compute_rf=nominal_catch,
+                                                     dataset_to_compute_rf=dataset_to_compute_rf,
+                                                     x_raising_dimensions=x_raising_dimensions)
+
+rm(dataset_to_compute_rf)
+
+#@juldebar: pending => metadata elements below to be managed (commented for now)
+# metadata$description<-paste0(metadata$description,georef_dataset$description)
+# metadata$lineage<-c(metadata$lineage,georef_dataset$lineage)
+# metadata$supplemental_information<-paste0(metadata$supplemental_information,georef_dataset$supplemental_information)
+
+georef_dataset<-georef_dataset$dataset
+config$logger.info(paste0("Total ",fact," after raising is now: ",sum(georef_dataset$value),"\n"))
+config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))	
+config$logger.info(paste0("Total catch for data after raising is ",sum(georef_dataset$value),"  \n"))
+
+fonction_dossier("Level2_RFraisingPSLL",
+                 georef_dataset, 
+                 "function_raising_georef_to_nominal, \n",
+                 "", c(raising_georef_to_nominal ,
+                       iattc_ps_raise_flags_to_schooltype ,
+                       iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,
+                       iattc_ps_catch_billfish_shark_raise_to_effort ,
+                       iccat_ps_include_type_of_school, include_IATTC, include_IOTC, 
+                       include_ICCAT, include_CCSBT, include_WCPFC, 
+                       fact, raising_do_not_raise_wcfpc_data, raising_raise_only_for_PS_LL
+                 ))
 
          
          
