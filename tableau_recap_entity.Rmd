@@ -6,6 +6,7 @@ output:
 date: '2022-03-23'
 params:
   working_directory: "~/Documents/Tunaatlas_level1/jobs/all_25_avril"
+  species_filter: !r c('YFT','SKJ', 'BET')
 ---
 
 Analyse of the entity : `r params$working_directory`
@@ -31,7 +32,18 @@ library(readr)
 library(webshot)
 if(require("htmltools"))
 div(flextable_html_dependency())
+
 ```
+
+```{r}
+nominal_dataset <- readRDS("data/nominalmapped.rds")
+
+if(!(is.null(params$species_filter))){nominal <- sum((nominal_dataset %>% filter(species %in% params$species_filter))$value)} else {nominal <- sum(nominal_dataset$value)}
+
+# if(params$species =="main"){nominal <- 182299925}else{nominal<- 211479421}
+```
+
+The filter done is on : `r params$species_filter`.
 
 ```{r results='asis'}
 FitFlextableToPage <- function(ft, pgwidth = 6){
@@ -58,6 +70,7 @@ list <- c()
 for (sub_list_dir in list_dir){
   # list_options <- read_csv(paste0(sub_list_dir,"/list_options.csv"))
   #     assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1), "list_options"), list_options, envir = .GlobalEnv)
+  # print(sub_list_dir)
     sub_list_dir_2 <- list.dirs(path =paste0(sub_list_dir,"/Markdown"), full.names = TRUE, recursive = FALSE)
     details = file.info(paste0(sub_list_dir_2,"/Markdown"))
     details = file.info(sub_list_dir_2)
@@ -68,11 +81,19 @@ for (sub_list_dir in list_dir){
                     # "Explanation", "Fonctions", 
                     "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
                     )
+  if((!is.null(params$species_filter))){
   tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
   lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
-  nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])
+  nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
+     main <- readRDS(paste0(sub_list_dir_2[1],"/rds.rds")) %>% filter(species%in%params$species_filter)
+      tons_init <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
+      nofish_init <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
+      lines_init <- nrow(main)
+  }
     for (i in sub_list_dir_2){
-      nominal <- 227382101
+      # sum((nominal_dataset %>% filter(year(time_start) > min(data$year)))$value) filtered only on species presented in georefdataset filte
+      # nominal <- 211479421
+      #this is not the complete sum o nominal, indeed it is the one between 1950 and 2020
 
 
       sums <- read.csv(paste0(i,"/sums.csv"))
@@ -80,21 +101,32 @@ for (sub_list_dir in list_dir){
       Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
       if (file.exists(paste0(i,"/options.txt"))){
         Options <- pull(readtext(paste0(i,"/options.txt"))[2])} else {Options <- "Aucune"}
+      if(!is.null(params$species_filter)){
+      main <- readRDS(paste0(i,"/rds.rds")) %>% filter(species%in%params$species_filter)
+      sum_t <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
+      sum_no <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
+      nrow <- nrow(main)
+      
+      } else{sum_t <- pull(sums[1])
+      sum_no <-  pull(sums[2])
+      nrow <- pull(sums[3])}
+      
       step <- tail(str_split(paste0(i),"/")[[1]],n=1)
-      loss_percent <- 100*((tons_init - pull(sums[1]))/tons_init)
-      loss_tons <- (tons_init - pull(sums[1]))
-      loss_percent_lines <- 100*((lines_init - pull(sums[3]))/lines_init)
-      loss_percent_no <- 100*((nofish_init - pull(sums[2]))/nofish_init)
-      percentage_of_nominal <- (pull(sums[1])*100)/nominal
+      loss_percent <- 100*((tons_init - sum_t)/tons_init)
+      loss_tons <- (tons_init - sum_t)
+      loss_percent_lines <- 100*((lines_init - nrow)/lines_init)
+      loss_percent_no <- 100*((nofish_init - sum_no)/nofish_init)
+      percentage_of_nominal <- (sum_t*100)/nominal
+      sums <- as.data.frame(data.frame(sum_t, sum_no, nrow))
       data_i <- cbind(step,
                       # Explanation, Fonctions, 
                       Options,
                       sums, loss_percent,loss_tons,loss_percent_no, loss_percent_lines, percentage_of_nominal)
       names(data_i) <- colnames(df)
       df <- rbind(df, data_i)
-      tons_init <- pull(sums[1])
-      nofish_init <- pull(sums[2])
-      lines_init <- pull(sums[3])
+      tons_init <- sum_t
+      nofish_init <- sum_no
+      lines_init <- nrow
 
     }
   df = df[-1,]

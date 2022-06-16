@@ -1,0 +1,520 @@
+---
+title: "Comparison of a dataset and the nominal catch"
+author: "Bastien Grasset"
+date: "09/02/2022"
+output:
+  html_document:
+    toc: true
+    theme: united
+    number_sections: true
+params: 
+  data: "~/Documents/Tunaatlas_level1/data/mapping_codelist.rds"
+  filter_species:  "NULL"
+  filter_source_authority:  "NULL"
+  filter_gear:  "NULL"
+  filter_fishingfleet:   "NULL"
+  filter_year:   "NULL"
+  filter_time_end:  "NULL"
+  filter_cat_geo:   "NULL"
+  filter_catchtype:   "NULL"
+  filter_schooltype: "NULL"
+  filter_species_group: "NULL"
+  titre_dataset: "RF3"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(readr)
+library(ggplot2)
+library(shiny)
+library(DBI)
+library(RMySQL)
+library(dbplyr)
+library(RPostgreSQL)
+library(odbc)
+library(sf)
+library(tmap)
+library(leaflet)
+library(tidyr)
+library(DT)
+library(kableExtra)
+library(flextable)
+
+set_flextable_defaults(
+  font.size = 10,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = 0,
+  theme_fun = "theme_box"
+  )
+
+tmap_mode("view")
+```
+
+```{r}
+drv <- dbDriver("PostgreSQL")      
+con <- DBI::dbConnect(drv , dbname = "tunaatlas", host = "db-tunaatlas.d4science.org", 
+                 port = 5432,
+                 user = "tunaatlas_u",
+                 password = "21c0551e7ed2911")
+
+query <- "dplyr::select code, st_area(geom), geom from area.cwp_grid"
+world_sf <- st_read(con, query = query) 
+
+shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>% mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1 deg", st_area == 25 ~ "5 deg", TRUE ~ "> 5 deg")))
+shape_without_geom  <- shapefile.fix %>% as_tibble()# %>% dplyr::select(-geom)
+options(scipen=999)
+
+kbl <- function(data) {
+  knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
+    kable_styling(latex_options =c("striped", "scale_down"))
+}
+
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% rename(species = species_code)
+colnames_to_keep <- c("fishingfleet",         "gear",                 "year",            "species",                 
+ "unit",                 "value",                "source_authority", "geographic_identifier", "species_group")
+
+```
+
+The purpose of this markdown is to describe the loss of data from the World Tuna Atlas following the different filters. It describes the differences between the data and the nominal data, and is intended for users of the nominal data who might be tempted to use it without taking into account the various filtering specificities.
+
+# The data compared
+
+The analyzed data is : - ***`r params$data`*** - ***nominal data***
+
+The filters used are:
+
+-   on species: `r params$filter_species`
+-   on gears: `r params$filter_gear`
+-   on rfmos: `r params$filter_source_authority`
+-   on fleets: `r params$filter_fishing_fleet`
+-   on data dates: `r params$filter_year`
+-   on nominal dates: `r params$filter_time_end`
+-   on geographical categories: `r params$filter_cat_geo`
+-   on catch types: `r params$filter_catchtype`
+-   on species group: `r params$filter_species_group`
+
+```{r}
+last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
+
+fonction_filtre = function(dataframe_tot_filter) {
+  dataframe_tot_filter <- dataframe_tot_filter%>% left_join(species_group%>% distinct(), by = c("species"))
+  if (!(params$filter_species == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  species %in% params$filter_species)
+  }
+    if (!(params$filter_gear == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  gear %in% params$filter_gear)
+    }    
+  if (!(params$filter_source_authority == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  source_authority %in% params$filter_source_authority)
+  }  
+  if (!(params$filter_fishingfleet == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  fishingfleet %in% params$filter_fishingfleet)
+  }
+    if (!(params$filter_year == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  year %in% params$filter_year)
+    }
+      if (!(params$filter_time_end == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  time_end %in% params$filter_time_end)
+     }
+    if (!(params$filter_schooltype == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  schooltype %in% params$filter_schooltype)
+  }
+    if (!(params$filter_catchtype == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  catchtype %in% params$filter_catchtype)
+    }
+  
+  if (!(params$filter_cat_geo == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  cat_geo %in% params$filter_cat_geo)
+  }
+    if (!(params$filter_catchtype == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  cat_geo %in% params$filter_catchtype)
+    }
+    if (!(params$filter_species_group == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  source_authority == params$filter_species_group)
+  }  
+
+
+  dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO")~ "Tons", unit %in% c("NO", "NOMT","no")~"Number of fish"))  %>% mutate(year = lubridate::year(time_start)) %>%dplyr::select(-time_start, time_end)
+  
+}
+
+
+  
+data <- fonction_filtre(readRDS(as.character(params$data)))# %>% left_join(shape_without_geom%>% distinct(), by = c("geographic_identifier"="code"))%>% dplyr::dplyr::select(all_of(colnames_to_keep)) %>% filter(species_group == "Tropical tunas")
+
+# if(nrow(data %>% filter(unit == "Number of fish")) == 0){
+#   data <- data %>% add_row(unit = "Number of fish") 
+#   }
+
+
+
+nominal <- fonction_filtre(readRDS("data/nominal.rds"))#%>% filter(species_group == "Tropical tunas")
+
+dates_communes <- inner_join(nominal %>% dplyr::select(year) %>% distinct(), data %>% dplyr::select(year)%>% distinct())
+data <- data%>% inner_join(dates_communes)
+nominal <- nominal%>% inner_join(dates_communes)
+
+especes_communes <- inner_join(nominal %>% dplyr::select(species) %>% distinct(), data %>% dplyr::select(species)%>% distinct())
+especes_non_communes <- anti_join(nominal %>% dplyr::select(species) %>% distinct(), data %>% dplyr::select(species)%>% distinct())
+data <- data%>% inner_join(especes_communes)
+nominal <- nominal%>% inner_join(especes_communes)
+
+rfmo_year_species_common <- inner_join(nominal %>% dplyr::select(species, year, source_authority) %>% distinct(), data %>% dplyr::select(species, year, source_authority)%>% distinct())
+
+rfmo_year_species_not_common <- gdata::combine(nominal =anti_join(nominal %>% dplyr::select(species, year, source_authority) %>% distinct(), data %>% dplyr::select(species, year, source_authority)%>% distinct()),data=anti_join(data %>% dplyr::select(species, year, source_authority) %>% distinct(), nominal %>% dplyr::select(species, year, source_authority)%>% distinct()))
+
+nominal_test <- nominal %>% inner_join(rfmo_year_species_common)
+data_test <- data  %>% inner_join(rfmo_year_species_common)
+  if ((params$titre_dataset == "NULL")){
+    titre_dataset <- last_path_reduced(as.character(params$data))
+  } else {
+    titre_dataset <- params$titre_dataset
+  }
+
+
+```
+
+## Data in georef but not in nominal
+
+```{r}
+qflextable(rfmo_year_species_not_common)
+```
+
+### THe species that have sometimes data in georef but not in nominal.
+
+```{r}
+qflextable(unique(rfmo_year_species_not_common)$species)
+
+```
+
+
+```{r}
+fonction_groupement = function(x, data, nominal){
+  x  <-   enquo(x)
+  groupement_1  <-   data %>% group_by(!!x,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
+  groupement_2  <-   nominal %>% group_by(!!x,unit) %>% summarise(value_sum_2 = sum(value, na.rm=TRUE), number_lines2 = n()) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
+  
+  fulljoin  <-   full_join(groupement_1, groupement_2) %>% 
+    mutate(Perte_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>% mutate(Dimension = colnames(groupement_1[1])) %>%
+    rename("Precision" = 1) %>% mutate(Precision = as.character(Precision)) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>% mutate(Perte_pourcent = ifelse(is.na(Perte_pourcent), 100, Perte_pourcent)) %>% mutate(perte_nb_ligne = number_lines1 - number_lines2)%>% 
+    mutate(Perte_en_milliers_de_tonne = (value_sum_1 - value_sum_2)/ 10^6) %>% 
+           rename(`Loss (in %)` = Perte_pourcent,`Loss in millions of tons` = Perte_en_milliers_de_tonne, 
+                  `Loss in number of lines` = perte_nb_ligne) %>% mutate_if(is.numeric, list(~replace_na(., 0))) %>% dplyr::select(-c(value_sum1))
+}
+```
+
+```{r}
+carte_data <- fonction_groupement(geographic_identifier,data, nominal)
+data <- data%>% dplyr::select(all_of(colnames_to_keep))
+nominal <- nominal #%>% rename(fishingfleet = flag)%>% dplyr::select(all_of(colnames_to_keep))
+
+
+Dimensions <- colnames(nominal)[colnames(nominal) != "unit" & colnames(nominal)!= "value" & colnames(nominal)!= "time_end"]
+Dimensions <- gsub("flag","fishingfleet", Dimensions) 
+
+  t <- carte_data[0,]
+
+for (i in Dimensions){
+  temporaire <- fonction_groupement(.data[[i]],nominal, data)
+  assign(paste0("test", i), temporaire)
+  
+  t <- rbind(t, temporaire)
+}
+  
+data_t <- data %>% filter(unit == "Tons")
+data_no <- data %>% filter(unit == "Number of fish")
+nominal_t <- nominal %>% filter(unit == "Tons")
+nominal_no <- nominal %>% filter(unit == "Number of fish")
+  
+      somme_data_t <- sum(data_t$value, na.rm = TRUE)
+    somme_data_no <- sum(data_no$value, na.rm = TRUE)
+    somme_nominal_t <- sum(nominal_t$value, na.rm = TRUE)
+    somme_nominal_no <- sum(nominal_no$value, na.rm = TRUE)
+    
+
+    perte_en_tonnes <- round(somme_nominal_t-somme_data_t)
+    perte_en_tonnes_pourcent <- round(100*(somme_nominal_t-somme_data_t)/somme_nominal_t,2)
+    perte_en_nombre <- round(somme_nominal_no-somme_data_no)
+    perte_en_nombre_pourcent <- round(100*(somme_nominal_no-somme_data_no)/somme_nominal_no,2)
+    try(if (perte_en_nombre_pourcent==-Inf) {perte_en_nombre_pourcent <- -100})
+
+  
+nb_ligne_data_millions <- nrow(data)/10^6
+nb_ligne_nominal_millions<- nrow(nominal)/10^6
+
+sum_valeur_data <- sum(data$value, na.rm = TRUE)/10^6
+sum_valeur_nominal <- sum(nominal$value, na.rm = TRUE)/10^6
+
+t$Dimension <-as.character(t$Dimension)
+t$Precision <-as.character(t$Precision)
+
+strates_perdues <- t %>% filter(`Loss (in %)` == 100)
+nombre_strates_perdues <- nrow(strates_perdues)
+nombres_de_strates_totales <- nrow(t)
+pourcentage_strates_perdues <- 100-(100*((nombres_de_strates_totales-nombre_strates_perdues)/nombres_de_strates_totales))
+rm(data_no, data_t, nominal_no, nominal_t)
+gc()
+
+strates_perdues_first_10 <- strates_perdues %>%ungroup %>%  group_by(Dimension)%>% slice(1:10) %>%dplyr::select(Dimension, everything())
+```
+
+# Main differences
+
+The number of lines goes from `r nb_ligne_data_millions` millions in nominal dataset to `r nb_ligne_nominal_millions` millions in `r titre_dataset`, which correspond to a difference of `r round((( nb_ligne_nominal_millions-nb_ligne_data_millions)/nb_ligne_nominal_millions)*100,5)`%.
+
+The georeferenced dataset has a total of `r round(somme_data_t)` in tons and of `r round(somme_data_no)` in number of fish.
+
+The nominal dataset has a total of `r round(somme_nominal_t)` in tons and of `r round(somme_nominal_no)` in number of fish.
+
+The loss is `r perte_en_tonnes` in tons (**`r perte_en_tonnes_pourcent`%**). The loss is `r perte_en_nombre` in number of fish (**`r perte_en_nombre_pourcent`%**).
+
+The stratas loss between the first one and the second one are :
+
+(only first 10 per Dimension showed), representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
+
+```{r}
+qflextable(head(strates_perdues,10))
+```
+
+# Introduction to the two datasets
+
+We first present the main characteristics of each dimension for each dataset.
+
+## Comparison of the two catch evolutions
+
+For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish (if exists).
+
+```{r}
+captures_par_time <- testyear %>% mutate(Time = (Precision))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>% mutate(Origin = case_when(Origin == "Captures table 1" ~ "Nominal" , TRUE ~ titre_dataset))
+
+
+ggplot(captures_par_time) +
+  aes(
+    x = Time,
+    y = Captures,
+    fill = Origin,
+    colour = Origin,
+    group = Origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_dark() +
+  theme(legend.position = "top") +
+  facet_wrap(vars(unit), nrow = 2L)+
+  labs(x = "Time", y = "Captures")
+```
+
+## Comparison of the evolution of the cumulative catches
+
+```{r}
+
+captures_par_time <- captures_par_time %>% mutate(Time = as.numeric(Precision))%>% arrange(Precision,unit) %>% group_by(unit, Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct() 
+
+ggplot_capt_par_time = function(x){
+  
+  ggplot(captures_par_time %>% filter(unit==x)) +
+  aes(
+    x = Time,
+    y = `Captures cumulées`,
+    colour = Origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit)) +
+  labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
+}
+
+ggplot_capt_par_time("Tons")
+
+```
+
+## Comparison between the georeferenced
+
+We check the distribution of the value of each dimension in tons and number of fish for nominal and georeferenced dataset.
+
+```{r}
+library(rlang)
+
+pie_chart_2 = function(x, data= data,nominal = nominal) {
+  r <- deparse(substitute(x))
+  colnames <- enquo(x)
+  provisoire_i <-data %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    dplyr::select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+  
+  provisoire_t <- nominal %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    dplyr::select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+  
+ggplot_i <- ggplot(provisoire_i) +
+  aes(
+    x = "",
+    fill = class,
+    colour = class,
+    group = class,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="") 
+  
+ggplot_t <- ggplot(provisoire_t) +
+  aes(
+    x = "",
+    fill = class,
+    colour = class,
+    group = class,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_t %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1, y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")
+
+title <- ggdraw() + 
+  draw_label(
+    paste0("Distribution in value for the dimension : ",r),
+    fontface = 'bold',
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+
+graph <- plot_grid(ggplot_i, ggplot_t,nrow = 2,labels = c(paste0( "Nominal"), paste0(titre_dataset)),
+  label_size = 10)
+
+plot_grid(
+  title, graph,
+  ncol = 1,
+  # rel_heights values control vertical title margins
+  rel_heights = c(0.1, 1))+
+    theme(plot.background = element_rect(color = "black"))
+
+
+}
+
+Dimensions <- colnames(data)[colnames(data) != "unit" & colnames(data)!= "value"&
+                               colnames(data)!= "year"&
+                               colnames(data)!= "time_end"&
+                               colnames(data)!= "geographic_identifier"]
+```
+
+```{r}
+library(cowplot)
+fishing_fleet <- pie_chart_2(fishingfleet, data, nominal)
+source_authority <- pie_chart_2(source_authority, data, nominal)
+species <- pie_chart_2(species, data, nominal)
+species_group <- pie_chart_2(species_group, data, nominal)
+
+```
+
+```{r}
+species
+
+fishing_fleet
+
+source_authority
+
+try(species_group)
+
+```
+
+# Loss
+
+This section detail the different loss that observed between the dataframe `r titre_dataset` and the nominal dataset.
+
+```{r}
+disappearing_strates <- t %>% filter(value_sum_2 == 0)
+appearing_strates <- t %>% filter(value_sum_1 == 0)
+```
+
+```{r}
+topn <- 5  
+```
+
+## The losses for each dimension
+
+We will look for each dimension the `r topn` most important losses.
+
+```{r paged.print=TRUE}
+library(knitr)
+library(DT)
+library(kableExtra)
+
+valeur_totale <- sum(data$value, na.rm = TRUE)
+ligne_totale <- nrow(data)
+
+unit <- t %>% filter(Dimension %in% c("species", "source_authority", "fishingfleet", "species_group")) %>% mutate(Dimension = as.factor(Dimension)) %>%  group_by( Dimension, unit) %>% arrange(desc(`Loss (in %)`))   %>%   mutate(id = row_number())%>%   mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% ungroup() %>% group_by(Dimension,Precision, unit) %>% summarise(across(is.numeric, sum)) %>% mutate(`Loss (in %)` = (`Loss in millions of tons`*1000000/value_sum_1)*100) %>% dplyr::select(-id, -number_lines2)%>%group_by(unit,Dimension) %>%  arrange(Dimension,desc(`Loss (in %)`))
+
+
+```
+
+```{r paged.print=TRUE}
+qflextable(as_grouped_data(unit %>% ungroup(), groups = c("Dimension","unit"))) 
+```
+
+## Loss in temporal data
+
+Here is represented the loss in percent for each year.
+
+```{r}
+
+t %>%
+ filter(Dimension == "year") %>% mutate(Time = Precision) %>% 
+ ggplot() +
+ aes(x = Time, weight = `Loss (in %)`) +
+ geom_bar(fill = "#112446") +
+ theme_minimal()+facet_wrap("unit")+labs(y = "Loss in %")
+
+```

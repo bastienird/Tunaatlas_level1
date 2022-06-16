@@ -17,7 +17,7 @@
     "entities": [
       {
       "handler": "gsheet",
-      "source": "https://docs.google.com/spreadsheets/d/1JhS1ADsnqTpWOEEvljk-c9EdzBurkc8A8__JOHJmkOk/edit#gid=1111485440"
+      "source": "https://docs.google.com/spreadsheets/d/1wfZxOyVWIKXgiamxauea2BY7cUtiipSODHbQdZz6BcA/edit?usp=sharing"
       }
     ],
     "contacts" : [
@@ -44,7 +44,7 @@
 			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {}
 	},
@@ -58,7 +58,7 @@
 			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {}
 	},
@@ -68,7 +68,7 @@
 		"software_type": "googledrive",
 		"parameters": {
 			"email": "bastiengrassetensat@gmail.com",
-			"token": "4/1AX4XfWgqj_cac3AhM2RSO_wr9TlM2_NFMUfh2yB_tXRgaucmcUgxClnd6-k"
+			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
 		},
 		"properties" : {}
 	}
@@ -76,13 +76,13 @@
   "actions": [ 
   	{
 		"id": "load_dataset",
-		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_dataset.R",
-		"run": false,
+		"script": "~/Documents/Tunaatlas_level1/load_dataset_Bastien.R",
+		"run": true,
 		"options": {
-			"upload_to_db": false,
-			"create_materialized_view" : false,
-			"add_sql_comments" : false,
-			"upload_to_googledrive": false
+			"upload_to_db": true,
+			"create_materialized_view" : true,
+			"add_sql_comments" : true,
+			"upload_to_googledrive": true
 		}
   	}
  ]

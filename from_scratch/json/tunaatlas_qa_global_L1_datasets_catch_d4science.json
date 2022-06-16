@@ -17,7 +17,7 @@
     "entities": [
       {
       "handler": "gsheet",
-      "source": "https://docs.google.com/spreadsheets/d/1JhS1ADsnqTpWOEEvljk-c9EdzBurkc8A8__JOHJmkOk/edit#gid=1111485440"
+      "source": "https://docs.google.com/spreadsheets/d/1-vFeorfIQZsj_B9n7YB4FsKs2Mr7wINISbIvbA8fDJ0/edit?usp=sharing"
       }
     ],
     "contacts" : [
@@ -42,7 +42,7 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "db-tunaatlas.d4science.org",
+			"host": "localhost",
 			"port": "5432",
 			"dbname": "tunaatlas"
 		},
@@ -56,7 +56,7 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "db-tunaatlas.d4science.org",
+			"host": "localhost",
 			"port": "5432",
 			"dbname": "tunaatlas"
 		},
@@ -67,8 +67,8 @@
 		"type": "input",
 		"software_type": "googledrive",
 		"parameters": {
-			"email": "bastiengrassetensat@gmail.com",
-			"token": "4/1AX4XfWgqj_cac3AhM2RSO_wr9TlM2_NFMUfh2yB_tXRgaucmcUgxClnd6-k"
+			"email": "firmstunaatlas@gmail.com",
+			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
 		},
 		"properties" : {}
 	}

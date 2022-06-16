@@ -32,6 +32,85 @@ library(readr)
 library(webshot)
 if(require("htmltools"))
 div(flextable_html_dependency())
+pie_chart_2 = function(x, init= init,final = final) {
+  r <- deparse(substitute(x))
+  colnames <- enquo(x)
+  provisoire_i <-init %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+  
+  provisoire_t <- final %>%  group_by(!!colnames, unit)%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class, unit) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    select(unit, value, class) %>%   group_by(unit) %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+  
+ggplot_i <- ggplot(provisoire_i) +
+  aes(
+    x = "",
+    fill = class,
+    colour = class,
+    group = class,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="") + facet_wrap("unit")
+  
+ggplot_t <- ggplot(provisoire_t) +
+  aes(
+    x = "",
+    fill = class,
+    colour = class,
+    group = class,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_t %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1, y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="") + facet_wrap("unit")
+
+title <- ggdraw() + 
+  draw_label(
+    paste0("Distribution in value for the dimension : ",r),
+    fontface = 'bold',
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+
+graph <- plot_grid(ggplot_i, ggplot_t,nrow = 2,labels = c(paste0( titre_1), paste0(titre_2)),
+  label_size = 10)
+
+plot_grid(
+  title, graph,
+  ncol = 1,
+  # rel_heights values control vertical title margins
+  rel_heights = c(0.1, 1))+
+    theme(plot.background = element_rect(color = "black"))
+
+
+}
+
 ```
 
 ```{r}
@@ -106,12 +185,14 @@ ggplot(comp_year)+
 The difference between the two dataset is `r sum((raising_shark %>% filter(unit == "MT"))$value) - sum((not_raising_shark %>% filter(unit == "MT"))$value)` in tons and `r sum((raising_shark %>% filter(unit == "NO"))$value) - sum((not_raising_shark %>% filter(unit == "NO"))$value)` in number of fish.
 
 ```{r}
-setdiff <- setdiff(raising_shark, not_raising_shark)
+setdiff_raise <- setdiff(raising_shark, not_raising_shark)
+setdiff_not_raise <- setdiff(not_raising_shark,raising_shark)
 ```
 
 
 ```{r}
-t <- pie_chart_2(species, setdiff)
+titre_2 <- 'Not raised'
+t <- pie_chart_2(species, setdiff_raise, setdiff_not_raise)
 t
 ```
 

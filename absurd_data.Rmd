@@ -1,0 +1,500 @@
+---
+title: "Data with potential mistakes"
+output: latex_document
+
+date: '2022-05-11'
+params:
+  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/new_24_may/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/Markdown/mapping_codelist/rds.rds"
+  plotting: "plot"
+  world_coastline: "gshhs_world_coastlines"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+library(readtext)
+library(flextable)
+set_flextable_defaults(
+  font.size = 30,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = NULL,
+  theme_fun = "theme_box"
+  )
+library(dplyr)
+library(stringr)
+library(readr)
+library(webshot)
+if(require("htmltools"))
+library(ggplot2)
+library(cowplot)
+div(flextable_html_dependency())
+library(DBI)
+library(RPostgres)
+library(RPostgreSQL)
+library(sf)
+library(tmap)
+library(devtools)
+install("./../studycatchesird")
+library(studycatchesird)
+
+```
+
+```{r}
+
+data <- readRDS(params$chemin_dacces)
+  data <- data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
+cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+    col_types = cols(Identifier = col_skip(), 
+        Abbreviation = col_skip(), Name_Fr = col_skip(), 
+        Name_Es = col_skip(), Name_Ar = col_skip()))
+
+data <- data %>% full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+
+drv <- dbDriver("PostgreSQL")      
+con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox2", host = "localhost", 
+                      port = 5432,
+                      user = "tunaatlas_u",
+                      password = "21c0551e7ed2911")
+
+
+query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
+world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
+
+query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
+competence_area <- st_make_valid(st_read(con, query = query_area)) %>% filter(!st_is_empty(.))
+IOTC_shape <- competence_area %>% filter(code == "IOTC")
+IATTC_shape <- competence_area %>% filter(code == "IATTC")
+WCPFC_shape <- competence_area %>% filter(code == "WCPFC")
+ICCAT_shape <- competence_area %>% filter(code == "ICCAT")
+query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+continent <- st_read(con, query = query)%>% filter(!st_is_empty(.))
+query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
+irregular_iotc <- st_read(con, query = query)%>% filter(!st_is_empty(.))
+irregular_iotc <-irregular_iotc  %>% distinct()
+# test <- data %>% inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% mutate(geographic_identifier = code_cwp)
+irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
+irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
+irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
+if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
+
+world_sf <- world_sf %>% mutate(code_cwp = code)
+
+tmap_mode("plot")
+# tm_shape(st_as_sf(test %>% inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
+pakistan <- irregular_iotc %>% filter(code_cwp== "3120060")
+world_sf_combined <- rbind(pakistan, world_sf)
+# world_sf_combined <- gdata::combine(world_sf, irregular_iotc) %>% distinct()
+# t <- rbind(world_sf_combined[duplicated(world_sf_combined$code_cwp),],world_sf_combined[duplicated(world_sf_combined$code_cwp, fromLast = TRUE),] )
+
+data <- left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% select(-c(code_cwp, st_area))
+
+# testtt <- setdiff(irregular_iotc$code_cwp, world_sf$code_cwp)
+# 
+# test <- t %>% group_by(code, source) %>% slice(1)
+# tm_shape(st_as_sf(t))+tm_polygons()+tm_fill(col = "source")
+# 
+IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iotc = "iotc")
+
+IATTC <- world_sf[IATTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iattc = "iattc")
+
+WCPFC <- world_sf[WCPFC_shape,]%>% st_set_geometry(NULL) %>% mutate(wcpfc = "wcpfc")
+
+ICCAT <- world_sf[ICCAT_shape,]%>% st_set_geometry(NULL) %>% mutate(iccat = "iccat")
+
+
+
+full_join <- full_join(full_join(full_join(full_join(world_sf, IOTC), IATTC), WCPFC), ICCAT) %>% st_set_geometry(NULL) 
+
+
+full_join[is.na(full_join)] <-  FALSE
+
+full_join <- full_join %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat))))
+world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
+world_sf$continent <- str_replace(world_sf$continent, "TRUE","continent")
+
+world_sf <- left_join(world_sf, full_join)
+
+world_sf_with_competence_area <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
+
+
+inner_join <- data %>% inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
+
+
+
+all_the_data <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(world_sf%>% select(-area_competence) , by = c("geographic_identifier"="code", "st_area") ) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
+
+mislocated_continent <- all_the_data %>% filter(str_detect(area_competence, "continent"))
+if (nrow(mislocated_continent)==0){knitr::knit_exit()}else{
+tmap_mode(params$plotting)
+
+tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
+}
+
+
+```
+
+# Distribution of mislocated data 
+
+```{r}
+
+mislocated_continent2 <- mislocated_continent %>% group_by(unit, source_authority) %>% arrange(unit,desc(source_authority)) %>% summarise(value = sum(value, na.rm = TRUE))  %>% ungroup() %>% group_by(unit) %>%  mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(unit,desc( source_authority)) %>% 
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+ggplot(mislocated_continent2) +aes(
+    x = "",
+    fill = source_authority,
+    colour = source_authority,
+    group = source_authority,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (mislocated_continent2 %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="") + facet_wrap("unit")
+
+```
+
+
+***This markdown is aimed to study the repartition of each unity for a specific dataset, in this case is `r params$chemin_dacces`.***
+
+```{r}
+all_the_data3 <- all_the_data %>% mutate(continent = ifelse(area_competence != "continent", "ocean", "continent"))
+
+```
+
+
+```{r}
+# st_geometry(all_the_data3) <- NULL
+final <- all_the_data3 %>% group_by(continent, unit) %>% summarise(value = sum(value))
+# all_the_data2_without_continent <- all_the_data %>% filter(area_competence != "continent")
+# value_without_continent <- sum(all_the_data2_without_continent$value, na.rm =TRUE)
+
+en_nombre_continent <- pull(final %>% filter(unit == "Number of fish") %>% filter(continent == "continent"))
+en_nombre_ocean <- pull(final %>% filter(unit == "Number of fish") %>% filter(continent == "ocean"))
+en_tonne_continent <- pull(final %>% filter(unit == "Tons") %>% filter(continent == "continent"))
+en_tonne_ocean <- pull(final %>% filter(unit == "Tons") %>% filter(continent == "ocean"))
+
+perte_en_nombre <- (en_nombre_continent / (en_nombre_ocean+en_nombre_continent))*100
+perte_en_tonne <- (en_tonne_continent/ (en_tonne_continent+en_tonne_ocean))*100
+
+# value_with_continent <- sum(all_the_data$value, na.rm = TRUE)
+
+# perte_en_pourcent_conitnent <- ((value_with_continent-value_without_continent)/value_with_continent)*100
+```
+
+Removing the data placed on the continents, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
+
+We are now interested in the mislocated data
+
+```{r}
+
+# mislocated <- inner_join %>%filter(!str_detect(area_competence, "continent")) %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(area_competence = toupper(area_competence)) %>%  mutate(mislocated = case_when(source_authority =="CCSBT" ~TRUE, area_competence%in%c("IATTC", "ICCAT", "IOTC", "WCPFC") & area_competence == source_authority ~ TRUE,
+#                               area_competence == "IOTCWCPFC" & source_authority %in% c("IOTC", "WCPFC")  ~ TRUE,
+#                               area_competence == "IATTCWCPFC" & source_authority %in% c("IATTC", "WCPFC")  ~ TRUE, tolower(area_competence) == area_competence ~ TRUE, 
+#                               TRUE ~ FALSE))
+
+mislocated <- inner_join %>% mutate(area_competence = as.character(area_competence)) %>% filter(!str_detect(inner_join$area_competence, "continent")) %>% filter(!is.null(area_competence))%>% filter(area_competence != "")%>% mutate(area_competence= as.factor(area_competence)) %>%  ungroup() %>% select(area_competence, source_authority, value, unit, geom) %>% mutate(source_authority = tolower(source_authority)) %>%  mutate(mislocated = case_when(str_detect(area_competence, source_authority) == TRUE ~ TRUE, area_competence == source_authority ~ TRUE, source_authority == "CCSBT"~TRUE,
+                              TRUE ~ FALSE))
+
+final <- mislocated %>% group_by(mislocated, unit) %>% summarise(value = sum(value))
+en_nombre_false<- pull(final %>% filter(unit == "Number of fish") %>% filter(mislocated == FALSE))
+en_nombre_true <- pull(final %>% filter(unit == "Number of fish") %>% filter(mislocated == TRUE))
+en_tonne_false <- pull(final %>% filter(unit == "Tons") %>% filter(mislocated == FALSE))
+en_tonne_true <- pull(final %>% filter(unit == "Tons") %>% filter(mislocated == TRUE))
+
+perte_en_nombre <- (en_nombre_false / (en_nombre_true+en_nombre_false))*100
+perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
+
+
+```
+
+```{r eval=FALSE}
+# tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")+tm_facets("unit")
+```
+
+```{r}
+tm_shape(WCPFC_shape %>% mutate(name = "WCPFC"))+tm_borders( col = "red")+tm_text("name")+tm_shape(ICCAT_shape%>% mutate(name = "ICCAT"))+tm_borders( col = "yellow")+tm_text("name")+tm_shape(IOTC_shape%>% mutate(name = "IOTC"))+tm_borders( col = "purple")+tm_text("name")+tm_shape(IATTC_shape%>% mutate(name = "IATTC"))+tm_borders( col = "skyblue")+tm_text("name")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="ccsbt") %>%  filter(area_competence != "") %>% filter(!is.null(area_competence))))+tm_polygons(col = "source_authority")+tm_text("source_authority")+tm_facets("unit")
+
+```
+
+
+Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
+
+```{r}
+mapped_data<- readRDS("data/rawdata.rds") #%>% filter(source_authority == params$source_authority)
+rdslevel0 <- mapped_data
+
+strata_nomt <- rdslevel0 %>% filter(unit %in% c("NOMT")) #%>% select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% summarise(value = sum(value)) #%>% mutate(unit = "NO", unit_target = "MT")
+# strata_no <- rdslevel0 %>% filter(unit == "NO") %>% mutate(source= "strata_no")
+# strata_nomt_2 <- strata_nomt %>% mutate(source = "strata_nomt")
+# t <- gdata::combine(strata_no, strata_nomt)
+# r <- full_join(strata_no, strata_nomt_2, by = c("fishingfleet", "gear", "time_start", "time_end", "geographic_identifier",
+# "schooltype", "species", "catchtype", "unit", "source_authority")) %>% filter(!is.na(source.x) & !is.na(source.y))
+# upp is to check if data in no could be converted
+
+strata_mtno <- rdslevel0 %>% filter(unit %in% c("MTNO")) #%>% select(-c(schooltype, catchtype ,fishingfleet)) %>% group_by_all() %>% summarise(value=sum(value))#%>% mutate(unit = "MT", unit_target = "NO")
+
+strata_converted_level0 <-  rbind(strata_nomt, strata_mtno) %>% ungroup() %>% select(-c(value)) %>% distinct()
+
+conversion_factor_level0 <- rbind(inner_join(strata_nomt , strata_mtno, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% rename(NO =value.x, MT = value.y) %>%
+                                    group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet) %>% 
+  summarise(NO = sum(NO), MT = sum(MT)) %>% ungroup()#%>% select(-c(unit.y, unit.x))
+  , inner_join(strata_mtno , strata_nomt, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% rename(MT =value.x, NO = value.y)%>%
+  group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet)%>%
+  summarise(NO = sum(NO), MT = sum(MT)) %>%ungroup() #%>%  select(-c(unit.y, unit.x))
+  )%>% distinct()%>%
+  group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet) %>%
+  summarise(NO = sum(NO), MT = sum(MT)) %>% mutate(conversion_factor = MT/NO) %>% distinct()
+```
+
+## Maximum catches in the history for those fishes.
+
+```{r}
+`%notin%` <- Negate(`%in%`)
+absurd_conversion_factor <- conversion_factor_level0 %>% filter((conversion_factor>0.05 & species == "SKJ") | (conversion_factor > 0.09 & species == "ALB") |(conversion_factor>0.2 & species == "YFT") | (conversion_factor >0.5 & species =="SWO")| (conversion_factor>0.2 &species == "BET") | (species %notin% c("ALB","SKJ","SWO", "YFT", "BET")))
+```
+
+```{r}
+# pie_chart_2 = function(x, init= init) {
+#   r <- deparse(substitute(x))
+#   colnames <- enquo(x)
+#   provisoire_i <-init %>%  group_by(!!colnames )%>% summarise(value = sum(value, na.rm = TRUE))  %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+#     mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+#     group_by(class) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+#     select(  value, class)  %>% mutate(pourcentage = prop.table(value)*100)%>%
+#     mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+#   mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+#     distinct()
+#   
+#   
+#   
+# ggplot_i <- ggplot(provisoire_i) +
+#   aes(
+#     x = "",
+#     fill = class,
+#     colour = class,
+#     group = class,
+#     weight = pourcentage
+#   ) +
+#   geom_bar(position = "fill") +
+#   scale_fill_hue(direction = 1) +
+#   scale_color_hue(direction = 1) +
+#   theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
+#                            aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+#   theme(axis.ticks.x = element_blank(),
+#         axis.text.x = element_blank())+
+#   labs(x = "", y="")
+#   
+# 
+# 
+# title <- ggdraw() + 
+#   draw_label(
+#     paste0("Distribution in value for the dimension : ",r),
+#     fontface = 'bold',
+#     x = 0,
+#     hjust = 0
+#   ) +
+#   theme(
+#     # add margin on the left of the drawing canvas,
+#     # so title is aligned with left edge of first plot
+#     plot.margin = margin(0, 0, 0, 7)
+#   )
+# 
+# graph <- plot_grid(ggplot_i,labels = c(paste0( titre_1)),
+#   label_size = 10)
+# 
+# plot_grid(
+#   title, graph,
+#   ncol = 1,
+#   # rel_heights values control vertical title margins
+#   rel_heights = c(0.1, 1))+
+#     theme(plot.background = element_rect(color = "black"))
+# 
+# 
+# }
+
+titre_1 <- "Strange conversion factors"
+absurd_conversion_factor_tons <- absurd_conversion_factor  %>%  rename(value=MT) %>% mutate(unit="MT")
+strange <- pie_chart_2(fishingfleet,unit,first=absurd_conversion_factor_tons,second=mapped_data )
+strange
+```
+
+
+```{r}
+# titre_1 <- "Original data"
+original <- pie_chart_1(fishingfleet, mapped_data %>% filter(unit %in% c("Tons","MT","MTNO")))
+original
+# plot_grid(strange, original)
+```
+
+We can see that the repartition of the value in tons is very different in the data where the conversion factor seems too big. 
+
+# Mislocated data
+
+```{r}
+
+rawdata <- readRDS("data/rawdata.rds")
+  data <- mapped_data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
+cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+    col_types = cols(Identifier = col_skip(), 
+        Abbreviation = col_skip(), Name_Fr = col_skip(), 
+        Name_Es = col_skip(), Name_Ar = col_skip()))
+
+data <- data %>% full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+
+
+query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
+library(sf)
+world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
+
+query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
+competence_area <- st_make_valid(st_read(con, query = query_area)) %>% filter(!st_is_empty(.))
+IOTC_shape <- competence_area %>% filter(code == "IOTC")
+IATTC_shape <- competence_area %>% filter(code == "IATTC")
+WCPFC_shape <- competence_area %>% filter(code == "WCPFC")
+ICCAT_shape <- competence_area %>% filter(code == "ICCAT")
+query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+continent <- st_read(con, query = query)%>% filter(!st_is_empty(.))
+query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
+irregular_iotc <- st_read(con, query = query)%>% filter(!st_is_empty(.))
+irregular_iotc <-irregular_iotc  %>% distinct()
+# test <- data %>% inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% mutate(geographic_identifier = code_cwp)
+irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
+irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
+irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
+if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
+
+world_sf <- world_sf %>% mutate(code_cwp = code)
+library(tmap)
+tmap_mode("plot")
+# tm_shape(st_as_sf(test %>% inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
+pakistan <- irregular_iotc %>% filter(code_cwp== "3120060")
+world_sf_combined <- rbind(pakistan, world_sf)
+# world_sf_combined <- gdata::combine(world_sf, irregular_iotc) %>% distinct()
+# t <- rbind(world_sf_combined[duplicated(world_sf_combined$code_cwp),],world_sf_combined[duplicated(world_sf_combined$code_cwp, fromLast = TRUE),] )
+
+data <- left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% select(-c(code_cwp, st_area))
+
+# testtt <- setdiff(irregular_iotc$code_cwp, world_sf$code_cwp)
+# 
+# test <- t %>% group_by(code, source) %>% slice(1)
+# tm_shape(st_as_sf(t))+tm_polygons()+tm_fill(col = "source")
+# 
+IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iotc = "iotc")
+
+IATTC <- world_sf[IATTC_shape,]%>% st_set_geometry(NULL) %>% mutate(iattc = "iattc")
+
+WCPFC <- world_sf[WCPFC_shape,]%>% st_set_geometry(NULL) %>% mutate(wcpfc = "wcpfc")
+
+ICCAT <- world_sf[ICCAT_shape,]%>% st_set_geometry(NULL) %>% mutate(iccat = "iccat")
+
+
+
+full_join <- full_join(full_join(full_join(full_join(world_sf, IOTC), IATTC), WCPFC), ICCAT) %>% st_set_geometry(NULL) 
+
+
+full_join[is.na(full_join)] <-  FALSE
+
+full_join <- full_join %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat))))
+world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
+world_sf$continent <- str_replace(world_sf$continent, "TRUE","continent")
+
+world_sf <- left_join(world_sf, full_join)
+
+world_sf_with_competence_area <- world_sf %>% mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
+
+
+inner_join <- data %>% inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
+
+
+
+all_the_data <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(world_sf%>% select(-area_competence) , by = c("geographic_identifier"="code", "st_area") ) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
+
+mislocated_continent <- all_the_data %>% filter(str_detect(area_competence, "continent"))
+
+
+
+```
+
+```{r}
+mislocated_continent_init <- rawdata %>% semi_join(mislocated_continent, by = "geographic_identifier")
+```
+
+```{r}
+titre_1 <- "Mislocated tons"
+mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% filter(unit %in%c("MTNO","MT")))
+titre_1 <- "Original tons"
+
+original <-  pie_chart_1(fishingfleet,rawdata%>% filter(unit %in%c("MTNO","MT")))
+
+plot_grid(mislocated, original)
+```
+
+Spain is mislocating the data a lot, as well as EUIRL and BLZ.
+
+```{r}
+titre_1 <- "Mislocated numbers"
+mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% filter(unit %in%c("NOMT","NO")))
+titre_1 <- "Original numbers"
+
+original <-  pie_chart_1(fishingfleet,mapped_data%>% filter(unit %in%c("NOTM","NO")))
+
+plot_grid(mislocated, original)
+```
+
+In numbers, it is Brasil, SYC and USA that are mislocating the data.
+
+```{r}
+titre_1 <- "Mislocated tons"
+mislocated <-  pie_chart_1(species,mislocated_continent_init %>% filter(unit %in%c("MTNO","MT")))
+titre_1 <- "Original tons"
+
+original <-  pie_chart_1(species,mapped_data%>% filter(unit %in%c("MTNO","MT")))
+
+plot_grid(mislocated, original)
+```
+
+Albacore is mislocated, as well as BET. 
+
+```{r}
+library(sf)
+library(lubridate)
+# mislocated_continent <- mislocated_continent %>% st_set_geometry(NULL)
+# st_geometry(mislocated_continent) <- NULL
+
+located_on_continent <- rawdata %>% semi_join(mislocated_continent , by = "geographic_identifier")
+conversion_factor_above_500_kilos <- rawdata  %>% semi_join(absurd_conversion_factor%>% mutate(time_start = as.character(time_start), time_end = as.character(time_end)))
+a <- gdata::combine(located_on_continent, conversion_factor_above_500_kilos) %>% rename(issue = source)
+```
+
+```{r}
+titre_1 <- "Problem conversion factor in tons"
+prblm_conv_fact <- pie_chart_1(source_authority,a%>% filter(unit %in%c("MTNO","MT")))
+titre_1 <- "Original tons"
+
+original <-  pie_chart_1(source_authority,mapped_data%>% filter(unit %in%c("MTNO","MT")))
+plot_grid(prblm_conv_fact,original)
+```
+
+Problem of conversion factor seems to be coming from WCPFC and IATTC.
+
+```{r}
+source_authority <- c("IATTC", "IOTC","WCPFC","CCSBT","ICCAT")
+
+lapply(source_authority, function(x){assign(paste0("table_",x), a #%>% filter(source_authority ==x)
+                                            , envir = .GlobalEnv)
+  write.csv(paste0("table_",x), file = paste0("data/issues_with_data_table",x,".csv"))})
+
+
+
+```
+

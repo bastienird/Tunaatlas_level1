@@ -1,0 +1,242 @@
+---
+title: "strange_data"
+output: html_document
+date: '2022-05-11'
+params:
+  source_authority: 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = TRUE,
+	warning = TRUE
+)
+library(readtext)
+library(flextable)
+set_flextable_defaults(
+  font.size = 30,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = NULL,
+  theme_fun = "theme_box"
+  )
+library(dplyr)
+library(stringr)
+library(readr)
+library(webshot)
+if(require("htmltools"))
+library(ggplot2)
+library(cowplot)
+div(flextable_html_dependency())
+library(DBI)
+library(RPostgres)
+library(RPostgreSQL)
+```
+
+```{r}
+fonction_groupement = function(x, data){
+  x  <-   enquo(x)
+  groupement_1  <-   data %>% group_by(!!x,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1)) 
+  second_highest_value <- groupement_1 %>% group_by(unit) %>%   arrange(desc(value_sum1)) %>% 
+  slice(seq_len(2)) %>% arrange(value_sum1) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value_sum1)
+  groupement2 <- groupement_1%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value_sum1))
+  }
+
+
+# mapped_data<- read_csv("data/georef_dataset_after_mapping_codelist.csv") %>% filter(source_authority == params$source_authority)
+mapped_data<- readRDS("~/Documents/Tunaatlas_level1/jobs/20220511123321/entities/global_catch_firms_Bastien_rds_level2/Markdown/rawdata/rds.rds")
+
+carte_init <- fonction_groupement(geographic_identifier,mapped_data%>% mutate(unit = case_when(unit == "NOMT"~ "NO", unit == "MTNO"~"MT", TRUE ~ unit))) #%>% mutate(absurd = topn(value,2))
+
+absurd = function(x){x %>% select(-value_sum_1) %>% filter(value_sum1 > 1.1 * second_highest_value & value_sum1 > 2*mean)}
+absurd_cart <- absurd(carte_init)
+```
+
+<!-- Analyse for years/species :  -->
+
+
+
+<!-- ```{r} -->
+<!-- year_init <- mapped_data%>% mutate(unit = case_when(unit == "NOMT"~ "NO", unit == "MTNO"~"MT", TRUE ~ unit))%>% group_by(time_start, species,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1)) -->
+
+<!--   second_highest_value <- year_init %>% group_by(unit) %>%   arrange(desc(value_sum1)) %>%  -->
+<!--   slice(seq_len(2)) %>% arrange(value_sum1) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value_sum1) -->
+<!--   year_init_2 <- year_init%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value_sum1)) -->
+
+<!-- absurd_year <- year_init_2 %>% select(-value_sum_1) %>% filter(value_sum1 > 1.1 * second_highest_value & value_sum1 > 2*mean) -->
+<!-- ``` -->
+
+<!-- Maybe absurd it is just because it is declared this time in number and it used to be in tons. -->
+
+<!-- Let's check the catches of FRI in 1990. -->
+
+<!-- ```{r} -->
+<!-- FRI_catches <- mapped_data %>% filter(species == "FRI") -->
+
+<!-- FRI_catches_by_year <- FRI_catches %>% group_by(time_start, unit) %>% summarise(value = sum(value)) -->
+<!-- ``` -->
+
+
+<!-- # Years with catches superior than 2 times the mean and 10 percent of the second highest. -->
+
+<!-- ```{r} -->
+<!-- qflextable(absurd_year) -->
+<!-- ``` -->
+
+<!-- For this year, we check in details the data.  -->
+
+<!-- ```{r} -->
+<!-- absurd_year_init <- semi_join(mapped_data, absurd_year, by = c("unit", "time_start")) -->
+
+<!-- second_highest_value <- absurd_year_init %>% group_by(unit, time_start) %>%   arrange(desc(value)) %>%  -->
+<!--   slice(seq_len(2)) %>% arrange(value) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value) -->
+<!-- absurd_year_init <- absurd_year_init%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value)) -->
+
+<!-- absurd_year_init_absurd <- absurd_year_init %>% filter(value > 1.1 * second_highest_value & value > 2*mean) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- qflextable(absurd_year_init_absurd) -->
+<!-- ``` -->
+
+# Areas with catches superior than 2 times the mean and 10 percent of the second highest.
+
+```{r}
+qflextable(absurd_cart)
+```
+
+
+Those are the data for a geographical identifier of the same size and for a time period of the same length, in which the catches are superior of 10% the second highest value and superior to the double of the mean.
+Let's check those catches.
+
+```{r}
+geograph_strange <- mapped_data %>% filter(geographic_identifier =="6440005" & unit %in%c("MTNO","NOMT"))
+
+pie_chart_2 = function(x, init= init) {
+  r <- deparse(substitute(x))
+  colnames <- enquo(x)
+  provisoire_i <-init %>%  group_by(!!colnames )%>% summarise(value = sum(value, na.rm = TRUE))  %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    select(  value, class)  %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+  
+  
+  
+ggplot_i <- ggplot(provisoire_i) +
+  aes(
+    x = "",
+    fill = class,
+    colour = class,
+    group = class,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")
+  
+
+
+title <- ggdraw() + 
+  draw_label(
+    paste0("Distribution in value for the dimension : ",r),
+    fontface = 'bold',
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+
+graph <- plot_grid(ggplot_i,labels = c(paste0( titre_1)),
+  label_size = 10)
+
+plot_grid(
+  title, graph,
+  ncol = 1,
+  # rel_heights values control vertical title margins
+  rel_heights = c(0.1, 1))+
+    theme(plot.background = element_rect(color = "black"))
+
+
+}
+
+titre_1 <- "For 6440005"
+plot_grid(pie_chart_2(fishingfleet, geograph_strange), pie_chart_2(source_authority, geograph_strange))
+
+```
+
+The issue could be that for this area, spain give catches in number and not in tons. This support the fact that data should be harmonized in units to make futher analysis.
+
+## Data present in georef dataset but not in nominal
+
+```{r}
+getwd()
+nominal <- readRDS("~/Documents/Tunaatlas_level1/jobs/20220511123321/entities/global_nominal_catch_firms_level0/Markdown/rawdata/rds.rds")%>% mutate(year = lubridate::year(time_start))#%>% filter(species_group == "Tropical tunas")
+data<- readRDS("~/Documents/Tunaatlas_level1/jobs/20220511123321/entities/global_catch_firms_Bastien_rds_level2/Markdown/rawdata/rds.rds") %>% mutate(year = lubridate::year(time_start))
+
+
+rfmo_year_species_common <- inner_join(nominal %>% dplyr::select(species, year, source_authority) %>% distinct(), data %>% dplyr::select(species, year, source_authority)%>% distinct())
+
+rfmo_year_species_not_common <- gdata::combine(nominal =anti_join(nominal %>% dplyr::select(species, year, source_authority) %>% distinct(), data %>% dplyr::select(species, year, source_authority)%>% distinct()),data=anti_join(data %>% dplyr::select(species, year, source_authority) %>% distinct(), nominal %>% dplyr::select(species, year, source_authority)%>% distinct()))
+```
+
+```{r}
+install("./../studycatchesird")
+georef_without_nominal_equivalent <- data %>% inner_join(rfmo_year_species_not_common %>% filter(source=="data"))
+summary(summary_fish(georef_without_nominal_equivalent))
+library(studycatchesird)
+summary_fish(georef_without_nominal_equivalent)
+```
+
+More than 2 millions tons are present in georef dataset and not in nominal (at this we could add all the catches in number of fish)
+
+### Features of the data present only in georef
+
+```{r}
+titre_1 <- "Data in georef without equivalent in nominal"
+pie_chart_2(species,georef_without_nominal_equivalent %>% filter(unit=="MT"))
+
+pie_chart_2(fishingfleet,georef_without_nominal_equivalent%>% filter(unit=="MT"))
+
+pie_chart_2(source_authority,georef_without_nominal_equivalent%>% filter(unit=="MT"))
+
+```
+
+```{r}
+rfmo_in_coomun <- inner_join(nominal %>% select(-c(value, time_start, time_end, geographic_identifier)) %>% distinct(), data %>%select(-c(geographic_identifier,value, time_start, time_end))%>% distinct())
+
+data <- data%>% filter(unit%in%c("MT","MTNO"))
+
+rfmo_not_in_coomun <- gdata::combine(nominal =anti_join(nominal %>% dplyr::select(-c(value, time_start, time_end, geographic_identifier,unit)) %>% distinct(), data %>% dplyr::select(-c(value, time_start, time_end, geographic_identifier,unit))%>% distinct()) ,data=anti_join(data %>% dplyr::select(-c(value, time_start, time_end, geographic_identifier,unit)) %>% distinct(), nominal %>% dplyr::select(-c(value, time_start, time_end, geographic_identifier,unit))%>% distinct())%>% select(-c(catchtype, schooltype)))
+```
+
+```{r}
+
+nrow(rfmo_not_in_coomun %>% filter(source=="nominal"))
+nrow(rfmo_not_in_coomun %>% filter(source=="data"))
+
+nominal_only <- rfmo_not_in_coomun %>% filter(source=="nominal") %>% inner_join(nominal) %>% filter(unit=="MT")
+georef_only <- rfmo_not_in_coomun %>% filter(source=="data") %>% inner_join(data)
+titre_1 <- "Nominal only"
+pie_chart_2(species, nominal_only)
+titre_1 <- "Georef only"
+pie_chart_2(species, georef_only)
+
+titre_1 <- "Nominal only"
+pie_chart_2(fishingfleet, nominal_only)
+titre_1 <- "Georef only"
+pie_chart_2(fishingfleet, georef_only)
+```
+

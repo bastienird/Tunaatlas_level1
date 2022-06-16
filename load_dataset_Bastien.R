@@ -15,6 +15,10 @@ load_dataset <- function(entity, config, options){
     install.packages("googledrive")
     require(googledrive)
   }
+  if(!require(RPostgreSQL)){
+    install.packages("RPostgreSQL")
+    require(RPostgreSQL)
+  }
   
   #control to check that everything is ok on mappings side, if not we stop the workflow until mappings are fixed/updated
   if(dir.exists("errors_mappings")){
@@ -389,7 +393,7 @@ load_dataset <- function(entity, config, options){
     for (i in 1:nrow(df_codelists_input)){
       id_metadata_code_list<-dbGetQuery(con,paste0("SELECT id_metadata from metadata.metadata where identifier='",df_codelists_input$code_list_identifier[i],"'"))
       if(nrow(id_metadata_code_list)){
-        dbSendQuery(con,paste0("INSERT INTO metadata.metadata_mapping(metadata_mapping_id_from,metadata_mapping_id_to) VALUES (",PK_metadata,",",id_metadata_code_list,")"))
+        try(dbSendQuery(con,paste0("INSERT INTO metadata.metadata_mapping(metadata_mapping_id_from,metadata_mapping_id_to) VALUES (",PK_metadata,",",id_metadata_code_list,")")))
       }
     }
     # 2) dataset-mappings (le dataset x utilise les mappings x,y,z) -> PAS ENCORE GERE
@@ -534,7 +538,7 @@ load_dataset <- function(entity, config, options){
         
         config$logger.info("Upload SQL queries (view/data) to Google Drive")
         # folder_views_id <- drive_get("~/geoflow_tunaatlas/data/outputs/views")$id #googledrive 1.0.0 doesn't work for that.. needs the github fix
-        folder_views_id <- "1Rm8TJsUM0DQo1c91LXS5kCzaTLt8__bS"
+        folder_views_id <- "1Soo5DuwMxDIoWJo_yrR5IEpJlxIyDwOQ"
         entity$data$access <- "googledrive"
         if(create_materialized_view){
           writeLines(sql_view, file.path("data", file_sql_view))

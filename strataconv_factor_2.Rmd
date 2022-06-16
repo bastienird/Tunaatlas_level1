@@ -1,0 +1,327 @@
+---
+title: "Comp facteur de conversion Alain B / Level 0"
+output: html_document
+date: "2022-03-23"
+params:
+  species: !r c('ALB', 'BET', 'SKJ', 'YFT', "SWO")
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+library(readtext)
+library(flextable)
+set_flextable_defaults(
+  font.size = 30,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = NULL,
+  theme_fun = "theme_box"
+  )
+library(dplyr)
+library(stringr)
+library(readr)
+library(ggpubr)
+library(tidyverse)
+library(rstatix)
+```
+
+```{r}
+rdslevel0 <- readRDS("~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_firms_Old_with_step_rds_level0/Markdown/rawdata/rds.rds")
+
+strata_nomt <- rdslevel0 %>% filter(unit %in% c("NOMT")) #%>% select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% summarise(value = sum(value)) #%>% mutate(unit = "NO", unit_target = "MT")
+# strata_no <- rdslevel0 %>% filter(unit == "NO") %>% mutate(source= "strata_no")
+# strata_nomt_2 <- strata_nomt %>% mutate(source = "strata_nomt")
+# t <- gdata::combine(strata_no, strata_nomt)
+# r <- full_join(strata_no, strata_nomt_2, by = c("fishingfleet", "gear", "time_start", "time_end", "geographic_identifier",
+# "schooltype", "species", "catchtype", "unit", "source_authority")) %>% filter(!is.na(source.x) & !is.na(source.y))
+# upp is to check if data in no could be converted
+
+strata_mtno <- rdslevel0 %>% filter(unit %in% c("MTNO")) #%>% select(-c(schooltype, catchtype ,fishingfleet)) %>% group_by_all() %>% summarise(value=sum(value))#%>% mutate(unit = "MT", unit_target = "NO")
+
+strata_converted_level0 <-  rbind(strata_nomt, strata_mtno) %>% ungroup() %>% select(-c(value)) %>% distinct()
+
+conversion_factor_level0 <- rbind(inner_join(strata_nomt , strata_mtno, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% rename(NO =value.x, MT = value.y) %>%
+                                    group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet) %>% 
+  summarise(NO = sum(NO), MT = sum(MT)) %>% ungroup()#%>% select(-c(unit.y, unit.x))
+  , inner_join(strata_mtno , strata_nomt, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% rename(MT =value.x, NO = value.y)%>%
+  group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet)%>%
+  summarise(NO = sum(NO), MT = sum(MT)) %>%ungroup() #%>%  select(-c(unit.y, unit.x))
+  )%>% distinct()%>%
+  group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet) %>%
+  summarise(NO = sum(NO), MT = sum(MT)) %>% mutate(conversion_factor = MT/NO) %>% distinct() #%>% select(-c(NO, MT))%>% left_join(area, by =c("geographic_identifier" = "code")) #%>% mutate(geographic_identifier2=geographic_identifier,geographic_identifier = as.character(source)) #%>% full_join(test, by = c("geographic_identifier"="code")) %>% mutate(geographic_identifier = source) 
+mapping_codelist <- readRDS("~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_firms_Old_with_step_rds_level0/Markdown/mapping_codelist/rds.rds")
+mapping_codelist <- mapping_codelist %>% filter(unit%in%c("MTNO", "NOMT"))
+data_before_raising_with_level0_raising_factor_at_the_side <- mapping_codelist %>% full_join(conversion_factor_level0)
+data_before_raising_with_rais_factor <- data_before_raising_with_level0_raising_factor_at_the_side %>% filter(!is.na(conversion_factor))
+
+
+
+
+
+conversion_factor_level0_to_compare <- conversion_factor_level0  %>% group_by(gear, time_start, time_end, geographic_identifier, species, source_authority) %>%
+  summarise(NO = sum(NO), MT = sum(MT)) %>% mutate(conversion_factor = MT/NO) %>% distinct() 
+
+
+```
+
+
+```{r}
+IOTC_conversion_factor <- conversion_factor_level0 %>% filter(source_authority == "IOTC") %>% filter(species %in% params$species)
+
+IOTC_conversion_factor_2 <- IOTC_conversion_factor %>% filter((conversion_factor<0.05 & species == "SKJ") | (conversion_factor < 0.09 & species == "ALB") |(conversion_factor<0.2 & species == "YFT") | (conversion_factor <0.5 & species =="SWO") | (conversion_factor<0.2 &species == "BET"))
+IOTC_conversion_factor_3 <- IOTC_conversion_factor %>% filter((conversion_factor>0.05 & species == "SKJ") | (conversion_factor > 0.09 & species == "ALB") |(conversion_factor>0.2 & species == "YFT") | (conversion_factor >0.5 & species =="SWO")| (conversion_factor>0.2 &species == "BET"))
+
+#retrieve original data of IOTC
+IOTC_DATASETS_CESurface <- read_csv("data/IOTC_data/drive-download-20220506T101442Z-001/IOTC-DATASETS-CESurface.csv") %>%
+  dplyr::select(c(`Fleet`,      `Gear`,       `Year`,       `MonthStart`, `MonthEnd`,   `iGrid`,     `Grid`,       `Effort`,     `EffortUnits`,`QualityCode`,`Source`,     `CatchUnits`) | starts_with(c("YFT","BET","SWO", "ALB","SKJ")))#%>% filter(Fleet == `CHN`,& iGrid == `6215065`)
+IOTC_DATASETS_CELongline <- read_csv("data/IOTC_data/drive-download-20220506T101442Z-001/IOTC-DATASETS-CELongline.csv")%>%
+  dplyr::select(c(`Fleet`,      `Gear`,       `Year`,       `MonthStart`, `MonthEnd`,   `iGrid`,     `Grid`,       `Effort`,     `EffortUnits`,`QualityCode`,`Source`) | starts_with(c("YFT","BET","SWO", "ALB","SKJ")))#%>% filter(Fleet == "CHN" & iGrid == "6215065")
+IOTC_DATASETS_CECoastal <- read_csv("data/IOTC_data/drive-download-20220506T101442Z-001/IOTC-DATASETS-CECoastal.csv")%>%
+  dplyr::select(c(`Fleet`,      `Gear`,       `Year`,       `MonthStart`, `MonthEnd`,   `iGrid`,     `Grid`,       `Effort`,     `EffortUnits`,`QualityCode`,`Source`) | starts_with(c("YFT","BET","SWO", "ALB","SKJ"))) #%>% filter(Fleet == "CHN" & iGrid == "6215065")
+
+
+IOTC_interese <- read_csv("data/IOTC_data/drive-download-20220506T101442Z-001/IOTC-DATASETS-CELongline.csv")%>% select( c(Fleet, Gear, Year, MonthStart, MonthEnd, iGrid, Effort, EffortUnits, QualityCode, Source)| starts_with(c("YFT","BET","SWO", "ALB", "SKJ"))) #%>% filter(Fleet == "CHN" & iGrid == "6215065") %>% filter(Year == 2011)
+library(tidyr)
+cleaned <- rbind(IOTC_DATASETS_CECoastal, IOTC_DATASETS_CELongline) %>% janitor::clean_names()%>% tidyr::pivot_longer(cols = starts_with(c("YFT","BET","SWO", "ALB", "SKJ")), names_to = c("species"))%>% separate(species,into = c("species","unit"),sep= "_") %>% filter(!is.na(value))%>% mutate(species = toupper(species), unit = toupper(unit)) %>% rename(fishingfleet = fleet)
+```
+
+
+```{r}
+strata_nomt <- cleaned %>% filter(unit=="NO")
+strata_mtno <- cleaned %>% filter(unit == "MT")
+strata_converted_level0 <-  rbind(strata_nomt, strata_mtno) %>% ungroup() %>% select(-c(value)) %>% distinct()
+
+conversion_factor_level0 <- rbind(inner_join(strata_nomt , strata_mtno, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% rename(NO =value.x, MT = value.y) %>%group_by(gear, month_start, year, i_grid, species, fishingfleet) %>% 
+  summarise(NO = sum(NO), MT = sum(MT)) %>% ungroup()#%>% select(-c(unit.y, unit.x))
+  , inner_join(strata_mtno , strata_nomt, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% rename(MT =value.x, NO = value.y)%>%group_by(gear, month_start, year, i_grid, species, fishingfleet)%>%
+  summarise(NO = sum(NO), MT = sum(MT)) %>%ungroup() #%>%  select(-c(unit.y, unit.x))
+  )%>% distinct()%>%group_by(gear, month_start, year, i_grid, species, fishingfleet) %>%
+  summarise(NO = sum(NO), MT = sum(MT)) %>% mutate(conversion_factor = MT/NO) %>% distinct() 
+
+test <- conversion_factor_level0 %>% filter((conversion_factor>0.05 & species == "SKJ") | (conversion_factor > 0.09 & species == "ALB") |(conversion_factor>0.2 & species == "YFT") | (conversion_factor >0.5 & species =="SWO")| (conversion_factor>0.2 &species == "BET"))
+
+IOTC_data_2 <- semi_join(IOTC_interese %>% janitor::clean_names()%>% rename(fishingfleet = fleet), test)
+```
+
+## Conversion factors higher than max catches of the specie kilos
+
+```{r}
+library(ggplot2)
+ggplot(test) +
+  aes(
+    x = year,
+    y = conversion_factor,
+    fill = fishingfleet,
+    colour = fishingfleet
+  ) +
+  geom_point(shape = "circle", size = 1.5) +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()
+
+test %>%
+ # filter(conversion_factor >= 0.2 & conversion_factor <= 4.4) %>%
+ ggplot() +
+ aes(x = year, y = conversion_factor, fill = fishingfleet, colour = fishingfleet) +
+ geom_point(shape = "circle", 
+ size = 1.5) +
+ scale_fill_hue(direction = 1) +
+ scale_color_hue(direction = 1) +
+ theme_minimal() +
+ facet_wrap(vars(species), scales = "free")
+```
+```{r}
+mean_conv_by_specie <- conversion_factor_level0 %>% group_by(species) %>% summarise(conversion_factor_mean = mean(conversion_factor), conversion_factor_max = max(conversion_factor))
+```
+
+## Mean conversion factors by species
+
+```{r}
+qflextable(mean_conv_by_specie)
+```
+
+
+```{r}
+# IOTC_data <- rbind(IOTC_DATASETS_CECoastal, IOTC_DATASETS_CELongline, IOTC_DATASETS_CESurface) %>% inner_join(IOTC_conversion_factor_3)
+```
+
+```{r}
+mean_conversion_factor <- conversion_factor_level0_to_compare %>% group_by(species, source_authority, gear) %>% mutate(conv_factor_mean = mean(conversion_factor), conv_factor_median = median(conversion_factor)) %>% mutate(ecart_a_la_moyenne = 100*(conversion_factor - conv_factor_mean)/conv_factor_mean,ecart_a_mediane = 100*(conversion_factor - conv_factor_median)/conv_factor_median)
+
+```
+
+
+```{r}
+conversion_factor_alain <-  read_csv("data/conversion_factors_num_to_weight_ird_2021.csv") %>% mutate(time_start = lubridate::year(time_start)) %>% mutate(time_end = lubridate::year(time_end)) %>% select(-c(unit, unit_target))%>% mutate(geographic_identifier = as.character(geographic_identifier))
+
+rfmo <- mean_conversion_factor%>% mutate(time_start = lubridate::year(time_start)) %>% mutate(time_end = lubridate::year(time_end)) %>% select(setdiff(colnames(conversion_factor_alain), c("unit_target","unit")))
+ird <- conversion_factor_alain %>%  mutate(geographic_identifier = as.character(geographic_identifier))%>% select(setdiff(colnames(conversion_factor_alain), c("unit_target","unit"))) 
+
+combine <- gdata::combine(rfmo,ird )%>% filter(species %in%params$species)
+combine <- combine %>% filter(species != "PBF") %>% mutate_if(is.character, as.factor)
+ggplot(combine , aes( y = conversion_factor, col = source))+geom_boxplot()+facet_wrap("species", scales="free")
+
+full_joi <- inner_join(ird, rfmo,by = c("gear", "source_authority", "species",
+"time_start", "time_end"))
+library(ggpubr)
+library(tidyverse)
+library(rstatix)
+library(ggpubr)
+unique(combine$gear)
+stat.test <- combine %>%
+  group_by(species) %>%
+  t_test(conversion_factor ~ source) %>%
+  adjust_pvalue(method = "BH") %>%
+  add_significance()
+stat.test
+
+myplot <- ggboxplot(
+  combine, x = "source", y = "conversion_factor",
+  fill = "source", palette = "npg", legend = "none",
+  ggtheme = theme_pubr(border = TRUE)
+  ) +
+  facet_wrap(~species)
+myplot
+stat.test <- stat.test %>% add_xy_position(x = "source")
+myplot + stat_pvalue_manual(stat.test, label = "p.adj.signif")
+
+
+
+
+```
+
+```{r}
+
+conv_factor_ok  <- conversion_factor_level0_to_compare%>% filter((conversion_factor<0.05 & species == "SKJ") | (conversion_factor < 0.09 & species == "ALB") |(conversion_factor<0.2 & species == "YFT") | (conversion_factor <0.5 & species =="SWO")| (conversion_factor<0.2 &species == "BET")) %>% mutate(source_authority = "IOTC") %>% group_by(species, source_authority, gear) %>% mutate(conv_factor_mean = mean(conversion_factor), conv_factor_median = median(conversion_factor)) %>% mutate(ecart_a_la_moyenne = 100*(conversion_factor - conv_factor_mean)/conv_factor_mean,ecart_a_mediane = 100*(conversion_factor - conv_factor_median)/conv_factor_median)
+
+rfmo <- conv_factor_ok%>% mutate(time_start = lubridate::year(time_start)) %>% mutate(time_end = lubridate::year(time_end)) %>% select(setdiff(colnames(conversion_factor_alain), c("unit_target","unit")))
+ird <- conversion_factor_alain %>%  mutate(geographic_identifier = as.character(geographic_identifier))%>% select(setdiff(colnames(conversion_factor_alain), c("unit_target","unit"))) 
+
+combine <- gdata::combine(rfmo,ird )%>% filter(species %in%params$species)
+combine <- combine  %>% mutate_if(is.character, as.factor)
+ggplot(combine , aes( y = conversion_factor, col = source))+geom_boxplot()+facet_wrap("species", scales="free")
+
+full_joi <- inner_join(ird, rfmo,by = c("gear", "source_authority", "species",
+"time_start", "time_end"))
+
+
+unique(combine$gear)
+stat.test <- combine%>% 
+  group_by(species) %>%
+  t_test(conversion_factor ~ source) %>%
+  adjust_pvalue(method = "BH") %>%
+  add_significance()
+stat.test
+
+myplot <- ggboxplot(
+  combine, x = "source", y = "conversion_factor",
+  fill = "source", palette = "npg", legend = "none",
+  ggtheme = theme_pubr(border = TRUE)
+  ) +
+  facet_wrap(~species)
+myplot
+stat.test <- stat.test %>% add_xy_position(x = "source")
+myplot + stat_pvalue_manual(stat.test, label = "p.adj.signif")
+
+
+
+
+```
+
+
+```{r}
+graphs <- combine %>%
+  group_by(species) %>%
+  doo(
+    ~ggboxplot(
+      data =., x = "source", y = "conversion_factor",
+      fill = "source", palette = "npg", legend = "none",
+      ggtheme = theme_pubr()
+      ), 
+    result = "plots"
+  )
+graphs
+species <- graphs$species
+for(i in 1:length(species)){
+  graph.i <- graphs$plots[[i]] + 
+    labs(title = species[i]) +
+    stat_pvalue_manual(stat.test[i, ], label = "p.adj.signif")
+  print(graph.i)
+}
+
+```
+
+```{r}
+library(rstatix)
+res.aov <- combine %>% 
+  anova_test(conversion_factor ~ species*time_start)
+# res.aov <- combine %>% 
+#   anova_test(conversion_factor ~ source*species*source_authority*gear)
+get_anova_table(res.aov)
+
+ggplot(combine) +
+  aes(x = time_start, y = conversion_factor, colour = species) +
+  geom_point(shape = "circle", size = 1.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_grid(vars(source),vars(species))
+```
+
+```{r}
+t <- combine %>%
+  group_by(species) %>%
+  anova_test(conversion_factor ~ source)
+t <- as.data.frame(t)
+t %>% filter(p>0.05)
+t2 <- combine %>%
+  group_by(species) %>%
+  anova_test(conversion_factor ~ source_authority*source)
+t2 <- as.data.frame(t2)
+t2 %>% filter(p>0.05)
+t3 <- combine %>%
+  group_by(species) %>%
+  anova_test(conversion_factor ~ source*gear)
+t3 <- as.data.frame(t3)
+t3
+t3 %>% filter(p > 0.05)
+t4 <- combine %>%
+  group_by(species) %>%
+  anova_test(conversion_factor ~ time_start)
+t4
+
+# only_rmfos <- combine %>% filter(source == "rfmo")
+# 
+# only_rmfos %>% group_by(species) %>% anova_test(conversion_factor~source_authority)
+
+```
+
+BFT et SKJ ont pas de diff significative pour source*gear.
+ALB a pas de diff significative selon la source 
+ALB a pas de diff significative pour source:gear:time_start
+
+```{r}
+
+ancova1 <- lm(combine$conversion_factor ~ -1 + combine$source + combine$species) 
+anova(ancova1)
+interaction.plot(x.factor = combine$source, trace.factor = combine$species, response = combine$conversion_factor, fun = mean)
+summary(ancova1)
+```
+
+# ```{r}
+# library(lattice)
+# library(stats4)
+# library(MASS)
+# null.conversion_factor<- glm(formula = conversion_factor ~ 1, data = combine)
+# lm.complet <- stepAIC(null.conversion_factor, conversion_factor ~ species*source*gear, direction = "both", data =
+# combine)
+# ```
+
+```{r}
+unique(conversion_factor_level0$species)
+unique(conversion_factor_alain$species)
+```
+

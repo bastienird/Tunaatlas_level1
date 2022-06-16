@@ -3,8 +3,8 @@ title: "Etude de l'overlap"
 output: html_document
 date: '2022-03-14'
 params:
-  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/lastoneeeeeeeeeeeeeeeeeeee/entities/global_catch_1deg_1m_Bastien_include_wcpfc_level0/Markdown/mapping_codelist/rds.rds"
-  plotting: "view"
+  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/new_24_may/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/Markdown/mapping_codelist/rds.rds"
+  plotting: "plote"
   world_coastline: "gshhs_world_coastlines"
 ---
 

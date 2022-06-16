@@ -17,7 +17,7 @@
     "entities": [
       {
       "handler": "gsheet",
-      "source": "https://docs.google.com/spreadsheets/d/18heU5YCqSxl7Ej5r-O2iN92Vzru0_y2-knFWD8cgtf0/edit#gid=1652637194"
+      "source": "https://docs.google.com/spreadsheets/d/1JhS1ADsnqTpWOEEvljk-c9EdzBurkc8A8__JOHJmkOk/edit#gid=918875673"
       }
     ],
     "contacts" : [
@@ -44,7 +44,7 @@
 			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {}
 	},
@@ -58,7 +58,7 @@
 			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {}
 	},

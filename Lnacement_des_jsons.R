@@ -5,7 +5,7 @@ require(remotes)
 require(devtools)
 # install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"))
 library(geoflow)
-library(RPostgreSQL)
+require(RPostgreSQL)
 library(RPostgres)
 library(RSQLite)
 library(gsheet)
@@ -17,7 +17,30 @@ library(rpostgis)
 library(stringr)
 library(sf)
 library(googledrive)
-executeWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json")
+#effort https://docs.google.com/spreadsheets/d/1F7BgP4i_BClk2slgh3ziVedWEQ_ATaGsC51NkwiD-xY/edit#gid=1994835658
+executeWorkflow("~/Documents/Tunaatlas_level1/lancing_workflow_effort.json")
+# executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_dbmodel+codelists_d4science.json")
+# executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")#works
+executeWorkflow("from_scratch/json/tunaatlas_qa_mappings.json")
+
+
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_ccsbt.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc.json")
+# initWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc.json")
+# config <- initWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iotc.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_wcpfc.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iccat.json") #fais abort la session
+
+executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
+config <- initWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
+# executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")
+
+executeWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_global_L0_datasets_catch_d4science_2022.json")
+
+# executeWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_dbmodel+codelists_d4science.json")
+# executeWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json")
 
 config <- initWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json")
 
@@ -30,7 +53,7 @@ if(!require(rtunaatlas)) {
   library(rtunaatlas)
   }
 setwd("~/Documents/Tunaatlas_level1")
-files <- "~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science.json"
+files <- "from_scratch/json/tunaatlas_qa_datasets_iattc.json"
 config <- initWorkflow(files)
 
 executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_dbmodel+codelists_d4science.json")
@@ -52,7 +75,7 @@ executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_global_datasets_catch_d4sci
 
 
 
-# config$job <- jobdir
+config$job <- jobdir
 # 
 executeWorkflowJob(config)
 # 
@@ -60,17 +83,19 @@ executeWorkflowJob(config)
 
 ############
 #1. Init the workflow based on configuration file
-config <- initWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science.json")
+config <- initWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json")
 #2. Inits workflow job (create directories)
 jobdir <- initWorkflowJob(config)
-# config$job <- "~/Documents/Tunaatlas_level1/jobs/20220428104014"
-# config$job <- "~/Documents/Analyse_des_scripts/Test01_02/lancement/jobs/20220309152940"
+# config$job <- "~/Documents/Tunaatlas_level1/jobs/all_new_reference"
+# config$job <- "~/Documents/Tunaatlas_level1/jobs/20220601110916"
 #3. le téléchargement de la donnée vers le dossier d'execution ne se fait  que lorsqu'on execute executeWorkflowJob. 
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
 # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220504152124"
 config$job <- jobdir
+# config$job <- "~/Documents/Tunaatlas_level1/jobs/20220608155023"
+initWorkflowJob(config)
 executeWorkflowJob(config)
-executeWorkflow(files)
+# geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")
 
 
 entities <- config$metadata$content$entities
@@ -79,7 +104,7 @@ entities <- config$metadata$content$entities
 contacts <- config$metadata$content$contacts 
 # contacts <- config$getContacts()
 
-entity <- config$metadata$content$entities[[2]]
+entity <- config$metadata$content$entities[[1]]
 # entity <- entities[[1]]
 
 options <- entity$data$actions[[1]]$options

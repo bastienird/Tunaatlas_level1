@@ -1,0 +1,387 @@
+---
+title: "Analyse georeferenced"
+author: "Bastien Grasset"
+date: "09/02/2022"
+output:
+  html_document:
+    toc: true
+    theme: united
+    number_sections: true
+params: 
+  init: "~/Documents/Tunaatlas_level1/jobs/nominal/entities/global_nominal_catch_firms_level0/Markdown/mapping/rds.rds"
+  filter_species: "NULL"
+  filter_source_authority: "NULL"
+  filter_gear: "NULL"
+  filter_fishingfleet: "NULL"
+  filter_time_start: "NULL"
+  filter_time_end: "NULL"
+  filter_cat_geo: "NULL"
+  filter_catchtype: "NULL"
+  filter_schooltype: "NULL"
+  titre_dataset_1: "Nominal data after mapping"
+  titre_dataset_2: "Mapcodelist"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+library(readr)
+library(ggplot2)
+library(shiny)
+library(DBI)
+library(RMySQL)
+library(dbplyr)
+library(RPostgreSQL)
+library(odbc)
+library(sf)
+library(tmap)
+library(leaflet)
+library(tidyr)
+library(DT)
+library(kableExtra)
+library(flextable)
+
+set_flextable_defaults(
+  font.size = 10,
+  font.color = "black",
+  table.layout = "fixed",
+  digits = 0,
+  theme_fun = "theme_box"
+  )
+
+tmap_mode("view")
+```
+
+
+```{r}
+drv <- dbDriver("PostgreSQL")      
+con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox", host = "db-tunaatlas.d4science.org", 
+                 port = 5432,
+                 user = "tunaatlas_u",
+                 password = "21c0551e7ed2911")
+
+
+
+
+kbl <- function(data) {
+  knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
+    kable_styling(latex_options =c("striped", "scale_down"))
+}
+
+```
+
+
+```{r}
+library(readxl)
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
+colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
+"geographic_identifier",           "species",                      
+              "value",                "source_authority")
+
+```
+
+
+The purpose of this markdown is to describe the nominal dataset created on the global tunaatlas.
+
+# The data
+
+The analyzed data are :
+- ***`r params$init` for the initial data***
+
+The filters used are:
+
+- on species: `r params$filter_species`
+- on gears: `r params$filter_gear`
+- on rfmos: `r params$filter_source_authority`
+- on fleets: `r params$filter_fishing_fleet`
+- on initial dates: `r params$filter_time_start`
+- on final dates: `r params$filter_time_end`
+- on geographical categories: `r params$filter_cat_geo`
+- on catch types: `r params$filter_catchtype`
+
+
+```{r}
+# as.character(params$init)
+# as.character(params$final)
+last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
+
+fonction_filtre = function(dataframe_tot_filter) {
+  if (!(params$filter_species == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  species %in% params$filter_species)
+  }
+    if (!(params$filter_gear == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  gear %in% params$filter_gear)
+    }    
+  if (!(params$filter_source_authority == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  source_authority %in% params$filter_source_authority)
+  }  
+  if (!(params$filter_fishingfleet == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  fishingfleet %in% params$filter_fishingfleet)
+  }
+    if (!(params$filter_time_start == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  time_start %in% params$filter_time_start)
+    }
+      if (!(params$filter_time_end == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  time_end %in% params$filter_time_end)
+      }
+    if (!(params$filter_schooltype == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  schooltype %in% params$filter_schooltype)
+  }
+    if (!(params$filter_catchtype == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  catchtype %in% params$filter_catchtype)
+    }
+  
+  if (!(params$filter_cat_geo == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  cat_geo %in% params$filter_cat_geo)
+  }
+    if (!(params$filter_catchtype == "NULL")){
+    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  cat_geo %in% params$filter_catchtype)
+    }
+
+  # dataframe_tot_filter <- dataframe_tot_filter 
+  # dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish"))
+  cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+    col_types = cols(Identifier = col_skip(), 
+        Abbreviation = col_skip(), Name_Fr = col_skip(), 
+        Name_Es = col_skip(), Name_Ar = col_skip()))
+
+dataframe_tot_filter <- dataframe_tot_filter %>% full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+  
+}
+
+  
+init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)) %>%  left_join(species_group, by = c("species"))%>% distinct() )
+
+
+  if ((params$titre_dataset_1 == "NULL")){
+    titre_1 <- last_path_reduced(as.character(params$init))
+  } else {
+    titre_1 <- params$titre_dataset_1
+  }
+
+```
+
+
+
+```{r}
+fonction_groupement = function(x, init){
+  x  <-   enquo(x)
+  groupement_1  <-   init %>% group_by(!!x ) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n())
+}
+```
+
+
+
+```{r}
+carte_init <- fonction_groupement(geographic_identifier,init)
+
+
+Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"]
+  # t <- init[0,] 
+  t <- carte_init[0,]
+  colnames(t )[1] <- "Precision"
+
+
+for (i in Dimensions){
+  temporaire <- fonction_groupement(.data[[i]],init)
+  assign(paste0("test", i), temporaire)
+  colnames(temporaire)[1] <- "Precision"
+
+  print(i)
+  t <- rbind(t, temporaire)
+}
+  
+init_t <- init
+
+      somme_init_t <- sum(init_t$value, na.rm = TRUE)
+
+
+
+  
+nb_ligne_init_millions <- nrow(init)/10^6
+
+sum_valeur_init <- sum(init$value, na.rm = TRUE)/10^6
+
+
+```
+
+
+
+```{r}
+library(rlang)
+
+pie_chart_2 = function(x, init= init) {
+  r <- deparse(substitute(x))
+  colnames <- enquo(x)
+  provisoire_i <-init %>%  group_by(!!colnames )%>% summarise(value = sum(value, na.rm = TRUE))  %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
+    select(  value, class)  %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+  
+  
+  
+ggplot_i <- ggplot(provisoire_i) +
+  aes(
+    x = "",
+    fill = class,
+    colour = class,
+    group = class,
+    weight = pourcentage
+  ) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
+                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="")
+  
+
+
+title <- ggdraw() + 
+  draw_label(
+    paste0("Distribution in value for the dimension : ",r),
+    fontface = 'bold',
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+
+graph <- plot_grid(ggplot_i,labels = c(paste0( titre_1)),
+  label_size = 10)
+
+plot_grid(
+  title, graph,
+  ncol = 1,
+  # rel_heights values control vertical title margins
+  rel_heights = c(0.1, 1))+
+    theme(plot.background = element_rect(color = "black"))
+
+
+}
+
+
+# ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(class)))
+
+Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&
+                               colnames(init)!= "time_start"&
+                               colnames(init)!= "time_end"&
+                               colnames(init)!= "geographic_identifier"]
+  # t <- init[0,] 
+```
+
+## Catch evolutions
+
+```{r}
+captures_par_time <- testtime_start %>% mutate(Time = as.Date(time_start))%>% rename(`Captures table 1` = "value_sum_1")%>% pivot_longer(cols = c(`Captures table 1`), names_to = "Origin", values_to ="Captures")
+
+
+ggplot(captures_par_time) +
+  aes(
+    x = Time,
+    y = Captures,
+    fill = Origin,
+    colour = Origin,
+    group = Origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_dark() +
+  theme(legend.position = "top") +
+  labs(x = "Time", y = "Captures")+
+  facet_grid(scales = "free_y")
+```
+
+## Evolution of the cumulative catches
+
+```{r}
+captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>% arrange(time_start) %>% group_by(Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
+
+ggplot_capt_par_time = function(x){
+  
+  ggplot(captures_par_time) +
+  aes(
+    x = Time,
+    y = `Captures cumulées`,
+    colour = Origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
+}
+
+ggplot_capt_par_time("Tons")
+
+```
+
+```{r}
+library(cowplot)
+fishing_fleet <- pie_chart_2(fishingfleet, init)
+source_authority <- pie_chart_2(source_authority, init)
+species <- pie_chart_2(species, init)
+species_group <- pie_chart_2(species_group, init)
+# gear <- pie_chart_2(gear, init)
+Name_En <- pie_chart_2(Name_En, init)
+
+```
+
+```{r}
+working_directory <- getwd()
+setwd("~/Documents/Tunaatlas_level1")
+
+species
+png(filename = "data/nominal_report/pie_chart_species.png")
+print(species)
+dev.off()
+fishing_fleet
+png(filename = "data/nominal_report/pie_chart_fishing_fleet.png")
+print(fishing_fleet)
+dev.off()
+
+source_authority
+png(filename = "data/nominal_report/pie_chart_source_authority.png")
+print(source_authority)
+dev.off()
+
+species_group
+png(filename = "data/nominal_report/pie_chart_species_group.png")
+print(source_authority)
+dev.off()
+
+Name_En
+png(filename = "data/nominal_report/pie_chart_source_authority.png")
+print(source_authority)
+dev.off()
+# plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
+```
+
