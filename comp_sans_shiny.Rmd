@@ -2,14 +2,15 @@
 title: "Comparison of two data sets at different levels/options of the tuna atlas"
 author: "Bastien Grasset"
 date: "09/02/2022"
+always_allow_html: true
 output:
-  html_document:
-    toc: true
-    theme: united
-    number_sections: true
+  pdf_document:
+    pandoc_args: --listings
+    includes:
+      in_header: preamble.tex
 params: 
-  init: "/home/grasset/Documents/Tunaatlas_level1/jobs/20220525104114/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/Markdown/Level2_RF2"
-  final: "/home/grasset/Documents/Tunaatlas_level1/jobs/20220525104114/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/Markdown/Level2_RF3without_gears"
+  init: "/home/grasset/Documents/Tunaatlas_level1/jobs/20220616115652/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/filtering_on_gear"
+  final: "/home/grasset/Documents/Tunaatlas_level1/jobs/20220616115652/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/mapping_codelist"
   filter_species: !r NULL
   filter_source_authority: !r NULL
   filter_gear: !r NULL
@@ -21,6 +22,11 @@ params:
   filter_schooltype: !r NULL
   titre_dataset_1: !r NULL
   titre_dataset_2: !r NULL
+  colnames_to_keep: [ fishingfleet ,           species ,                  
+  unit ,                  value ,                 source_authority ]
+  columns_to_keep: [  Precision     ,                   unit      ,                     
+  "Captures table 1"         ,                               Loss_gain,    
+   Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
 
 ---
 
@@ -56,18 +62,31 @@ library(stringr)
 set_flextable_defaults(
   font.size = 10,
   font.color = "black",
-  table.layout = "fixed",
-  digits = 0,
+  table.layout = "autofit",
+  digits = 2,
   theme_fun = "theme_box"
   )
+# qflextable2 = function(x){x <- autofit(kable(x))}
 
-tmap_mode("view")
+last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+
+```
+
+
+```{r}
+fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
+
+  if(!exists("df_robinson")){
+    df_robinson <- df}
+  return(df_robinson)
+  
+}
 ```
 
 
 ```{r}
 drv <- dbDriver("PostgreSQL")
-con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox", host = "db-tunaatlas.d4science.org", 
+con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox2", host = "localhost", 
                  port = 5432,
                  user = "tunaatlas_u",
                  password = "21c0551e7ed2911")
@@ -91,6 +110,9 @@ kbl <- function(data) {
     kable_styling(latex_options =c("striped", "scale_down"))
 }
 
+query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+continent <- fSpatPlan_Convert2PacificRobinson(st_read(con, query = query)%>% filter(!st_is_empty(.)))
+
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
 irregular_iotc <- dbGetQuery(con, paste0(query))
 irregular_iotc <-irregular_iotc  %>% distinct()
@@ -98,8 +120,20 @@ irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
 irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
 irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
 if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
+FitFlextableToPage <- function(ft, pgwidth = 6){
 
+  ft_out <- ft %>% autofit()
 
+  ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
+  return(ft_out)
+}
+kable2 =function(x){as_image(kable(x))}
+qflextable2 =function(x){
+  if("value_sum_1"%in%colnames(x)){x <- x %>% rename("Tons in table 1" = "value_sum_1")}
+  # y <- FitFlextableToPage(x)
+   save_as_image(qflextable(x), paste0(getwd(),"/",deparse(substitute(x)),".png"))
+  knitr::include_graphics(paste0(getwd(),"/",deparse(substitute(x)),".png"))
+  }
 
 
 ```
@@ -122,9 +156,9 @@ It describes the differences between the initial data and the final data, and is
 
 The analyzed data are :
 
-- ***acces `r params$init` for the initial data***
+- ***acces `r last_path(params$init)` for the initial data***
 
-- ***acces `r params$final` for the final data***
+- ***acces `r last_path(params$final)` for the final data***
 
 
 The filters used are:
@@ -288,15 +322,21 @@ differences_between_options2 <-differences_between_options %>% filter(Options_fi
 
 The differences in options choosen between the two dataframes are : 
 
+
 ```{r}
-qflextable(differences_between_options2)
+if (nrow(differences_between_options2) == 0){
+  towrite ="There are no differences between the options to create the two datasets.They are created by the same workflow."
+} else { towrite ="The differences are upside"
+qflextable2(differences_between_options2)}
 ```
+
+`r towrite`
 
 The options used to create the initial data frame are: 
 
-
 ```{r}
-qflextable(differences_in_optionsinit_base)
+s <-  differences_in_optionsinit_base%>% rename("Options" = X1, "Value" = X2)
+qflextable2(s)
 ```
 
 
@@ -403,11 +443,15 @@ The stratas differencies between the first one and the second one are :
 (only first 10 per Dimension showed), representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
 
 ```{r}
-# qflextable(head(strates_perdues,10))
+# qflextable2(head(strates_perdues,10))
 if (nrow(strates_perdues_first_10)!=0){
-qflextable(as_grouped_data(strates_perdues_first_10 %>% ungroup() %>% group_by(Dimension, unit,Loss_gain) %>% arrange(Dimension,unit,Loss_gain), groups = c("Dimension","unit","Loss_gain")))} else {print("No strata is gain nor lost")}
+  groupe_df <- as_grouped_data(strates_perdues_first_10%>% mutate(Loss_gain = ifelse(loss >= 0, "Loss", "Gain"))  %>%  mutate(Loss_gain = case_when(is.na(Loss_gain) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ Loss_gain))%>% ungroup()%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% group_by(Dimension, unit,Loss_gain) %>% arrange(Dimension,unit,Loss_gain)%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit","Loss_gain"))
+
+qflextable2(groupe_df)
+towrite = ""} else {towrite =("No strata is gain nor lost")}
 ```
 
+`r towrite`
 
 # Introduction to the two datasets 
 
@@ -509,13 +553,19 @@ pie_chart_2 = function(dimension, first, second) {
     distinct()
 
   set.seed(2) # For reproducibility of random color vector
+  # print(c(provisoire_i$class, provisoire_t$class))
+  # print(unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
   number <- length(unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
+  # print(number)
   pal <- brewer.pal(number,"Set1")
+  # print(number)
 
   # myColors <- ColorRampPalette(brewer.pal(120,"Spectral"))
   # names(myColors) <- levels(dat$grp)
   # set.seed(2)
+  # print(pal)
   pal = setNames(pal, unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
+  # print(pal)
 
   ggplot_i <<- ggplot(provisoire_i) +
     aes(
@@ -532,6 +582,7 @@ pie_chart_2 = function(dimension, first, second) {
     theme(axis.ticks.x = element_blank(),
           axis.text.x = element_blank())+
     labs(x = "", y="")+ scale_fill_manual(values=pal)+ guides(fill=guide_legend(title=toupper(r)))+facet_wrap("unit")
+  # print("ggplot_i")
   legend <- cowplot::get_legend(ggplot_i)
 
   ggplot_t <<- ggplot(provisoire_t) +
@@ -616,7 +667,7 @@ Name_En
 
 ```{r}
 library(gdata)
-tmap_mode("view")
+tmap_mode("plot")
 fonction_empreinte_spatiale = function(variable_affichee){
   selection = function(x){x %>% ungroup() %>% select(geographic_identifier, value, cat_geo, unit)}
   Initial_dataframe <- selection(init)
@@ -629,10 +680,13 @@ inner_join <- st_as_sf(geo_data%>% group_by(geographic_identifier, unit,source) 
 if(nrow(inner_join %>% filter(unit == variable_affichee)) != 0){
 
 
-tm_shape(inner_join %>% filter(unit == variable_affichee))+
+image <- tm_shape(inner_join %>% filter(unit == variable_affichee))+
   tm_fill("value", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)+tm_shape(continent)+tm_borders()
+  tmap::tmap_save(image, "image.png")
+# mapshot(image, file = "image.png")
+knitr::include_graphics("image.png")
 }
 }
 tmap_mode("plot")
@@ -654,7 +708,7 @@ fonction_empreinte_spatiale("Tons")
 ```{r}
 tmap_mode("plot")
 try(fonction_empreinte_spatiale("Number of fish"))
-tmap_mode("view")
+tmap_mode("plot")
 
 ```
 
@@ -663,7 +717,6 @@ tmap_mode("view")
 This section detail the different differencies that observed between the dataframe `r titre_1` and `r titre_2`.
 
 ```{r}
-
 disappearing_strates <- t %>% filter(value_sum_2 == 0)
 ```
 
@@ -698,7 +751,8 @@ unit <- t %>%  filter(Dimension %in% c("species", "source_authority","cat_geo", 
 
 
 ```{r paged.print=TRUE}
-qflextable(as_grouped_data(unit %>% ungroup(), groups = c("Dimension","unit"))) 
+t3 <- as_grouped_data(unit %>% ungroup()%>% mutate(Loss_gain = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(Loss_gain = case_when(is.na(Loss_gain) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ Loss_gain))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
+qflextable2(t3) 
 ```
 
 
@@ -708,38 +762,49 @@ qflextable(as_grouped_data(unit %>% ungroup(), groups = c("Dimension","unit")))
 <!-- ***In numbers*** -->
 
 <!-- ```{r paged.print=TRUE} -->
-<!-- qflextable(as_grouped_data(unit_no, groups = c("Dimension")))  -->
+<!-- kable(as_grouped_data(unit_no, groups = c("Dimension")))  -->
 <!-- ``` -->
 
 ## Differencies in geographical data
 
-```{r}
-tmap_mode("view")
-inner_join <- inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% mutate(cat_loss = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differencies', `Difference (in %)` == 100~'All data different', TRUE ~ 'Partial differencies')))
+```{r testnaming}
+tmap_mode("plot")
+inner_join <- inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% mutate(cat_loss = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differencies', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
 
 if (nrow(inner_join %>% filter(cat_loss == 'All data different'))!=0 & nrow(inner_join %>% filter(cat_loss == 'No differencies'))!=0){
-tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
+image <- tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
   tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-				 id="name", midpoint = 0)+ tm_shape(inner_join %>% filter(cat_loss == 'No differencies')) + tm_borders(col="skyblue")+tm_shape(inner_join %>% filter(cat_loss == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = TRUE)+
-  tm_layout(legend.outside = FALSE) } else{
+				 id="name", midpoint = 0)+ tm_shape(inner_join %>% filter(cat_loss == 'No differencies')) + tm_borders(col="skyblue")+tm_shape(inner_join %>% filter(cat_loss == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = TRUE, free.scales = TRUE)+
+  tm_layout(legend.outside = FALSE)+tm_shape(continent)+tm_borders()
+  tmap::tmap_save(image,"image2.png")
+# mapshot(image, file = "image.png")
+knitr::include_graphics("image2.png")} else{
 
-tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
+image <- tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
   tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"),free.coords = TRUE)+
-  tm_layout(legend.outside = FALSE) }
+				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"),free.coords = TRUE, free.scales = TRUE)+
+  tm_layout(legend.outside = FALSE) +tm_shape(continent)+tm_borders()
+  tmap::tmap_save(image,"image3.png")
+# mapshot(image, file = "image.png")
+knitr::include_graphics("image3.png")
+
+}
+```
 
 
-
-
-
-
-tmap::tmap_mode("view")
-tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_loss = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differencies', `Difference (in %)` == 100~'All data different', TRUE ~ 'Partial differencies')))
+```{r testnaming2}
+tmap::tmap_mode("plot")
+image <- tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_loss = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differencies', `Difference (in %)` == 100~'All data different' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
          # %>% filter(unit == "Tons")
          )+
   tm_fill( "cat_loss", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"), free.scales = TRUE)
+  tm_layout(legend.outside = TRUE) + tm_facets(by = c("unit", "cat_geo"), free.scales = TRUE)+
+  tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
+  tmap::tmap_save(image, "image4.png")
+# mapshot(image, file = "image.png")
+knitr::include_graphics("image4.png")
+
 ```
 
 
@@ -889,8 +954,12 @@ The stratas differencies between the first one and the second one are :
 (only first 10 per Dimension showed), representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
 
 ```{r}
-qflextable(head(strates_perdues,10))
-# qflextable(strates_perdues_first_10)
+
+t4 <- head(strates_perdues%>% mutate(Loss_gain = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(Loss_gain = case_when(is.na(Loss_gain) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ Loss_gain))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2),10)
+
+
+qflextable2(t4)
+# kable(strates_perdues_first_10)
 ```
 
 
@@ -1018,7 +1087,7 @@ fonction_empreinte_spatiale("Tons")
 ### Spatial coverage in number of fish
 
 ```{r}
-tmap::tmap_mode("view")
+tmap::tmap_mode("plot")
 fonction_empreinte_spatiale("Number of fish")
 ```
 
@@ -1055,7 +1124,8 @@ unit <- t%>%  filter(Dimension %in% c("species", "source_authority","cat_geo", "
 
 
 ```{r paged.print=TRUE}
-qflextable(as_grouped_data(unit %>% ungroup(), groups = c("Dimension","unit"))) 
+t5 <- as_grouped_data(unit %>% ungroup()%>% mutate(Loss_gain = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(Loss_gain = case_when(is.na(Loss_gain) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ Loss_gain))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
+qflextable2(t5) 
 ```
 
 
@@ -1064,13 +1134,16 @@ qflextable(as_grouped_data(unit %>% ungroup(), groups = c("Dimension","unit")))
 
 ```{r}
 
-tmap::tmap_mode("view")
-tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_loss = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differencies', `Difference (in %)` == 100~'All data different', TRUE ~ 'Partial differencies')))
+image <- tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(cat_loss = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differencies', `Difference (in %)` == 100~'All data different', TRUE ~ 'Partial differencies')))
          # %>% filter(unit == "Tons")
          )+
   tm_fill( "value", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by = c("unit", "cat_geo"))
+  tm_layout(legend.outside = TRUE) + tm_facets(by = c("unit", "cat_geo"))
+  tmap::tmap_save(image, paste0(getwd(),"image5.png"))
+# mapshot(image, file = "image.png")
+knitr::include_graphics(paste0(getwd(),"image5.png"))
+
 ```
 
 ## Differencies in temporal data
