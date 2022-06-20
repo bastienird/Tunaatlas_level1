@@ -8,8 +8,8 @@ output:
     toc: true
     number_sections: true
 params: 
-  init: "/home/grasset/Documents/Tunaatlas_level1/jobs/20220616115652/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/filtering_on_gear"
-  final: "/home/grasset/Documents/Tunaatlas_level1/jobs/20220616115652/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/mapping_codelist"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220620155133/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/rawdata"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220620155133/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/treatment_after_binding"
   filter_species: !r NULL
   filter_source_authority: !r NULL
   filter_gear: !r NULL
@@ -39,7 +39,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
-library(dplyr)
+library(tidyr)
 library(stringr)
 library(readr)
 library(ggplot2)
@@ -58,6 +58,16 @@ library(DT)
 library(kableExtra)
 library(flextable)
 library(stringr)
+library(readxl)
+library(rlang)
+library(cowplot)
+library(RColorBrewer)
+library(gdata)
+library(knitr)
+library(DT)
+library(kableExtra)
+
+
 set_flextable_defaults(
   font.size = 10,
   font.color = "black",
@@ -80,6 +90,16 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
   return(df_robinson)
   
 }
+library(dplyr)
+
+library(conflicted)
+conflict_prefer("summarise","dplyr")
+conflict_prefer("group_by","dplyr")
+conflict_prefer("group_by_","dplyr")
+conflict_prefer("filter","dplyr")
+# conflict_prefer_all("dplyr", quiet = TRUE)
+# write("options_written", paste0("options.txt"))
+
 ```
 
 
@@ -128,7 +148,7 @@ FitFlextableToPage <- function(ft, pgwidth = 6){
 }
 kable2 =function(x){as_image(kable(x))}
 qflextable2 =function(x){
-  if("value_sum_1"%in%colnames(x)){x <- x %>% rename("Tons in table 1" = "value_sum_1")}
+  if("value_sum_1"%in%colnames(x)){x <- x %>%  dplyr::rename("Tons in table 1" = "value_sum_1")}
   # y <- (x)
   #  save_as_image(FitFlextableToPage(qflextable(x)), paste0(getwd(),"/",deparse(substitute(x)),".png"))
   # knitr::include_graphics(paste0(getwd(),"/",deparse(substitute(x)),".png"))
@@ -140,8 +160,7 @@ qflextable2 =function(x){
 
 
 ```{r}
-library(readxl)
-species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
+species_group <-   read_excel(file.path("data", "SPECIES_LIST_RFMO_WITH_ERRORS.xlsx")) %>% janitor::clean_names() %>%  select(species_group, species_code) %>% dplyr::rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
 "geographic_identifier","schooltype",           "species",              "catchtype",           
  "unit",                 "value",                "source_authority")
@@ -230,18 +249,18 @@ fonction_filtre = function(dataframe_tot_filter) {
   # dataframe_tot_filter <- dataframe_tot_filter 
   dataframe_tot_filter <- dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish")) %>% mutate(gear = as.character(gear))
   
-  cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+  cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
     col_types = cols(Identifier = col_skip(), 
         Abbreviation = col_skip(), Name_Fr = col_skip(), 
         Name_Es = col_skip(), Name_Ar = col_skip()))
 
 dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
-dataframe_tot_filter_normal  <- anti_join(dataframe_tot_filter, irregular_iotc,by =c("geographic_identifier"= "code")) #to make the calcul faster
-dataframe_tot_filter_iotc_shape <-dataframe_tot_filter %>% inner_join(irregular_iotc , by =c("geographic_identifier"= "code")) %>%
-  mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
-  select(-c(code_cwp))%>% group_by(across(setdiff(everything(),"value"))) %>% summarise(value =sum(value))
-
-dataframe_tot_filter <- rbind(dataframe_tot_filter_normal ,dataframe_tot_filter_iotc_shape) %>% ungroup()
+# dataframe_tot_filter_normal  <- anti_join(dataframe_tot_filter, irregular_iotc,by =c("geographic_identifier"= "code")) #to make the calcul faster
+# dataframe_tot_filter_iotc_shape <-dataframe_tot_filter %>% inner_join(irregular_iotc , by =c("geographic_identifier"= "code")) %>%
+#   mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
+#   select(-c(code_cwp))%>% group_by(across(setdiff(everything(),"value"))) %>% summarise(value =sum(value))
+# 
+# dataframe_tot_filter <- rbind(dataframe_tot_filter_normal ,dataframe_tot_filter_iotc_shape) %>% ungroup()
 }
 
   
@@ -281,7 +300,6 @@ final <- fonction_filtre(readRDS(paste0(as.character(params$final),"/rds.rds"))%
 
 ```{r}
 differences_in_optionsinit <- readr::read_delim(paste0(params$init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% distinct() 
-library(tidyr)
 # differences_in_optionsinit <- tidyr::unite_(differences_in_optionsinit, paste0(colnames(differences_in_optionsinit), collapse="_"), colnames(differences_in_optionsinit))
 differences_in_optionsinit$X1 <- gsub(" ","",differences_in_optionsinit$X1)
 differences_in_optionsinit$X1 <- gsub("options_","",differences_in_optionsinit$X1) 
@@ -292,6 +310,8 @@ differences_in_optionsinit_base <- differences_in_optionsinit %>% distinct()
 
 
 differences_in_optionsfinal <- readr::read_delim(paste0(params$final,"/options_total.txt"), col_names = FALSE, delim = "=") %>% distinct() 
+# write.csv(differences_in_optionsfinal,"differences_in_optionsfinal.csv")
+
 # differences_in_optionsfinal <- tidyr::unite_(differences_in_optionsfinal, paste0(colnames(differences_in_optionsfinal), collapse="_"), colnames(differences_in_optionsfinal))
 differences_in_optionsfinal$X1 <- gsub(" ","",differences_in_optionsfinal$X1)
 differences_in_optionsfinal$X1 <- gsub("options_","",differences_in_optionsfinal$X1)
@@ -307,10 +327,10 @@ colnames(differences_in_optionsinit) <- "Options init"
 # differences_in_optionsfinal <- differences_in_optionsfinal[startsWith(differences_in_optionsfinal$X1_X2,"options_")|startsWith(differences_in_optionsfinal$X1_X2," options_"),]
 
 colnames(differences_in_optionsfinal) <- "Options final"
-library(stringr)
-differences_in_optionsinit <- as.data.frame(stringr::str_split_fixed(differences_in_optionsinit$`Options init`, "=", 2)) %>% rename(Options_initial =V2)%>% filter(Options_initial!="")
+# write.csv(differences_in_optionsinit,"differences_in_optionsinit.csv")
+differences_in_optionsinit <- as.data.frame(stringr::str_split_fixed(differences_in_optionsinit$`Options init`, "=", 2)) %>% dplyr::rename(Options_initial =V2)%>% filter(Options_initial!="")
 
-differences_in_optionsfinal <- as.data.frame(stringr::str_split_fixed(differences_in_optionsfinal$`Options final`, "=", 2)) %>% rename(Options_final =V2) %>% filter(Options_final!="")
+differences_in_optionsfinal <- as.data.frame(stringr::str_split_fixed(differences_in_optionsfinal$`Options final`, "=", 2)) %>% dplyr::rename(Options_final =V2) %>% filter(Options_final!="")
 
 differences_between_options <- full_join(differences_in_optionsfinal,differences_in_optionsinit) %>% distinct()
 
@@ -335,22 +355,26 @@ qflextable2(differences_between_options2)}
 The options used to create the initial data frame are: 
 
 ```{r}
-s <-  differences_in_optionsinit_base%>% rename("Options" = X1, "Value" = X2)
+s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2)
 qflextable2(s)
 ```
 
 
 ```{r}
 fonction_groupement = function(x, init, final){
+  require(dplyr)
+
   x  <-   enquo(x)
-  groupement_1  <-   init %>% group_by(!!x,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n()) %>%mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
-  groupement_2  <-   final %>% group_by(!!x,unit) %>% summarise(value_sum_2 = sum(value, na.rm=TRUE), number_lines2 = n()) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
+  groupement_1  <-   init %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines1 = 0,
+    value_sum_1 = sum(value, na.rm=TRUE)) %>%dplyr::mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
+  groupement_2  <-   final %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines2 = 0,
+    value_sum_2 = sum(value, na.rm=TRUE)) %>% dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
   
   fulljoin  <-   full_join(groupement_1, groupement_2)%>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2)) %>%mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))%>% mutate(loss = value_sum_1 - value_sum_2) %>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% 
     mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>% mutate(Dimension = colnames(groupement_1[1])) %>%
-    rename("Precision" = 1) %>% mutate(Precision = as.character(Precision)) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>% mutate(Loss_pourcent = ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>% mutate(loss_nb_ligne = number_lines1 - number_lines2)%>% 
+    dplyr::rename("Precision" = 1) %>% mutate(Precision = as.character(Precision)) %>% mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>% mutate(Loss_pourcent = ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>% mutate(loss_nb_ligne = number_lines1 - number_lines2)%>% 
     mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)/ 10^6) %>% 
-           rename(`Difference (in %)` = Loss_pourcent,`Difference in millions of tons` = Loss_en_milliers_de_tonne, 
+            dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in millions of tons` = Loss_en_milliers_de_tonne, 
                   `Difference in number of lines` = loss_nb_ligne) %>% mutate_if(is.numeric, list(~replace_na(., 0))) %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))
 }
 ```
@@ -445,7 +469,7 @@ The stratas differences between the first one and the second one are :
 ```{r}
 # qflextable2(head(strates_perdues,10))
 if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- as_grouped_data(strates_perdues_first_10%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% ungroup()%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange(Dimension,unit,`Loss / Gain`)%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- as_grouped_data(strates_perdues_first_10%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange(Dimension,unit,`Loss / Gain`)%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit","Loss / Gain"))
 
 qflextable2(groupe_df)
 towrite = ""} else {towrite =("No strata is gain nor lost")}
@@ -462,7 +486,7 @@ We first present the main characteristics of each dimension for each dataset.
 For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish.
 
 ```{r}
-captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>% mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
+captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>% mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
 
 
 ggplot(captures_par_time) +
@@ -508,7 +532,7 @@ ggplot_capt_par_time("Tons")
 ```
 
 ```{r}
-# try(ggplot_capt_par_time("Number of fish"))
+try(ggplot_capt_par_time("Number of fish"))
 ```
 
 ## Comparison of the two datasets
@@ -516,37 +540,42 @@ ggplot_capt_par_time("Tons")
 We check the distribution of the value of each dimension in tons and number of fish for each dataset.
 
 ```{r}
-library(rlang)
 
 pie_chart_2 = function(dimension, first, second) {
-  r <- deparse(substitute(dimension))
+  library(dplyr)
+           if(any(first$unit == "MTNO")) first[first$unit == "MTNO", ]$unit <- "MT"
+         if(any(first$unit == "NOMT")) first[first$unit == "NOMT", ]$unit <- "NO"
+           if(any(second$unit == "MTNO")) second[second$unit == "MTNO", ]$unit <- "MT"
+         if(any(second$unit == "NOMT")) second[second$unit == "NOMT", ]$unit <- "NO"
+
+r <- deparse(substitute(dimension))
   colnames <- enquo(dimension)
   name1 <- enquo(first)
   name2 <- enquo(second)
-  provisoire_i <-first %>%  group_by(!!colnames, unit
-  )  %>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>%
-    arrange(desc(value)) %>%   mutate(id = row_number())%>%
-    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
-    group_by(class, unit
-    ) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
-    select( value, class,unit
-    ) %>%   group_by(unit) %>%
-    mutate(pourcentage = prop.table(value)*100)%>%
-    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
-    mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+  provisoire_i <-first %>%  dplyr::group_by(!!colnames, unit
+  )  %>% dplyr::summarise(value = sum(value, na.rm = TRUE)) %>% dplyr::group_by(unit) %>%
+    arrange(desc(value)) %>%   dplyr::mutate(id = row_number())%>%
+    dplyr::mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    dplyr::group_by(class, unit
+    ) %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
+    dplyr::select( value, class,unit
+    ) %>%   dplyr::group_by(unit) %>%
+    dplyr::mutate(pourcentage = prop.table(value)*100)%>%
+    dplyr::mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+    dplyr::mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
     distinct()
 
 
 
 
-  provisoire_t <- second %>%  group_by(!!colnames, unit
-  )%>% summarise(value = sum(value, na.rm = TRUE)) %>% group_by(unit) %>%
+  provisoire_t <- second %>%  dplyr::group_by(!!colnames, unit
+  )%>% dplyr::summarise(value = sum(value, na.rm = TRUE)) %>% dplyr::group_by(unit) %>%
     arrange(desc(value)) %>%   mutate(id = row_number())%>%
     mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
-    group_by(class, unit
-    ) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
-    select( value, class,unit
-    ) %>%   group_by(unit) %>%
+    dplyr::group_by(class, unit
+    ) %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
+    dplyr::select( value, class,unit
+    ) %>%   dplyr::group_by(unit) %>%
     mutate(pourcentage = prop.table(value)*100)%>%
     mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
     mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
@@ -634,8 +663,7 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
 ```
 
 ```{r}
-library(cowplot)
-library(RColorBrewer)
+
 fishing_fleet <- pie_chart_2(fishingfleet, init, final)
 source_authority <- pie_chart_2(source_authority, init, final)
 cat_geo <- pie_chart_2(cat_geo, init, final)
@@ -666,7 +694,6 @@ Name_En
 ## Spatial coverage
 
 ```{r}
-library(gdata)
 tmap_mode("plot")
 fonction_empreinte_spatiale = function(variable_affichee){
   selection = function(x){x %>% ungroup() %>% select(geographic_identifier, value, cat_geo, unit)}
@@ -731,9 +758,7 @@ topn <- 5
 We will look for each dimension the `r topn` most important differences
 
 ```{r paged.print=TRUE}
-library(knitr)
-library(DT)
-library(kableExtra)
+
 
 
 valeur_totale <- sum(init$value, na.rm = TRUE)
@@ -752,7 +777,7 @@ unit <- t %>%  filter(Dimension %in% c("species", "source_authority","cat_geo", 
 
 
 ```{r paged.print=TRUE}
-t3 <- as_grouped_data(unit %>% ungroup()%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
+t3 <- as_grouped_data(unit %>% ungroup()%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
 qflextable2(t3) 
 ```
 
@@ -768,7 +793,7 @@ qflextable2(t3)
 
 ## Differences in geographical data
 
-```{r testnaming, out.width=100%}
+```{r testnaming, out.width="100%"}
 tmap_mode("plot")
 inner_join <- inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
 
@@ -796,7 +821,7 @@ image
 ```
 
 
-```{r testnaming2, out.width=100%}
+```{r testnaming2, out.width="100%"}
 tmap::tmap_mode("plot")
 image <- tm_shape(inner_join(shapefile.fix,(t %>% filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data lost' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
          # %>% filter(unit == "Tons")
@@ -959,7 +984,7 @@ The stratas differences between the first one and the second one are :
 
 ```{r}
 
-t4 <- head(strates_perdues%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2),10)
+t4 <- head(strates_perdues%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2),10)
 
 
 qflextable2(t4)
@@ -976,7 +1001,7 @@ We first present the main characteristics of each dimension for each dataset.
 For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish.
 
 ```{r}
-captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>% mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
+captures_par_time <- testtime_start %>% mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>% mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
 
 
 ggplot(captures_par_time) +
@@ -1042,7 +1067,6 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
 ```
 
 ```{r}
-library(cowplot)
 fishing_fleet <- pie_chart_2(fishingfleet, init, final)
 source_authority <- pie_chart_2(source_authority, init, final)
 try(cat_geo <- pie_chart_2(cat_geo, init, final))
@@ -1073,7 +1097,6 @@ Name_En
 ## Spatial coverage
 
 ```{r}
-library(gdata)
 tmap_mode("plot")
 
 number_of_cat_geo <- nrow(unique(t$cat_geo))
@@ -1128,7 +1151,7 @@ unit <- t%>%  filter(Dimension %in% c("species", "source_authority","cat_geo", "
 
 
 ```{r paged.print=TRUE}
-t5 <- as_grouped_data(unit %>% ungroup()%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
+t5 <- as_grouped_data(unit %>% ungroup()%>% mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%  mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% select(params$columns_to_keep)%>% mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
 qflextable2(t5) 
 ```
 

@@ -64,7 +64,47 @@ if(!require(readr)){
   install.packages("readr")
   require(readr)
 }
+last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
+# source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
+step_for_rmd <- 1
+create_latex <- function(x){
+  wd <- getwd()
+  config$logger.info(paste0("working direcotyr begining create_latex : ",wd))
+  # y <- last_path(x)
+  setwd("./../../../..")
+  wd2 <- getwd()
+  setwd(wd)
+  file.copy(paste0(wd2,"/",
+    x), paste0(wd,"/",x), overwrite = TRUE)
+  config$logger.info(paste0("jsute after copying rmd"))
+  
+  file.copy(paste0(wd2,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
+  file.copy(paste0(wd2,"/",'data/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
+  
+  setwd(wd)
+  print(getwd())
+  list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
+  details = file.info(list_dir)
+  details = details[with(details, order(as.POSIXct(mtime))), ]
+  sub_list_dir_2 = rownames(details)
+  t <- tail(details, 2)
+  avant_last <-  rownames(head(t,1))
+  last <- rownames(tail(details, 1))
+  rmarkdown::render(x, #output_format = "latex_document",
+                    params = list(init = avant_last, final = last), output_file = paste0(x, "step",step_for_rmd,".Rmd"))
+  tex <- gsub(".Rmd", ".tex", paste0(x, "step",step_for_rmd,".Rmd"))
+  system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
+         ignore.stdout = FALSE, ignore.stderr = FALSE,
+         wait = TRUE, input = NULL, show.output.on.console = TRUE,
+         minimized = FALSE, invisible = TRUE, timeout = 0)
+  unlink("comp_sans_shiny.Rmd")
+  rm("s.png")
+  rm("image.png")
+  rm("t3.png")
+  step_for_rmd <<- step_for_rmd +1
+  
+}
 
 # mapping_map_code_lists <- options$mapping_map_code_lists
 #scripts
@@ -77,14 +117,16 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonct
 # source("~/Documents/Tunaatlas_level1/function_raising_georef_to_nominal_Bastien.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/disagregate_on_resdeg_Bastien.R")
-source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/get_rfmos_dataset_leve0_bastien.R")
-
+# source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/get_rfmos_dataset_leve0_bastien.R")
+source("~/Documents/Tunaatlas_level1/get_rfmos_datasets_level0_B2.R")
+# source("~/Documents/Tunaatlas_level1/analyse_raising_iattc_schooltype_and_fishingfleet.Rmd")
+# source("~/Documents/Tunaatlas_level1/comp_sans_shiny.Rmd")
 # connect to Tuna atlas database
 con <- config$software$output$dbi
 
 #set parameterization
 
-source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
+source("~/Documents/Tunaatlas_level1/fonction_dossier.R")
 # function_creation_options()
 
   
@@ -161,6 +203,254 @@ georef_dataset <- left_join(georef_dataset, irregular_iotc , by =c("geographic_i
   select(-c(code_cwp))
 
 georef_dataset$geographic_identifier = str_replace_all(georef_dataset$geographic_identifier,"6130045\n","6130045")
+ 
+#-----------------------------------------------------------------
+
+variable <- options$fact
+columns_to_keep <- NULL
+if (variable == "catch"){
+  columns_to_keep<-c("source_authority","species","gear","fishingfleet","schooltype","time_start","time_end","geographic_identifier","catchtype","unit","value")
+} else if (variable=="effort"){
+  columns_to_keep<-c("source_authority","gear","fishingfleet","schooltype","time_start","time_end","geographic_identifier","unit","value")
+}
+
+#list of dataset files (from entity data sources)
+dataset_files <- sapply(entity$data$source[2:length(entity$data$source)], function(x){ entity$getJobDataResource(config, x) })
+names(dataset_files) <- entity$data$source[2:length(entity$data$source)]
+config$logger.info("LEVEL 0 => STEP 2/8: Treatment on iccat PS")
+
+if (options$iccat_ps_include_type_of_school){
+  iccat_data <- georef_dataset %>% filter(source_authority == "ICCAT")
+  config$logger.info("Option 'iccat_ps_include_type_of_school' is TRUE. Include Type of school...")
+  dataset_iccat_byschool_file <- dataset_files[regexpr("nominal", names(dataset_files)) < 0 & 
+                                                 regexpr("byschool", names(dataset_files)) > 0 &
+                                                 regexpr("iccat", names(dataset_files)) > 0]
+  iccat_ce_WithSchooltypeInfo <- readr::read_csv(dataset_iccat_byschool_file, guess_max = 0)
+  iccat_ce_WithSchooltypeInfo <- as.data.frame(iccat_ce_WithSchooltypeInfo)
+  iccat_ce_WithSchooltypeInfo <- iccat_ce_WithSchooltypeInfo[, columns_to_keep]
+  class(iccat_ce_WithSchooltypeInfo$value) <- "numeric"
+  
+  # We need to map fishingfleet code list, because fishingfleet code list used in iccat task2 by operation mode dataset is different from fishingfleet code list used in ICCAT task2; however we have to use the same fishingfleet code list for data raising. In other words, we express all ICCAT datasets following ICCAT task2 fishingfleet code list.
+  cl_filename <- "codelist_mapping_flag_iccat_from_ncandcas_flag_iccat.csv"
+  cl_id <- googledrive::drive_get(cl_filename)$id
+  googledrive::drive_download(googledrive::as_id(cl_id), cl_filename, overwrite = TRUE)
+  flag_mapping_flag_iccat_from_ncandcas_to_flag_iccat <- as.data.frame(readr::read_csv(cl_filename, guess_max = 0))
+  
+  iccat_ce_WithSchooltypeInfo <- rtunaatlas::map_codelist(iccat_ce_WithSchooltypeInfo, flag_mapping_flag_iccat_from_ncandcas_to_flag_iccat, "fishingfleet")[[1]]
+  
+  strata_in_withoutschooltype_and_not_in_withshooltype <- dplyr::anti_join (iccat_data, iccat_ce_WithSchooltypeInfo, by=setdiff(columns_to_keep,c("value","schooltype")))
+  
+  # Join datasets: Dataset with the type of school + dataset without the type of school from which we have removed the strata that are also available in the dataset with the type of school.
+  iccat_data <- rbind(strata_in_withoutschooltype_and_not_in_withshooltype, iccat_ce_WithSchooltypeInfo)
+  georef_dataset <- rbind(georef_dataset %>% filter(source_authority !="ICCAT"), iccat_data)
+}
+
+
+
+#####
+config$logger.info("LEVEL 0 => STEP 2/8: Treatment IATTC ")
+ 
+iattc_data <- georef_dataset %>% filter(source_authority == "IATTC")
+
+columns_to_keep_effort=c("source_authority","gear","fishingfleet","schooltype","time_start","time_end","geographic_identifier","unit","value")
+
+# Get metadata of Catch datasets (for tuna, billfish and shark, and stratified by fishingfleet and then by type of school)
+dataset_file_PSSetType_tuna_catch <- "catch_1deg_1m_ps_iattc_level0__tuna_byschool.csv"
+dataset_file_PSSetType_billfish_catch<- "catch_1deg_1m_ps_iattc_level0__billfish_byschool.csv"
+dataset_file_PSSetType_shark_catch <- "catch_1deg_1m_ps_iattc_level0__shark_byschool.csv"
+dataset_file_PSFlag_tuna_catch <- "catch_1deg_1m_ps_iattc_level0__tuna_byflag.csv"
+dataset_file_PSFlag_billfish_catch <- "catch_1deg_1m_ps_iattc_level0__billfish_byflag.csv"
+dataset_file_PSFlag_shark_catch <- "catch_1deg_1m_ps_iattc_level0__shark_byflag.csv"
+
+# Get metadata of Effort datasets (for tuna, billfish and shark, and stratified by flag and then by type of school)
+dataset_file_PSSetType_tuna_effort <- "effort_1deg_1m_ps_iattc_level0__tuna_byschool.csv"
+dataset_file_PSSetType_billfish_effort <- "effort_1deg_1m_ps_iattc_level0__billfish_byschool.csv"
+dataset_file_PSSetType_shark_effort <- "effort_1deg_1m_ps_iattc_level0__shark_byschool.csv"
+dataset_file_PSFlag_tuna_effort <- "effort_1deg_1m_ps_iattc_level0__tuna_byflag.csv"
+dataset_file_PSFlag_billfish_effort <- "effort_1deg_1m_ps_iattc_level0__billfish_byflag.csv"
+dataset_file_PSFlag_shark_effort <- "effort_1deg_1m_ps_iattc_level0__shark_byflag.csv"
+
+#for catch fact
+if(variable == "catch") {
+  
+  config$logger.info(sprintf("Case %s data", variable))
+  
+  # Extract tuna catch
+  df_catch_tuna_flag <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_PSFlag_tuna_catch], guess_max = 0))
+  df_catch_tuna_flag <- df_catch_tuna_flag[,columns_to_keep]
+  class(df_catch_tuna_flag$value) <- "numeric"
+  
+  df_catch_tuna_settype <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_PSSetType_tuna_catch], guess_max = 0))
+  df_catch_tuna_settype <- df_catch_tuna_settype[,columns_to_keep]
+  class(df_catch_tuna_settype$value) <- "numeric"
+  
+  # Extract billfish and shark catch.
+  # If the user decides to raise shark/billfish catch to ratio effort tuna / effort shark/billfish:
+  if (options$iattc_ps_catch_billfish_shark_raise_to_effort){
+    
+    # Function to extract the datasets of catch (for billfish and tuna) and raise them to the ratio effort tuna / effort billfish (or effort shark)
+    function_raise_catch_to_effort <- function(dataset_file_tuna_effort,
+                                               dataset_file_billfish_or_shark_catch,
+                                               dataset_file_billfish_or_shark_effort,
+                                               raising_dimensions){
+      
+      config$logger.info(sprintf("Catch file which will be raised to efffort: %s ", dataset_file_billfish_or_shark_catch))
+      
+      
+      billfish_or_shark_catch <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_billfish_or_shark_catch], guess_max = 0))
+      billfish_or_shark_catch <- billfish_or_shark_catch[,columns_to_keep]
+      class(billfish_or_shark_catch$value) <- "numeric"
+      
+      billfish_or_shark_effort <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_billfish_or_shark_effort], guess_max = 0))
+      billfish_or_shark_effort <- billfish_or_shark_effort[,columns_to_keep_effort]
+      class(billfish_or_shark_effort$value) <- "numeric"
+      
+      tuna_effort <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_tuna_effort], guess_max = 0))
+      tuna_effort <- tuna_effort[,columns_to_keep_effort]
+      class(tuna_effort$value) <- "numeric"
+      
+      # Get RF for effort (rf=effort tuna / effort billfish   or    effort tuna / effort shark)
+      df_rf <- rtunaatlas::raise_get_rf(
+        df_input=billfish_or_shark_effort,
+        df_input_total=tuna_effort,
+        x_raising_dimensions=c(raising_dimensions,"unit")
+      )
+      
+      df_rf$unit<-NULL
+      
+      # Raise the data
+      catch_raised <- rtunaatlas::raise_incomplete_dataset_to_total_dataset(
+        df_input_incomplete=billfish_or_shark_catch,
+        df_input_total=billfish_or_shark_catch,
+        df_rf=df_rf,
+        x_raising_dimensions=raising_dimensions,
+        threshold_rf=NULL)
+      
+      return(catch_raised$df)
+    }
+    
+    df_catch_billfish_flag <- function_raise_catch_to_effort(dataset_file_tuna_effort=dataset_file_PSFlag_tuna_effort,
+                                                             dataset_file_billfish_or_shark_catch=dataset_file_PSFlag_billfish_catch,
+                                                             dataset_file_billfish_or_shark_effort=dataset_file_PSFlag_billfish_effort,
+                                                             raising_dimensions=c("gear","fishingfleet","time_start","time_end","geographic_identifier"))
+    
+    df_catch_billfish_settype <- function_raise_catch_to_effort(dataset_file_tuna_effort=dataset_file_PSSetType_tuna_effort,
+                                                                dataset_file_billfish_or_shark_catch=dataset_file_PSSetType_billfish_catch,
+                                                                dataset_file_billfish_or_shark_effort=dataset_file_PSSetType_billfish_effort,
+                                                                raising_dimensions=c("gear","schooltype","time_start","time_end","geographic_identifier"))
+    
+    df_catch_shark_flag <- function_raise_catch_to_effort(dataset_file_tuna_effort=dataset_file_PSFlag_tuna_effort,
+                                                          dataset_file_billfish_or_shark_catch=dataset_file_PSFlag_shark_catch,
+                                                          dataset_file_billfish_or_shark_effort=dataset_file_PSFlag_shark_effort,
+                                                          raising_dimensions=c("gear","fishingfleet","time_start","time_end","geographic_identifier"))
+    
+    df_catch_shark_settype <- function_raise_catch_to_effort(dataset_file_tuna_effort=dataset_file_PSSetType_tuna_effort,
+                                                             dataset_file_billfish_or_shark_catch=dataset_file_PSSetType_shark_catch,
+                                                             dataset_file_billfish_or_shark_effort=dataset_file_PSSetType_shark_effort,
+                                                             raising_dimensions=c("gear","schooltype","time_start","time_end","geographic_identifier"))
+    
+  } else { # Else do not raise (i.e. for billfish/shark, keep catch only from billfish / shark)
+    df_catch_billfish_flag <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_PSFlag_billfish_catch], guess_max = 0))
+    df_catch_billfish_flag <- df_catch_billfish_flag[,columns_to_keep]
+    class(df_catch_billfish_flag$value) <- "numeric"
+    
+    df_catch_billfish_settype <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_PSSetType_billfish_catch], guess_max = 0))
+    df_catch_billfish_settype <- df_catch_billfish_settype[,columns_to_keep]
+    class(df_catch_billfish_settype$value) <- "numeric"
+    
+    df_catch_shark_flag <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_PSFlag_shark_catch],guess_max = 0))
+    df_catch_shark_flag <- df_catch_shark_flag[,columns_to_keep]
+    class(df_catch_shark_flag$value) <- "numeric"
+    
+    df_catch_shark_settype <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_PSSetType_shark_catch],guess_max = 0))
+    df_catch_shark_settype <- df_catch_shark_settype[,columns_to_keep]
+    class(df_catch_shark_settype$value) <- "numeric"
+  }
+  
+  if(options$iattc_ps_raise_flags_to_schooltype){
+    
+    df_catch_billfish<-rtunaatlas::raise_datasets_by_dimension(df1=df_catch_billfish_flag,
+                                                               df2=df_catch_billfish_settype,
+                                                               dimension_missing_df1="schooltype",
+                                                               dimension_missing_df2="fishingfleet")$df
+    
+    df_catch_shark<-rtunaatlas::raise_datasets_by_dimension(df1=df_catch_shark_flag,
+                                                            df2=df_catch_shark_settype,
+                                                            dimension_missing_df1="schooltype",
+                                                            dimension_missing_df2="fishingfleet")$df
+    
+    df_catch_tuna<-rtunaatlas::raise_datasets_by_dimension(df1=df_catch_tuna_flag,
+                                                           df2=df_catch_tuna_settype,
+                                                           dimension_missing_df1="schooltype",
+                                                           dimension_missing_df2="fishingfleet")$df
+    
+    
+  } else {
+    # If user decides to not raise flags to type of school, he chooses to use either the data with stratification by fishingfleet or the data with stratification by schooltype
+    if (options$iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype == 'fishingfleet'){
+      df_catch_billfish <- df_catch_billfish_flag
+      df_catch_shark <- df_catch_shark_flag
+      df_catch_tuna <- df_catch_tuna_flag
+    } else if (options$iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype == 'schooltype'){
+      df_catch_billfish <- df_catch_billfish_settype
+      df_catch_shark <- df_catch_shark_settype
+      df_catch_tuna <- df_catch_tuna_settype
+    }
+  }
+  
+  iattc_data <- rbind(iattc_data, df_catch_billfish, df_catch_shark, df_catch_tuna)
+  
+}else if (variable=="effort"){
+  config$logger.info(sprintf("Case %s data", variable))
+  
+  dataset_file_effort_flag <- switch(options$iattc_ps_effort_to_extract,
+                                     "tuna" = "effort_1deg_1m_ps_iattc_level0__tuna_byflag.csv",
+                                     "billfish" = "effort_1deg_1m_ps_iattc_level0__billfish_byflag.csv",
+                                     "shark" = "effort_1deg_1m_ps_iattc_level0__shark_byflag.csv"
+  )
+  dataset_file_effort_settype <- switch(options$iattc_ps_effort_to_extract,
+                                        "tuna" = "effort_1deg_1m_ps_iattc_level0__tuna_byschool.csv",
+                                        "billfish" = "effort_1deg_1m_ps_iattc_level0__billfish_byschool.csv",
+                                        "shark" = "effort_1deg_1m_ps_iattc_level0__shark_byschool.csv"
+  )
+  
+  # For the effort data, we keep only effort from one of the files (tuna or billfishes or shark). This is driven by the parameter "iattc_ps_effort_to_extract"
+  
+  df_iattc_effort_PSSetType <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_effort_settype], guess_max = 0))
+  df_iattc_effort_PSSetType <- df_iattc_effort_PSSetType[,columns_to_keep_effort]
+  class(df_iattc_effort_PSSetType) <- "numeric"
+  df_iattc_effort_PSFlag <- as.data.frame(readr::read_csv(dataset_files[names(dataset_files)==dataset_file_effort_flag], guess_max = 0))
+  df_iattc_effort_PSFlag <- df_iattc_effort_PSFlag[,columns_to_keep_effort]
+  class(df_iattc_effort_PSFlag) <- "numeric"
+  
+  if (options$iattc_ps_raise_flags_to_schooltype){
+    #Get Tuna effort by raising flags to schooltype
+    df <- rtunaatlas::raise_datasets_by_dimension(df1=df_iattc_effort_PSFlag,
+                                                  df2=df_iattc_effort_PSSetType,
+                                                  dimension_missing_df1="schooltype",
+                                                  dimension_missing_df2="fishingfleet")$df
+    
+  } else {  # If the user decides not to raise flags to type of school, he chooses to use either the data with stratification by fishingfleet or the data with stratification by schooltype
+    if (options$iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype == 'fishingfleet'){
+      df<-df_iattc_effort_PSFlag
+    } else if (options$iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype == 'schooltype'){
+      df<-df_iattc_effort_PSSetType
+    }
+  }
+  
+  iattc_data <- rbind(iattc_data, df)
+  georef_dataset <- rbind(georef_dataset %>% filter(source_authority!= "IATTC"), iattc_data)
+}
+
+fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc and iccat data", "raise_datasets_by_dimension", 
+                 c(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+                   options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
+                   ) )
+create_latex("comp_sans_shiny.Rmd")
+
+euro#####
+
+
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
@@ -181,12 +471,14 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                    georef_dataset, 
                    "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
                    "map_codelists", c(options_mapping_map_code_lists))
+  create_latex("comp_sans_shiny.Rmd")
+  
   
 
   }
 
 
-
+ 
 
 
 #adding treatment for all the data in irregular zone given by ctoi.
@@ -200,7 +492,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
 
            if(!exists("options_strata_overlap_iattc_wcpfc")){options_strata_overlap_iattc_wcpfc <- c("geographic_identifier",    "species", "time_start", "time_end",
                                                                                                         "unit")}
-           
+            
            georef_dataset <- function_overlapped(dataset = georef_dataset , con =con , rfmo_to_keep = overlapping_zone_iattc_wcpfc_data_to_keep,
                                                  rfmo_not_to_keep = (if (overlapping_zone_iattc_wcpfc_data_to_keep == "IATTC"){"WCPFC"} else {"IATTC"}), 
                                                  strata = options_strata_overlap_iattc_wcpfc)
@@ -209,6 +501,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             "Keeping data from IATTC or WCPFC ",
                             "function_overlapped" , c(options_include_IATTC, 
                                                       options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
+           create_latex("comp_sans_shiny.Rmd")
+           
 
            }
 if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlapping_zone_iotc_wcpfc_data_to_keep)) {
@@ -242,8 +536,10 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
   
 }
 
+create_latex("comp_sans_shiny.Rmd")
+
          
-   
+    
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 7/: Overlapping zone (WCPFC/CCSBT): keep data from WCPFC or CCSBT?")
@@ -267,8 +563,10 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
                                options_include_WCPFC ,
                                options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
     
-           }
-         
+         }
+   create_latex("comp_sans_shiny.Rmd")
+    
+      
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 8/8: Overlapping zone (ICCAT/CCSBT): keep data from ICCAT or CCSBT?")
@@ -295,7 +593,9 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
            
         
            
-           }
+         }
+   create_latex("comp_sans_shiny.Rmd")
+    
          
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -322,7 +622,9 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
        
            
            }
-         
+   create_latex("comp_sans_shiny.Rmd")
+    
+   
 
 # #### unit treatment
 # if(is.null(options$unit_treatment)) {
@@ -383,7 +685,9 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }         
 
-         
+   create_latex("comp_sans_shiny.Rmd")
+    
+   
          
          if (options$spatial_curation_data_mislocated %in% c("reallocate","remove")){
            
@@ -425,7 +729,9 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
 
-
+   create_latex("comp_sans_shiny.Rmd")
+    
+   
 
         
          #end switch LEVEL 1
@@ -586,6 +892,11 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
                          fact, raising_do_not_raise_wcfpc_data, raising_raise_only_for_PS_LL
                    ))
   
+  create_latex("comp_sans_shiny.Rmd")
+   
+  
+  
+  
   if (fact=="catch"){
     config$logger.info("Fact=catch !")
     dataset_to_compute_rf=georef_dataset
@@ -694,6 +1005,10 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
                          include_ICCAT, include_CCSBT, include_WCPFC, 
                          fact, raising_do_not_raise_wcfpc_data, raising_raise_only_for_PS_LL
                    ))
+  
+  create_latex("comp_sans_shiny.Rmd")
+   
+  
 
   
          
@@ -802,6 +1117,9 @@ fonction_dossier("Level2_RF3without_gears",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
                             c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            gc()
+           create_latex("comp_sans_shiny.Rmd")
+            
+           
          } else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
            config$logger.info(sprintf("LEVEL 1 => STEP 5/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet): Disaggregate data on 1° resolution quadrants (for 1deg resolution datasets only). Option is: [%s] ",entity$data$source[[1]], options$disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
@@ -822,6 +1140,9 @@ fonction_dossier("Level2_RF3without_gears",
                             georef_dataset, 
                             "Apply filters on WCPFC at the end to see what's lost ",
                             "", c(options_filter_WCPFC_at_the_end))
+           create_latex("comp_sans_shiny.Rmd")
+            
+           
            
          }
          
@@ -849,6 +1170,9 @@ fonction_dossier("Level2_RF3without_gears",
                             "Spatial Aggregation of data (5deg resolution datasets only: Aggregate data on 5° resolution quadrants)",
                             "spatial_curation_upgrade_resolution", 
                             c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
+           create_latex("comp_sans_shiny.Rmd")
+            
+           
          }
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -879,6 +1203,9 @@ fonction_dossier("Level2_RF3without_gears",
                             georef_dataset, 
                             "Grid spatial resolution filter",
                             "", c(options_resolution_filter))
+           create_latex("comp_sans_shiny.Rmd")
+            
+           
          }
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -895,6 +1222,9 @@ fonction_dossier("Level2_RF3without_gears",
                             georef_dataset, 
                             "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
                             "", c(options_gear_filter))
+           create_latex("comp_sans_shiny.Rmd")
+            
+           
            
          }
 
@@ -942,12 +1272,12 @@ fonction_dossier("Level2_RF3without_gears",
            # Levels 1 and 2 of non-global datasets should be expressed with tRFMOs code lists. However, for the effort unit code list and in those cases, we take the tuna atlas effort unit codes although this is not perfect. but going back to tRFMOs codes is too complicated 
            df_codelists$code_list_identifier[which(df_codelists$dimension=="unit")]<-"effortunit_rfmos"
          }
-         
+
          #@geoflow -> export as csv
          output_name_dataset <- file.path("data", paste0(entity$identifiers[["id"]], "_harmonized.csv"))
-         #write.csv(dataset$dataset, output_name_dataset, row.names = FALSE)
+         write.csv(head(dataset$dataset,100), output_name_dataset, row.names = FALSE)
          output_name_codelists <- file.path("data", paste0(entity$identifiers[["id"]], "_codelists.csv"))
-         #write.csv(dataset$codelists, output_name_codelists, row.names = FALSE)
+         write.csv(dataset$codelists, output_name_codelists, row.names = FALSE)
          #----------------------------------------------------------------------------------------------------------------------------  
          entity$addResource("harmonized", output_name_dataset)
          entity$addResource("codelists", output_name_codelists)

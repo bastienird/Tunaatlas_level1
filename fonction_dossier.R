@@ -57,6 +57,7 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
   write(fonctions, paste0(nom_dossier,"/fonctions.txt"))
+  write(options_written_total, paste0("options_total.txt"))
   write(options_written_total, paste0(nom_dossier,"/options_total.txt"))
   
 }

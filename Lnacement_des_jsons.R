@@ -90,9 +90,9 @@ jobdir <- initWorkflowJob(config)
 # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220601110916"
 #3. le téléchargement de la donnée vers le dossier d'execution ne se fait  que lorsqu'on execute executeWorkflowJob. 
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
-# config$job <- "~/Documents/Tunaatlas_level1/jobs/20220504152124"
+ # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220616115652"
 config$job <- jobdir
-# config$job <- "~/Documents/Tunaatlas_level1/jobs/20220608155023"
+config$job <- "~/Documents/Tunaatlas_level1/jobs/20220620173750"
 initWorkflowJob(config)
 executeWorkflowJob(config)
 # geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")

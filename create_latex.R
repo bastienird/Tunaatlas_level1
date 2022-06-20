@@ -4,6 +4,7 @@
 #   output = "out.tex",
 #   options = "--standalone"
 # )
+setwd("~/Documents/Tunaatlas_level1/")
 create_latex <- function(x){
   wd <- getwd()
 rmarkdown::render(paste0(wd,"/", x), output_format = "latex_document")
@@ -17,3 +18,10 @@ system(paste0( "cd ", wd, ";pdflatex ", tex), intern = FALSE,
 create_latex("oitc_conversion_factors.Rmd")
 create_latex("etude_overlap.Rmd")
 create_latex("backupabsurd.Rmd")
+create_latex("absurd_data.Rmd")
+create_latex("analyse_raising_iattc_schooltype_and_fishingfleet.Rmd")
+create_latex("comp_sans_shiny.Rmd")
+
+
+
+
