@@ -92,8 +92,8 @@ create_latex <- function(x){
   avant_last <-  rownames(head(t,1))
   last <- rownames(tail(details, 1))
   rmarkdown::render(x, #output_format = "latex_document",
-                    params = list(init = avant_last, final = last), output_file = paste0(x, "step",step_for_rmd,".Rmd"))
-  tex <- gsub(".Rmd", ".tex", paste0(x, "step",step_for_rmd,".Rmd"))
+                    params = list(init = avant_last, final = last), output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd"))
+  tex <- gsub(".Rmd", ".tex", paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd"))
   system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
          ignore.stdout = FALSE, ignore.stderr = FALSE,
          wait = TRUE, input = NULL, show.output.on.console = TRUE,
