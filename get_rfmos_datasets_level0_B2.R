@@ -1,4 +1,4 @@
-function(rfmo, entity, config, options){
+get_rfmos_datasets_level0_B2 = function(rfmo, entity, config, options){
   
   variable <- options$fact
   columns_to_keep <- NULL
