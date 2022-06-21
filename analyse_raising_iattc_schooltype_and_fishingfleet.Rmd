@@ -43,13 +43,13 @@ raising_schooltype_to_fishingfleet <- readRDS("data/raising_schooltype_to_fishin
 comp <- gdata::combine(mapping_codelist, raising_fishingfleet_to_schooltype, raising_schooltype_to_fishingfleet)
 comp$unit <- str_replace(comp$unit, "MTNO","MT")
 comp$unit <- str_replace(comp$unit, "NOMT","NO")
-comp <-  comp%>% group_by(source, time_start, unit) %>% summarise(Value = sum(value)) %>% mutate(time_start = as.Date(time_start)) 
+comp <-  comp%>% dplyr::group_by(source, time_start, unit) %>% dplyr::summarise(Value = sum(value)) %>% dplyr::mutate(time_start = as.Date(time_start)) 
 ```
 
 
 ```{r}
 library(lubridate)
-comp_year <- comp %>% mutate(Year =lubridate::year(time_start)) %>%ungroup() %>%  group_by(Year, unit, source) %>% summarise(Value = sum(Value))
+comp_year <- comp %>% dplyr::mutate(Year =lubridate::year(time_start)) %>%ungroup() %>%  dplyr::group_by(Year, unit, source) %>% dplyr::summarise(Value = sum(Value))
 ```
 ```{r}
 library(ggplot2)

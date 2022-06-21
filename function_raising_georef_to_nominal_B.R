@@ -1,4 +1,4 @@
-function_raising_georef_to_nominal_B =function(entity,
+function_raising_georef_to_nominal_B =function(options = options,entity,
          config,
          dataset_to_raise,
          dataset_to_compute_rf,
@@ -115,6 +115,7 @@ function_raising_georef_to_nominal_B =function(entity,
     config$logger.info(paste0("Raising georeferenced dataset of CCBST and WCPFC - if included in the Tuna Atlas - by ",paste(setdiff(x_raising_dimensions,"fishingfleet"),collapse = ","),"\n"))
     
     config$logger.info(paste0("Executing function function_raise_data for CCSBT and WCPFC options \n"))
+    # class(dataset_to_compute_rf$value) <- "numeric"
     data_WCPFC_CCSBT_raised<-function_raise_data(fact=fact,
                                                  source_authority_filter = source_authority_filter,
                                                  dataset_to_raise = dataset_to_raise,
