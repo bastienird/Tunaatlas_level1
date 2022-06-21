@@ -76,6 +76,9 @@ create_latex <- function(x){
   wd2 <- getwd()
   setwd(wd)
   output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd)
+  # fs::dir_create(paste0(output_file,"/"))
+  fs::dir_create(paste0(output_file,"/","data/"))
+  
   file.copy(paste0(wd2,"/",
     x), paste0(wd,"/",output_file,"/",x), overwrite = TRUE)
   config$logger.info(paste0("jsute after copying rmd"))
