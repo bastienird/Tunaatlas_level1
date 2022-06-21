@@ -75,12 +75,13 @@ create_latex <- function(x){
   setwd("./../../../..")
   wd2 <- getwd()
   setwd(wd)
+  output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd)
   file.copy(paste0(wd2,"/",
-    x), paste0(wd,"/",x), overwrite = TRUE)
+    x), paste0(wd,"/",output_file,"/",x), overwrite = TRUE)
   config$logger.info(paste0("jsute after copying rmd"))
   
-  file.copy(paste0(wd2,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
-  file.copy(paste0(wd2,"/",'data/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
+  file.copy(paste0(wd2,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",output_file,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
+  file.copy(paste0(wd2,"/",'data/cl_cwp_gear_level2.csv'),paste0(wd,"/",output_file,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
   
   setwd(wd)
   print(getwd())
@@ -91,25 +92,29 @@ create_latex <- function(x){
   t <- tail(details, 2)
   avant_last <-  rownames(head(t,1))
   last <- rownames(tail(details, 1))
-  rmarkdown::render(x, #output_format = "latex_document",
-                    params = list(init = avant_last, final = last), output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd"))
-  tex <- gsub(".Rmd", ".tex", paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd"))
-  system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
-         ignore.stdout = FALSE, ignore.stderr = FALSE,
-         wait = TRUE, input = NULL, show.output.on.console = TRUE,
-         minimized = FALSE, invisible = TRUE, timeout = 0)
+  setwd(wd,"/",output_file)
+  rmarkdown::render(x,params = list(init = avant_last, final = last)#,
+  #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
+  )
+  print("Output_created")
+  # tex <- gsub(".Rmd", ".tex", paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd"))
+  # system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
+  #        ignore.stdout = FALSE, ignore.stderr = FALSE,
+  #        wait = TRUE, input = NULL, show.output.on.console = TRUE,
+  #        minimized = FALSE, invisible = TRUE, timeout = 0)
   unlink("comp_sans_shiny.Rmd")
   rm("s.png")
   rm("image.png")
   rm("t3.png")
   step_for_rmd <<- step_for_rmd +1
+  setwd(wd)
   
 }
 
 # mapping_map_code_lists <- options$mapping_map_code_lists
 #scripts
 url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation"
-source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R")) #modified for geoflow
+# source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
@@ -118,7 +123,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonct
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/disagregate_on_resdeg_Bastien.R")
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/get_rfmos_dataset_leve0_bastien.R")
-source("~/Documents/Tunaatlas_level1/get_rfmos_datasets_level0_B2.R")
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/get_rfmos_datasets_level0_B2.R")
 # source("~/Documents/Tunaatlas_level1/analyse_raising_iattc_schooltype_and_fishingfleet.Rmd")
 # source("~/Documents/Tunaatlas_level1/comp_sans_shiny.Rmd")
 # connect to Tuna atlas database
@@ -126,7 +131,7 @@ con <- config$software$output$dbi
 
 #set parameterization
 
-source("~/Documents/Tunaatlas_level1/fonction_dossier.R")
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/96683c75f389270612dbcfbb6ea1e30a0b878945/fonction_dossier.R")
 # function_creation_options()
 
   
@@ -174,7 +179,7 @@ config$logger.info("Begin: Retrieving primary datasets from Tuna atlas DB... ")
 #-------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 1/8: Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked")
 #-------------------------------------------------------------------------------------------------------------------------------------
-dataset <- do.call("rbind", lapply(c("IOTC", "WCPFC", "CCSBT", "ICCAT", "IATTC"), get_rfmos_datasets_level0, entity, config, options))
+dataset <- do.call("rbind", lapply(c("IOTC", "WCPFC", "CCSBT", "ICCAT", "IATTC"), get_rfmos_datasets_level0_B2, entity, config, options))
 dataset$time_start<-substr(as.character(dataset$time_start), 1, 10)
 dataset$time_end<-substr(as.character(dataset$time_end), 1, 10)
 georef_dataset<-dataset
@@ -448,7 +453,6 @@ fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc
                    ) )
 create_latex("comp_sans_shiny.Rmd")
 
-euro#####
 
 
 
