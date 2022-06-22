@@ -64,27 +64,33 @@ if(!require(readr)){
   install.packages("readr")
   require(readr)
 }
+if(!require(tools)){
+  install.packages("tools")
+  require(tools)
+}
 last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
-step_for_rmd <- 1
-create_latex <- function(x){
+# step_for_rmd <- 1
+create_latex <- function(x,last = FALSE,unique = FALSE){
+  last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+  
   wd <- getwd()
-  config$logger.info(paste0("working direcotyr begining create_latex : ",wd))
+  # config$logger.info(paste0("working direcotyr begining create_latex : ",wd))
   # y <- last_path(x)
   setwd("./../../../..")
   wd2 <- getwd()
   setwd(wd)
-  output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd)
+  # output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd)
   # fs::dir_create(paste0(output_file,"/"))
-  fs::dir_create(paste0(output_file,"/","data/"))
+  # fs::dir_create(paste0(output_file,"/","data/"))
+
+    file.copy(paste0(wd2,"/",
+    x), paste0(wd,"/",x), overwrite = TRUE)
+  # config$logger.info(paste0("jsute after copying rmd"))
   
-  file.copy(paste0(wd2,"/",
-    x), paste0(wd,"/",output_file,"/",x), overwrite = TRUE)
-  config$logger.info(paste0("jsute after copying rmd"))
-  
-  file.copy(paste0(wd2,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",output_file,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
-  file.copy(paste0(wd2,"/",'data/cl_cwp_gear_level2.csv'),paste0(wd,"/",output_file,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
+  file.copy(paste0(wd2,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
+  file.copy(paste0(wd2,"/",'data/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
   
   setwd(wd)
   print(getwd())
@@ -93,23 +99,29 @@ create_latex <- function(x){
   details = details[with(details, order(as.POSIXct(mtime))), ]
   sub_list_dir_2 = rownames(details)
   t <- tail(details, 2)
-  avant_last <-  rownames(head(t,1))
+  if (last = TRUE){avant_last = rownames(head(details,1))}
+  avant_last <-  rownames(head(t,1))h
   last <- rownames(tail(details, 1))
-  setwd(wd,"/",output_file)
+  name_output <- last_path(as.character(last))
+  
+  # setwd(paste0(wd,"/",output_file))
+  if(unique = TRUE){rmarkdown::render(x,params = list(final = last))}#,
+}else {
   rmarkdown::render(x,params = list(init = avant_last, final = last)#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
-  )
+  )}
   print("Output_created")
-  # tex <- gsub(".Rmd", ".tex", paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd"))
+  tex <- gsub(".Rmd", ".tex", x)
+  tools::texi2dvi(tex, pdf = TRUE, clean = FALSE, quiet = TRUE,
+           texi2dvi = getOption("texi2dvi"))
   # system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
   #        ignore.stdout = FALSE, ignore.stderr = FALSE,
-  #        wait = TRUE, input = NULL, show.output.on.console = TRUE,
+  #        wait = TRUE, input = NULL, show.output.on.console = FALSE,
   #        minimized = FALSE, invisible = TRUE, timeout = 0)
-  unlink("comp_sans_shiny.Rmd")
-  rm("s.png")
-  rm("image.png")
-  rm("t3.png")
-  step_for_rmd <<- step_for_rmd +1
+  setwd(wd)
+  
+  file.rename(paste0(gsub(".Rmd", "", x),".pdf"), paste0(gsub(".Rmd", "", x),name_output,".pdf"))
+  # unlink("comp_sans_shiny.Rmd")
   setwd(wd)
   
 }
@@ -197,6 +209,7 @@ fonction_dossier("rawdata",
                                                   options_iattc_ps_raise_flags_to_schooltype,
                                                   options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype, 
                                                   options_iccat_ps_include_type_of_school))
+create_latex()
 
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
 irregular_iotc <- dbGetQuery(con, paste0(query))
@@ -503,7 +516,7 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
            georef_dataset <- function_overlapped(dataset = georef_dataset , con =con , rfmo_to_keep = overlapping_zone_iattc_wcpfc_data_to_keep,
                                                  rfmo_not_to_keep = (if (overlapping_zone_iattc_wcpfc_data_to_keep == "IATTC"){"WCPFC"} else {"IATTC"}), 
                                                  strata = options_strata_overlap_iattc_wcpfc)
-           fonction_dossier("overlapIATTC_WCPFC",
+           fonction_dossier("overlap_iattc_wcpfc",
                             georef_dataset, 
                             "Keeping data from IATTC or WCPFC ",
                             "function_overlapped" , c(options_include_IATTC, 
@@ -562,9 +575,9 @@ create_latex("comp_sans_shiny.Rmd")
           
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_wcpfc_ccsbt_data_to_keep," in the WCPFC/CCSBT overlapping zone OK"))
  
-           fonction_dossier("overlapccsbt_WCPFC",
+           fonction_dossier("overlap_ccsbt_wcpfc",
                             georef_dataset, 
-                            "Keeping data from ccsbt or WCPFC ",
+                            "Keeping data from CCSBT or WCPFC ",
                             "function_overlapped", 
                             c( options_include_CCSBT  , 
                                options_include_WCPFC ,
@@ -591,9 +604,9 @@ create_latex("comp_sans_shiny.Rmd")
            
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_iccat_ccsbt_data_to_keep," in the ICCAT/CCSBT overlapping zone OK"))
        
-           fonction_dossier("overlapiccat_ccsbt",
+           fonction_dossier("overlap_iccat_ccsbt",
                             georef_dataset, 
-                            "Keeping data from ccsbt or iccat ",
+                            "Keeping data from CCSBT or ICCAT ",
                             "function_overlapped", 
                             c(options_include_CCSBT,
                               options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
@@ -622,7 +635,7 @@ create_latex("comp_sans_shiny.Rmd")
   
            fonction_dossier("overlap_iotc_ccsbt",
                             georef_dataset, 
-                            "Keeping data from ccsbt or iotc ",
+                            "Keeping data from CCSBT or IOTC ",
                             "function_overlapped", 
                             c( options_include_CCSBT  , 
                                options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
@@ -723,7 +736,7 @@ create_latex("comp_sans_shiny.Rmd")
            config$logger.info(sprintf("STEP 3/5 : Gridded catch dataset after Reallocation of mislocated data has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_after_mislocated))	
            config$logger.info(sprintf("STEP 3/5 : Reallocation of mislocated data generated [%s] additionnal tons", ntons_after_mislocated-ntons_before_this_step))
            config$logger.info("END STEP 3/5")
-           fonction_dossier("level1realocate_remove",
+           fonction_dossier("Realocating_removing_mislocated_data",
                             georef_dataset, 
                             "Reallocation of mislocated data, and just before, taking care of irregular zone given by ctoi",
                             "function_spatial_curation_data_mislocated",
@@ -1181,6 +1194,7 @@ fonction_dossier("Level2_RF3without_gears",
             
            
          }
+         # conflict_prefer("startsWith", "gdata")
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: Grid spatial resolution filter")
@@ -1230,7 +1244,8 @@ fonction_dossier("Level2_RF3without_gears",
                             "Apply filters on fishing gears if needed (Filter data by groups of gears) ",
                             "", c(options_gear_filter))
            create_latex("comp_sans_shiny.Rmd")
-            
+           create_latex("comp_sans_shiny.Rmd", last = TRUE)
+           
            
            
          }

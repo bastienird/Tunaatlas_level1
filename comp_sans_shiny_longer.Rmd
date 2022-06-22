@@ -27,9 +27,7 @@ params:
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Captures table 1"         ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
-
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -83,7 +81,6 @@ plotting_type <- "plot"
 if (knitr::is_html_output()){plotting_type <- "view" }
 ```
 
-
 ```{r}
 
 fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
@@ -104,7 +101,6 @@ conflict_prefer("filter","dplyr")
 # write("options_written", paste0("options.txt"))
 
 ```
-
 
 ```{r}
 drv <- dbDriver("PostgreSQL")
@@ -161,7 +157,6 @@ qflextable2 =function(x){
 
 ```
 
-
 ```{r}
 species_group <-   read_excel(file.path("data", "SPECIES_LIST_RFMO_WITH_ERRORS.xlsx")) %>% janitor::clean_names() %>% dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
@@ -170,30 +165,26 @@ colnames_to_keep <- c("fishingfleet",         "gear",                 "time_star
 
 ```
 
-
-The purpose of this markdown is to describe the differences of data from the World Tuna Atlas following the different filters. 
-It describes the differences between the initial data and the final data, and is intended for users of the final data who might be tempted to use it without taking into account the various filtering specificities.
+The purpose of this markdown is to describe the differences of data from the World Tuna Atlas following the different filters. It describes the differences between the initial data and the final data, and is intended for users of the final data who might be tempted to use it without taking into account the various filtering specificities.
 
 # The data compared
 
 The analyzed data are :
 
-- ***acces `r last_path(params$init)` for the initial data***
+-   ***acces `r last_path(params$init)` for the initial data***
 
-- ***acces `r last_path(params$final)` for the final data***
-
+-   ***acces `r last_path(params$final)` for the final data***
 
 The filters used are:
 
-- on species: `r params$filter_species`
-- on gears: `r params$filter_gear`
-- on rfmos: `r params$filter_source_authority`
-- on fleets: `r params$filter_fishing_fleet`
-- on initial dates: `r params$filter_time_start`
-- on final dates: `r params$filter_time_end`
-- on geographical categories: `r params$filter_cat_geo`
-- on catch types: `r params$filter_catchtype`
-
+-   on species: `r params$filter_species`
+-   on gears: `r params$filter_gear`
+-   on rfmos: `r params$filter_source_authority`
+-   on fleets: `r params$filter_fishing_fleet`
+-   on initial dates: `r params$filter_time_start`
+-   on final dates: `r params$filter_time_end`
+-   on geographical categories: `r params$filter_cat_geo`
+-   on catch types: `r params$filter_catchtype`
 
 ```{r}
 last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
@@ -300,7 +291,6 @@ if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0 | nrow(final%>% dplyr
 # palette3
 ```
 
-
 ```{r}
 differences_in_optionsinit <- readr::read_delim(paste0(params$init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct() 
 # differences_in_optionsinit <- tidyr::unite_(differences_in_optionsinit, paste0(colnames(differences_in_optionsinit), collapse="_"), colnames(differences_in_optionsinit))
@@ -343,8 +333,7 @@ differences_between_options2 <-differences_between_options %>%dplyr::filter(Opti
 
 ```
 
-The differences in options choosen between the two dataframes are : 
-
+The differences in options choosen between the two dataframes are :
 
 ```{r}
 if (nrow(differences_between_options2) == 0){
@@ -355,13 +344,12 @@ qflextable2(differences_between_options2)}
 
 `r towrite`
 
-The options used to create the initial data frame are: 
+The options used to create the initial data frame are:
 
 ```{r}
 s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2)
 qflextable2(s)
 ```
-
 
 ```{r}
 fonction_groupement = function(x, init, final){
@@ -381,8 +369,6 @@ fonction_groupement = function(x, init, final){
                   `Difference in number of lines` = loss_nb_ligne) %>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0))) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))
 }
 ```
-
-
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 carte_init <- fonction_groupement(geographic_identifier,init, final)
@@ -453,19 +439,17 @@ if (nrow(t %>%dplyr::filter(`Loss / Gain` != 'Egal'))==0){
   knitr::knit_exit()}
 ```
 
-
 # Main differences
 
-The number of lines goes from  `r nb_ligne_init_millions` millions in `r titre_1` to `r nb_ligne_final_millions` millions in `r titre_2`, which correspond to a difference of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
+The number of lines goes from `r nb_ligne_init_millions` millions in `r titre_1` to `r nb_ligne_final_millions` millions in `r titre_2`, which correspond to a difference of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
 
 The initial dataset has a total of `r round(somme_init_t)` in tons and of `r round(somme_init_no)` in number of fish.
 
-The final dataset has a total of  `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
+The final dataset has a total of `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
 
-The differences is `r loss_en_tonnes` in tons (**`r loss_en_tonnes_pourcent`%**). The differences is `r loss_en_nombre` in number of fish (**`r ifelse(is.na(loss_en_nombre_pourcent), "0% (There was no data in number of fish neither in the first dataset nor in the second)",loss_en_nombre_pourcent) `**).
+The differences is `r loss_en_tonnes` in tons (**`r loss_en_tonnes_pourcent`%**). The differences is `r loss_en_nombre` in number of fish (**`r ifelse(is.na(loss_en_nombre_pourcent), "0% (There was no data in number of fish neither in the first dataset nor in the second)",loss_en_nombre_pourcent)`**).
 
 The stratas differences between the first one and the second one are :
-
 
 (only first 10 per Dimension showed), representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
 
@@ -696,7 +680,6 @@ Name_En
 # plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
 ```
 
-
 ## Spatial coverage
 
 ```{r}
@@ -753,7 +736,6 @@ This section detail the different differences that observed between the datafram
 disappearing_strates <- t %>%dplyr::filter(value_sum_2 == 0)
 ```
 
-
 ```{r}
 topn <- 5
 ```
@@ -780,20 +762,17 @@ unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_
 # library(kable)
 ```
 
-
 ```{r paged.print=TRUE}
 t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
 qflextable2(t3)
 ```
 
-
-
-
-
 <!-- ***In numbers*** -->
 
 <!-- ```{r paged.print=TRUE} -->
+
 <!-- kable(as_grouped_data(unit_no, groups = c("Dimension")))  -->
+
 <!-- ``` -->
 
 ## Differences in geographical data
@@ -842,7 +821,6 @@ image
 
 ```
 
-
 ## Differences in temporal data
 
 Here is represented the differences in percent for each year.
@@ -866,4 +844,326 @@ dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precisi
 
 ```
 
+We'll analyse now, only the lines where there are differences between the data.
 
+```{r}
+if(params$further_analysis == "FALSE"){knitr::knit_exit()}
+
+setdiff_init_final <- setdiff(init, final)
+
+setdiff_final_init <- setdiff(final, init)
+if (nrow(setdiff_final_init) == 0| nrow(setdiff_init_final == 0)){knitr::knit_exit()} else{print("oncontinue")}
+
+all_different_row <- gdata::combine(setdiff_final_init, setdiff_init_final)
+test <- head(all_different_row,15)
+```
+
+```{r}
+ggplot(all_different_row)+geom_bar(aes(x = source))
+```
+
+# The species differences (to help for new analysis)
+
+The data that was in initial table but not in final is:
+
+```{r}
+setdiff_i_a <- setdiff(init, final) %>%dplyr::select(-value) %>% left_join(init, by = c("fishingfleet", "gear", "time_start", "time_end", "geographic_identifier",
+"schooltype", "species", "catchtype", "unit", "source_authority", "st_area", "cat_geo", "Name_En",
+"species_group"))
+```
+
+The data in final dataset but not in initial is:
+
+```{r}
+setdiff_a_i <- setdiff(final, init) %>%dplyr::select(-value) %>% left_join(final, by = c("fishingfleet", "gear", "time_start", "time_end", "geographic_identifier",
+"schooltype", "species", "catchtype", "unit", "source_authority", "st_area", "cat_geo", "Name_En",
+"species_group"))
+```
+
+```{r}
+tes <- rbind(setdiff_i_a,setdiff_a_i)
+species_filtered <- unique(tes$species)
+
+```
+
+`r species_filtered`
+
+# Grand deux test
+
+```{r}
+init <- setdiff_a_i
+final <- setdiff_i_a
+```
+
+```{r}
+carte_init <- fonction_groupement(geographic_identifier,init, final)
+
+
+Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"]
+  # t <- init[0,]
+  t <- carte_init[0,]
+
+
+for (i in Dimensions){
+  temporaire <- fonction_groupement(.data[[i]],init, final)
+  assign(paste0("test", i), temporaire)
+
+  t <- rbind(t, temporaire)
+}
+
+init_t <- init %>%dplyr::filter(unit == "Tons")
+init_no <- init %>%dplyr::filter(unit == "Number of fish")
+final_t <- final %>%dplyr::filter(unit == "Tons")
+final_no <- final %>%dplyr::filter(unit == "Number of fish")
+
+      somme_init_t <- sum(init_t$value, na.rm = TRUE)
+    somme_init_no <- sum(init_no$value, na.rm = TRUE)
+    somme_final_t <- sum(final_t$value, na.rm = TRUE)
+    somme_final_no <- sum(final_no$value, na.rm = TRUE)
+
+
+    loss_en_tonnes <- round(somme_init_t-somme_final_t)
+    loss_en_tonnes_pourcent <- round(100*(somme_init_t-somme_final_t)/somme_init_t,2)
+    loss_en_nombre <- round(somme_init_no-somme_final_no)
+    loss_en_nombre_pourcent <- round(100*(somme_init_no-somme_final_no)/somme_init_no,2)
+    try(if (loss_en_nombre_pourcent==-Inf) {loss_en_nombre_pourcent <- -100})
+
+
+nb_ligne_init_millions <- nrow(init)/10^6
+nb_ligne_final_millions<- nrow(final)/10^6
+
+sum_valeur_init <- sum(init$value, na.rm = TRUE)/10^6
+sum_valeur_final <- sum(final$value, na.rm = TRUE)/10^6
+
+t$Dimension <-as.character(t$Dimension)
+t$Precision <-as.character(t$Precision)
+
+strates_perdues <- t %>%dplyr::filter(`Difference (in %)` == 100)
+nombre_strates_perdues <- nrow(strates_perdues)
+nombres_de_strates_totales <- nrow(t)
+pourcentage_strates_perdues <- 100-(100*((nombres_de_strates_totales-nombre_strates_perdues)/nombres_de_strates_totales))
+rm(init_no, init_t, final_no, final_t)
+gc()
+
+strates_perdues_first_10 <- strates_perdues %>%dplyr::ungroup() %>% dplyr::group_by(Dimension)%>% slice(1:10) %>%dplyr::select(Dimension, everything())
+```
+
+# Main differences
+
+The number of lines goes from `r nb_ligne_init_millions` millions in `r titre_1` to `r nb_ligne_final_millions` millions in `r titre_2`, which correspond to a difference of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
+
+The initial dataset has a total of `r round(somme_init_t)` in tons and of `r round(somme_init_no)` in number of fish.
+
+The final dataset has a total of `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
+
+The differences is `r loss_en_tonnes` in tons (**`r loss_en_tonnes_pourcent`%**). The differences is `r loss_en_nombre` in number of fish (**`r loss_en_nombre_pourcent`%**).
+
+The stratas differences between the first one and the second one are :
+
+(only first 10 per Dimension showed), representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
+
+```{r}
+
+t4 <- head(strates_perdues%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2),10)
+
+
+qflextable2(t4)
+# kable(strates_perdues_first_10)
+```
+
+# Introduction to the two datasets
+
+We first present the main characteristics of each dimension for each dataset.
+
+## Comparison of the two catch evolutions
+
+For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish.
+
+```{r}
+captures_par_time <- testtime_start %>%dplyr::mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>%dplyr::mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
+
+
+ggplot(captures_par_time) +
+  aes(
+    x = Time,
+    y = Captures,
+    fill = Origin,
+    colour = Origin,
+    group = Origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_dark() +
+  theme(legend.position = "top") +
+  facet_wrap(vars(unit), nrow = 2L)+
+  labs(x = "Time", y = "Captures")+
+  facet_grid("unit", scales = "free_y")
+```
+
+## Comparison of the evolution of the cumulative catches
+
+```{r}
+captures_par_time <- captures_par_time %>%dplyr::mutate(Time = as.Date(Precision))%>% arrange(Precision) %>%dplyr::group_by(unit, Origin) %>% dplyr::mutate(`Captures cumulées` = cumsum(`Captures`)) %>% dplyr::distinct()
+
+ggplot_capt_par_time = function(x){
+
+  ggplot(captures_par_time %>%dplyr::filter(unit==x)) +
+  aes(
+    x = Time,
+    y = `Captures cumulées`,
+    colour = Origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_color_hue(direction = 1) +
+  theme_minimal() +
+  facet_wrap(vars(unit)) +
+  labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
+}
+
+ggplot_capt_par_time("Tons")
+
+```
+
+```{r}
+if(is_there_no){
+try(ggplot_capt_par_time("Number of fish"))}
+```
+
+## Comparison of the two datasets
+
+We check the distribution of the value of each dimension in tons and number of fish for each dataset.
+
+```{r}
+
+
+# ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(class)))
+
+Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&
+                               colnames(init)!= "time_start"&
+                               colnames(init)!= "time_end"&
+                               colnames(init)!= "geographic_identifier"]
+  # t <- init[0,]
+```
+
+```{r}
+fishing_fleet <- pie_chart_2(fishingfleet, init, final)
+source_authority <- pie_chart_2(source_authority, init, final)
+try(cat_geo <- pie_chart_2(cat_geo, init, final))
+species <- pie_chart_2(species, init, final)
+species_group <- pie_chart_2(species_group, init, final)
+# gear <- pie_chart_2(gear, init, final)
+Name_En <- pie_chart_2(Name_En, init, final)
+
+```
+
+```{r}
+species
+
+try(cat_geo)
+
+fishing_fleet
+
+source_authority
+
+species_group
+
+Name_En
+
+# plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
+```
+
+## Spatial coverage
+
+```{r}
+tmap_mode(plotting_type)
+
+number_of_cat_geo <- nrow(unique(t$cat_geo))
+cat_geo <- (unique(t$cat_geo))
+```
+
+We represent the spatial coverage, faceted by the geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).
+
+### Spatial coverage in tons
+
+```{r}
+fonction_empreinte_spatiale("Tons")
+```
+
+### Spatial coverage in number of fish
+
+```{r}
+if(is_there_no){
+try(fonction_empreinte_spatiale("Number of fish"))}
+```
+
+# Differences
+
+This section detail the different differences that observed between the dataframe `r titre_1` and `r titre_2`.
+
+```{r}
+disappearing_strates <- t %>%dplyr::filter(value_sum_2 == 0)
+```
+
+```{r}
+topn <- 5
+```
+
+## The differences for each dimension
+
+We will look for each dimension the `r topn` most important differences
+
+```{r paged.print=TRUE}
+
+
+
+valeur_totale <- sum(init$value, na.rm = TRUE)
+ligne_totale <- nrow(init)
+
+
+unit <- t%>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group",# "gear",
+                                                                           "Name_En")) %>%dplyr::mutate(Dimension = as.factor(Dimension)) %>% dplyr::group_by( Dimension, unit) %>% arrange(desc(`Difference (in %)`))   %>%  dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(Dimension,unit, Precision) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(unit,Dimension) %>%  arrange(Dimension,desc(`Difference (in %)`))
+
+
+```
+
+```{r paged.print=TRUE}
+t5 <- as_grouped_data(unit %>% dplyr::ungroup()%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
+qflextable2(t5)
+```
+
+## Differences in geographical data
+
+```{r}
+
+image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different', TRUE ~ 'Partial differences')))
+         # %>%dplyr::filter(unit == "Tons")
+         )+
+  tm_fill( "value", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0) +
+  tm_layout(legend.outside = TRUE) + tm_facets(by = c("unit", "cat_geo"))
+
+image
+#   tmap::tmap_save(image, paste0(getwd(),"image5.png"))
+# # mapshot(image, file = "image.png")
+# knitr::include_graphics(paste0(getwd(),"image5.png"))
+
+```
+
+## Differences in temporal data
+
+Here is represented the differences in percent for each year.
+
+```{r}
+
+t %>%
+dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precision)) %>%
+ ggplot() +
+ aes(x = Time, weight = `Difference (in %)`) +
+ geom_bar(fill = "#112446") +
+ theme_minimal()+facet_wrap("unit")+labs(y = "differences in %")
+
+
+
+
+```

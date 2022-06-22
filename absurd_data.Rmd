@@ -1,7 +1,9 @@
 ---
 title: "Data with potential mistakes"
-always_allow_html: true
-output: latex_document
+output:
+  latex_document:
+    toc: true
+    number_sections: true
 date: '2022-05-11'
 params:
   chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/new_24_may/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/Markdown/mapping_codelist/rds.rds"
@@ -132,11 +134,30 @@ if (nrow(mislocated_continent)==0){knitr::knit_exit()}else{
 tmap_mode("plot")
 
 image <- tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
-
-tmap::tmap_save(image, "image.png")
-# mapshot(image, file = "image.png")
-knitr::include_graphics('image.png')
+image
+# tmap::tmap_save(image, "image.png")
+# # mapshot(image, file = "image.png")
+# knitr::include_graphics('image.png')
 }
+FitFlextableToPage <- function(ft, pgwidth = 6){
+
+  ft_out <- ft %>% autofit()
+
+  ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
+  return(ft_out)
+}
+kable2 =function(x){as_image(kable(x))}
+qflextable2 =function(x){
+  # if("value_sum_1"%in%colnames(x)){x <- x %>%  dplyr::rename("Tons in table 1" = "value_sum_1") %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`))}
+  # y <- (x)
+  #  save_as_image(FitFlextableToPage(qflextable(x)), paste0(getwd(),"/",deparse(substitute(x)),".png"))
+  # knitr::include_graphics(paste0(getwd(),"/",deparse(substitute(x)),".png"))
+  if("Captures table 1" %in% colnames(x)){
+    y <-x %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`)) } 
+  else {y <- x}
+  FitFlextableToPage(qflextable(y))
+  }
+
 
 
 ```
@@ -227,10 +248,10 @@ perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
 
 ```{r}
 image <- tm_shape(WCPFC_shape %>% mutate(name = "WCPFC"))+tm_borders( col = "red")+tm_text("name")+tm_shape(ICCAT_shape%>% mutate(name = "ICCAT"))+tm_borders( col = "yellow")+tm_text("name")+tm_shape(IOTC_shape%>% mutate(name = "IOTC"))+tm_borders( col = "purple")+tm_text("name")+tm_shape(IATTC_shape%>% mutate(name = "IATTC"))+tm_borders( col = "skyblue")+tm_text("name")+tm_shape(st_as_sf(mislocated %>% filter(mislocated ==FALSE) %>% filter(source_authority!="ccsbt") %>%  filter(area_competence != "") %>% filter(!is.null(area_competence))))+tm_polygons(col = "source_authority")+tm_text("source_authority")+tm_facets("unit")
-tmap::tmap_save(image, "image.png")
-# mapshot(image, file = "image.png")
-knitr::include_graphics('image.png')
-
+# tmap::tmap_save(image, "image.png")
+# # mapshot(image, file = "image.png")
+# knitr::include_graphics('image.png')
+image
 ```
 
 
