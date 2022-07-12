@@ -1,12 +1,13 @@
 ---
 title: "Data with potential mistakes"
+always_allow_html: true
 output:
   latex_document:
     toc: true
     number_sections: true
 date: '2022-05-11'
 params:
-  chemin_dacces: "~/Documents/Tunaatlas_level1/jobs/new_24_may/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/Markdown/mapping_codelist/rds.rds"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220711194201/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
   plotting: "plot"
   world_coastline: "gshhs_world_coastlines"
 ---
@@ -40,14 +41,179 @@ library(RPostgreSQL)
 library(sf)
 library(tmap)
 library(devtools)
-install("./../studycatchesird")
-library(studycatchesird)
+# install("./../studycatchesird")
+# library(studycatchesird)
+library(scales)
+library(RColorBrewer)
+pie_chart_2 = function(dimension, unit = c("MT","MTNO","Tons","t"), first, second) {
+  r <- deparse(substitute(dimension))
+  colnames <- enquo(dimension)
+  name1 <- enquo(first)
+  name2 <- enquo(second)
+  first <- first %>% filter(unit%in%unit)
+  second <- second %>% filter(unit%in%unit)
+  provisoire_i <-first %>%  group_by(!!colnames#, unit
+  )  %>% summarise(value = sum(value, na.rm = TRUE)) %>% #group_by(unit) %>%
+    arrange(desc(value)) %>%   mutate(id = row_number())%>%
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class#, unit
+    ) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
+    select( value, class,#unit
+    ) %>%  # group_by(unit) %>%
+    mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+    mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+
+
+
+
+  provisoire_t <- second %>%  group_by(!!colnames#, unit
+  )%>% summarise(value = sum(value, na.rm = TRUE)) %>%# group_by(unit) %>%
+    arrange(desc(value)) %>%   mutate(id = row_number())%>%
+    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    group_by(class#, unit
+    ) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
+    select( value, class,#unit
+    ) %>%#   group_by(unit) %>%
+    mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+    mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+
+# -------------------------------------------------------------------------
+
+
+
+
+  set.seed(2) # For reproducibility of random color vector
+  number <- length(unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
+  pal <- brewer.pal(number,"Set1")
+
+  # myColors <- ColorRampPalette(brewer.pal(120,"Spectral"))
+  # names(myColors) <- levels(dat$grp)
+  # set.seed(2)
+  pal = setNames(pal, unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
+
+  ggplot_i <<- ggplot(provisoire_i) +
+    aes(
+      x = "",
+      fill = class,
+      group = class,
+      weight = pourcentage
+    ) +
+    geom_bar(position = "fill") +
+    scale_fill_hue(direction = 1) +
+    scale_color_hue(direction = 1) +
+    theme_minimal()+ coord_polar("y", start=0)+ geom_text(first = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
+                                                          aes( x = 1 ,y = ypos_ligne/100, label = paste0(round(pourcentage),"%")), color = "black")+
+    theme(axis.ticks.x = element_blank(),
+          axis.text.x = element_blank())+
+    labs(x = "", y="")+ scale_fill_manual(values=pal)+ guides(fill=guide_legend(title=toupper(r)))
+  legend <- cowplot::get_legend(ggplot_i)
+
+  ggplot_t <<- ggplot(provisoire_t) +
+    aes(
+      x = "",
+      fill = class,
+      group = class,
+      weight = pourcentage
+    ) +
+    geom_bar(position = "fill") +
+    scale_fill_hue(direction = 1) +
+    scale_color_hue(direction = 1) +
+    theme_minimal()+ coord_polar("y", start=0)+ geom_text(first = (provisoire_t %>% mutate_if(is.numeric, round)), size = 3,
+                                                          aes( x = 1, y = ypos_ligne/100, label = paste0(round(pourcentage),"%")), color = "black")+
+    theme(axis.ticks.x = element_blank(),
+          axis.text.x = element_blank())+
+    labs(x = "", y="")+ scale_fill_manual(values=pal)+ theme(legend.position = "none")
+
+  title <- ggdraw() +
+    draw_label(
+      paste0("Distribution in value for the dimension : ",r),
+      fontface = 'bold',
+      x = 0,
+      hjust = 0
+    ) +
+    theme(
+      # add margin on the left of the drawing canvas,
+      # so title is aligned with left edge of first plot
+      plot.margin = margin(0, 0, 0, 7)
+    )
+  graph <<- plot_grid(ggplot_i+ theme(legend.position = "none"), ggplot_t,nrow = 2,labels = c( deparse(substitute(name1)),deparse(substitute(name2))),
+                      label_size = 10)
+
+  plot_grid(title, nrow=2,plot_grid(graph,legend,ncol = 2),
+            # rel_heights values control vertical title margins
+            rel_heights = c(0.1, 1))+
+    theme(plot.background = element_rect(color = "black"))
+
+
+}
+pie_chart_1 = function(x, init= init) {
+  r <- deparse(substitute(x))
+  colnames <- enquo(x)
+  provisoire_i <-init %>%  group_by(!!colnames )%>% summarise(value = sum(value, na.rm = TRUE))  %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%
+    mutate(class = as.factor(ifelse(id<5,!!colnames,"Others"))) %>%
+    group_by(class) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
+    select(  value, class)  %>% mutate(pourcentage = prop.table(value)*100)%>%
+    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
+    mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+    distinct()
+
+
+
+  ggplot_i <- ggplot(provisoire_i) +
+    aes(
+      x = "",
+      fill = class,
+      colour = class,
+      group = class,
+      weight = pourcentage
+    ) +
+    geom_bar(position = "fill") +
+    scale_fill_hue(direction = 1) +
+    scale_color_hue(direction = 1) +
+    theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
+                                                          aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+    theme(axis.ticks.x = element_blank(),
+          axis.text.x = element_blank())+
+    labs(x = "", y="")
+
+
+
+  title <- ggdraw() +
+    draw_label(
+      paste0("Distribution in value for the dimension : ",r),
+      fontface = 'bold',
+      x = 0,
+      hjust = 0
+    ) +
+    theme(
+      # add margin on the left of the drawing canvas,
+      # so title is aligned with left edge of first plot
+      plot.margin = margin(0, 0, 0, 7)
+    )
+titre <- enquo(init)
+  graph <- plot_grid(ggplot_i,labels = c(deparse(substitute(titre))),
+                     label_size = 10)
+
+  plot_grid(
+    title, graph,
+    ncol = 1,
+    # rel_heights values control vertical title margins
+    rel_heights = c(0.1, 1))+
+    theme(plot.background = element_rect(color = "black"))
+
+
+}
 
 ```
 
-```{r}
+# How much data is mislocated on continents ?
 
-data <- readRDS(params$chemin_dacces)
+```{r}
+data <- readRDS(paste0(as.character(params$final),"/rds.rds"))
   data <- data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
 cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
     col_types = cols(Identifier = col_skip(), 
@@ -130,11 +296,20 @@ inner_join <- data %>% inner_join(world_sf_with_competence_area, by = c("geograp
 all_the_data <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(world_sf%>% select(-area_competence) , by = c("geographic_identifier"="code", "st_area") ) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
 
 mislocated_continent <- all_the_data %>% filter(str_detect(area_competence, "continent"))
+
 if (nrow(mislocated_continent)==0){knitr::knit_exit()}else{
 tmap_mode("plot")
 
-image <- tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
+
+
+
+
+image <- tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
 image
+
+
+image2 <- tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("source_authority")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
+image2
 # tmap::tmap_save(image, "image.png")
 # # mapshot(image, file = "image.png")
 # knitr::include_graphics('image.png')
@@ -189,7 +364,7 @@ ggplot(mislocated_continent2) +aes(
 ```
 
 
-***This markdown is aimed to study the repartition of each unity for a specific dataset, in this case is `r params$chemin_dacces`.***
+***This markdown is aimed to study the repartition of each unity for a specific dataset, in this case is `r params$final`.***
 
 ```{r}
 all_the_data3 <- all_the_data %>% mutate(continent = ifelse(area_competence != "continent", "ocean", "continent"))
@@ -258,8 +433,8 @@ image
 Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
 
 ```{r}
-mapped_data<- readRDS("data/rawdata.rds") #%>% filter(source_authority == params$source_authority)
-rdslevel0 <- mapped_data
+rawdata<- readRDS("data/rawdata.rds") #%>% filter(source_authority == params$source_authority)
+rdslevel0 <- rawdata
 
 strata_nomt <- rdslevel0 %>% filter(unit %in% c("NOMT")) #%>% select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% summarise(value = sum(value)) #%>% mutate(unit = "NO", unit_target = "MT")
 # strata_no <- rdslevel0 %>% filter(unit == "NO") %>% mutate(source= "strata_no")
@@ -284,7 +459,11 @@ conversion_factor_level0 <- rbind(inner_join(strata_nomt , strata_mtno, by = set
   summarise(NO = sum(NO), MT = sum(MT)) %>% mutate(conversion_factor = MT/NO) %>% distinct()
 ```
 
-## Maximum catches in the history for those fishes.
+# Absurd conversion factors
+
+We analyse here the data with conversion factors "absurd", meaning being superior to the maximum catch for the fish of the same species.
+
+We compare the data of this conversion factors absurd, with the total data to see any pattern.
 
 ```{r}
 `%notin%` <- Negate(`%in%`)
@@ -352,15 +531,15 @@ absurd_conversion_factor <- conversion_factor_level0 %>% filter((conversion_fact
 
 titre_1 <- "Strange conversion factors"
 absurd_conversion_factor_tons <- absurd_conversion_factor  %>%  rename(value=MT) %>% mutate(unit="MT")
-strange <- pie_chart_2(fishingfleet,unit,first=absurd_conversion_factor_tons,second=mapped_data )
+strange <- pie_chart_2(fishingfleet,unit,first=absurd_conversion_factor_tons,second=rawdata )
 strange
 ```
 
 
 ```{r}
 # titre_1 <- "Original data"
-original <- pie_chart_1(fishingfleet, mapped_data %>% filter(unit %in% c("Tons","MT","MTNO")))
-original
+# original <- pie_chart_2(fishingfleet, mapped_data %>% filter(unit %in% c("Tons","MT","MTNO")))
+# original
 # plot_grid(strange, original)
 ```
 
@@ -371,7 +550,7 @@ We can see that the repartition of the value in tons is very different in the da
 ```{r}
 
 rawdata <- readRDS("data/rawdata.rds")
-  data <- mapped_data%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
+  data <- rawdata%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
 cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
     col_types = cols(Identifier = col_skip(), 
         Abbreviation = col_skip(), Name_Fr = col_skip(), 
@@ -458,37 +637,44 @@ mislocated_continent_init <- rawdata %>% semi_join(mislocated_continent, by = "g
 ```
 
 ```{r}
-titre_1 <- "Mislocated tons"
-mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% filter(unit %in%c("MTNO","MT")))
-titre_1 <- "Original tons"
+# titre_1 <- "Mislocated tons"
+# mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% filter(unit %in%c("MTNO","MT")))
+# titre_1 <- "Original tons"
+# 
+# original <-  pie_chart_1(fishingfleet,rawdata%>% filter(unit %in%c("MTNO","MT")))
+# 
+# plot_grid(mislocated, original)
 
-original <-  pie_chart_1(fishingfleet,rawdata%>% filter(unit %in%c("MTNO","MT")))
+pie_chart_2(fishingfleet,unit=c("MTNO","MT"),mislocated_continent_init,rawdata)
 
-plot_grid(mislocated, original)
 ```
 
 Spain is mislocating the data a lot, as well as EUIRL and BLZ.
 
 ```{r}
-titre_1 <- "Mislocated numbers"
-mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% filter(unit %in%c("NOMT","NO")))
-titre_1 <- "Original numbers"
+# titre_1 <- "Mislocated numbers"
+# mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% filter(unit %in%c("NOMT","NO")))
+# titre_1 <- "Original numbers"
+# 
+# original <-  pie_chart_1(fishingfleet,mapped_data%>% filter(unit %in%c("NOTM","NO")))
+# 
+# plot_grid(mislocated, original)
+pie_chart_2(fishingfleet,unit=c("NOMT","NO"),mislocated_continent_init,rawdata)
 
-original <-  pie_chart_1(fishingfleet,mapped_data%>% filter(unit %in%c("NOTM","NO")))
-
-plot_grid(mislocated, original)
 ```
 
 In numbers, it is Brasil, SYC and USA that are mislocating the data.
 
 ```{r}
-titre_1 <- "Mislocated tons"
-mislocated <-  pie_chart_1(species,mislocated_continent_init %>% filter(unit %in%c("MTNO","MT")))
-titre_1 <- "Original tons"
+# titre_1 <- "Mislocated tons"
+# mislocated <-  pie_chart_1(species,mislocated_continent_init %>% filter(unit %in%c("MTNO","MT")))
+# titre_1 <- "Original tons"
+# 
+# original <-  pie_chart_1(species,mapped_data%>% filter(unit %in%c("MTNO","MT")))
+# 
+# plot_grid(mislocated, original)
+pie_chart_2(species,unit=c("MTNO","MT"),mislocated_continent_init,rawdata)
 
-original <-  pie_chart_1(species,mapped_data%>% filter(unit %in%c("MTNO","MT")))
-
-plot_grid(mislocated, original)
 ```
 
 Albacore is mislocated, as well as BET. 
@@ -505,12 +691,14 @@ a <- gdata::combine(located_on_continent, conversion_factor_above_500_kilos) %>%
 ```
 
 ```{r}
-titre_1 <- "Problem conversion factor in tons"
-prblm_conv_fact <- pie_chart_1(source_authority,a%>% filter(unit %in%c("MTNO","MT")))
-titre_1 <- "Original tons"
+# titre_1 <- "Problem conversion factor in tons"
+# prblm_conv_fact <- pie_chart_1(source_authority,a%>% filter(unit %in%c("MTNO","MT")))
+# titre_1 <- "Original tons"
+# 
+# original <-  pie_chart_1(source_authority,mapped_data%>% filter(unit %in%c("MTNO","MT")))
+# plot_grid(prblm_conv_fact,original)
+pie_chart_2(source_authority,unit=c("MTNO","MT"),mislocated_continent_init,rawdata)
 
-original <-  pie_chart_1(source_authority,mapped_data%>% filter(unit %in%c("MTNO","MT")))
-plot_grid(prblm_conv_fact,original)
 ```
 
 Problem of conversion factor seems to be coming from WCPFC and IATTC.

@@ -80,9 +80,9 @@
 		"run": true,
 		"options": {
 			"upload_to_db": true,
-			"create_materialized_view" : true,
+			"create_materialized_view" : false,
 			"add_sql_comments" : true,
-			"upload_to_googledrive": true
+			"upload_to_googledrive": false
 		}
 	},
 	{

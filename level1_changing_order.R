@@ -54,6 +54,11 @@ if(!require(stringr)){
   require(stringr)
 }
 
+if(!require(R3port)){
+  install.packages("R3port")
+  require(R3port)
+}
+
 if(!require(data.table)){
   install.packages("data.table")
   require(data.table)
@@ -72,7 +77,7 @@ last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
 # step_for_rmd <- 1
-create_latex <- function(x,last = FALSE,unique = FALSE){
+create_latex = function(x,last = FALSE,unique = FALSE){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   
   wd <- getwd()
@@ -85,12 +90,13 @@ create_latex <- function(x,last = FALSE,unique = FALSE){
   # fs::dir_create(paste0(output_file,"/"))
   # fs::dir_create(paste0(output_file,"/","data/"))
 
-    file.copy(paste0(wd2,"/",
-    x), paste0(wd,"/",x), overwrite = TRUE)
+    # file.copy(paste0(wd2,"/",
+    # x), paste0(wd,"/",x), overwrite = TRUE)
   # config$logger.info(paste0("jsute after copying rmd"))
   
   file.copy(paste0(wd2,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
   file.copy(paste0(wd2,"/",'data/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
+  file.copy(paste0(wd2,"/",'data/rawdata.rds'),paste0(wd,"/",'data/rawdata.rds') , overwrite = TRUE)
   
   setwd(wd)
   print(getwd())
@@ -99,31 +105,31 @@ create_latex <- function(x,last = FALSE,unique = FALSE){
   details = details[with(details, order(as.POSIXct(mtime))), ]
   sub_list_dir_2 = rownames(details)
   t <- tail(details, 2)
-  if (last = TRUE){avant_last = rownames(head(details,1))}
-  avant_last <-  rownames(head(t,1))h
+  if (last == TRUE){avant_last = rownames(head(details,1))}
+  avant_last <-  rownames(head(t,1))
   last <- rownames(tail(details, 1))
   name_output <- last_path(as.character(last))
-  
+  file.copy(paste0(wd2,"/",
+                   x), paste0(wd,"/",name_output,x), overwrite = TRUE)
   # setwd(paste0(wd,"/",output_file))
-  if(unique = TRUE){rmarkdown::render(x,params = list(final = last))}#,
-}else {
-  rmarkdown::render(x,params = list(init = avant_last, final = last)#,
+  if(unique == TRUE){rmarkdown::render(paste0(name_output,x),params = list(final = last))}
+  if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last))}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
-  )}
+  
   print("Output_created")
-  tex <- gsub(".Rmd", ".tex", x)
+  tex <- gsub(".Rmd", ".tex", paste0(name_output,x)) 
   tools::texi2dvi(tex, pdf = TRUE, clean = FALSE, quiet = TRUE,
            texi2dvi = getOption("texi2dvi"))
   # system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
   #        ignore.stdout = FALSE, ignore.stderr = FALSE,
   #        wait = TRUE, input = NULL, show.output.on.console = FALSE,
   #        minimized = FALSE, invisible = TRUE, timeout = 0)
-  setwd(wd)
+  # setwd(wd)
   
-  file.rename(paste0(gsub(".Rmd", "", x),".pdf"), paste0(gsub(".Rmd", "", x),name_output,".pdf"))
+  # file.rename(paste0(gsub(".Rmd", "", x),".pdf"), paste0(gsub(".Rmd", "", x),name_output,".pdf"))
+  # file.rename("comp_sans_shiny.tex", paste0(gsub(".Rmd", "", x),name_output,".tex"))
   # unlink("comp_sans_shiny.Rmd")
-  setwd(wd)
-  
+  # setwd(wd)
 }
 
 # mapping_map_code_lists <- options$mapping_map_code_lists
@@ -209,7 +215,7 @@ fonction_dossier("rawdata",
                                                   options_iattc_ps_raise_flags_to_schooltype,
                                                   options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype, 
                                                   options_iccat_ps_include_type_of_school))
-create_latex()
+
 
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
 irregular_iotc <- dbGetQuery(con, paste0(query))
@@ -707,7 +713,7 @@ create_latex("comp_sans_shiny.Rmd")
 
    create_latex("comp_sans_shiny.Rmd")
     
-   
+   create_latex("absurd_data.Rmd",unique =TRUE)
          
          if (options$spatial_curation_data_mislocated %in% c("reallocate","remove")){
            
@@ -751,7 +757,7 @@ create_latex("comp_sans_shiny.Rmd")
 
    create_latex("comp_sans_shiny.Rmd")
     
-   
+
 
         
          #end switch LEVEL 1
@@ -1294,6 +1300,8 @@ fonction_dossier("Level2_RF3without_gears",
            # Levels 1 and 2 of non-global datasets should be expressed with tRFMOs code lists. However, for the effort unit code list and in those cases, we take the tuna atlas effort unit codes although this is not perfect. but going back to tRFMOs codes is too complicated 
            df_codelists$code_list_identifier[which(df_codelists$dimension=="unit")]<-"effortunit_rfmos"
          }
+         # ltx_combine(combine = wd, out = "alltex.tex", clean = 0)
+         # create_latex("tableau_recap_entity.Rmd")
 
          #@geoflow -> export as csv
          output_name_dataset <- file.path("data", paste0(entity$identifiers[["id"]], "_harmonized.csv"))
@@ -1304,12 +1312,12 @@ fonction_dossier("Level2_RF3without_gears",
          entity$addResource("harmonized", output_name_dataset)
          entity$addResource("codelists", output_name_codelists)
          entity$addResource("geom_table", options$geom_table)
-         
          #### END
          config$logger.info("-----------------------------------------------------------------------------------------------------")
          config$logger.info("End: Your tuna atlas dataset has been created!")
          config$logger.info("-----------------------------------------------------------------------------------------------------")
          # write.csv(options)
+         
          rm(georef_dataset)
          gc()
          

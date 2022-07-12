@@ -10,7 +10,7 @@ output:
 params: 
   init: "~/Documents/Tunaatlas_level1/jobs/20220621155426/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/rawdata"
   final: "~/Documents/Tunaatlas_level1/jobs/20220621155426/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/treatment_after_binding"
-  further_analysis: "FALSE"
+  further_analysis: "TRUE"
   filter_species: !r NULL
   filter_source_authority: !r NULL
   filter_gear: !r NULL
