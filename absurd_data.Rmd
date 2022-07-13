@@ -7,9 +7,10 @@ output:
     number_sections: true
 date: '2022-05-11'
 params:
-  final: "~/Documents/Tunaatlas_level1/jobs/20220711194201/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220712184945/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
   plotting: "plot"
   world_coastline: "gshhs_world_coastlines"
+
 ---
 
 ```{r setup, include=FALSE}
@@ -71,7 +72,7 @@ pie_chart_2 = function(dimension, unit = c("MT","MTNO","Tons","t"), first, secon
   provisoire_t <- second %>%  group_by(!!colnames#, unit
   )%>% summarise(value = sum(value, na.rm = TRUE)) %>%# group_by(unit) %>%
     arrange(desc(value)) %>%   mutate(id = row_number())%>%
-    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    mutate(class = as.factor(ifelse(id<5,!!colnames,"Others"))) %>%
     group_by(class#, unit
     ) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>%
     select( value, class,#unit
@@ -223,10 +224,9 @@ cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv",
 data <- data %>% full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
 drv <- dbDriver("PostgreSQL")      
-con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox2", host = "localhost", 
-                      port = 5432,
-                      user = "tunaatlas_u",
-                      password = "21c0551e7ed2911")
+con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox2", host = "localhost",   port = 5432,
+                 user = "tunaatlas_u",
+                 password = "21c0551e7ed2911")
 
 
 query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
@@ -291,17 +291,14 @@ world_sf_with_competence_area <- world_sf %>% mutate(area_competence = as.factor
 
 inner_join <- data %>% inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
 
+query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 
-
-all_the_data <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(world_sf%>% select(-area_competence) , by = c("geographic_identifier"="code", "st_area") ) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
+all_the_data <- inner_join  %>% ungroup() %>% group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% summarise(value= sum(value, na.rm = TRUE))%>% distinct() %>% inner_join(st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg"))) , by = c("geographic_identifier"="code", "st_area") ) %>% select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
 
 mislocated_continent <- all_the_data %>% filter(str_detect(area_competence, "continent"))
 
 if (nrow(mislocated_continent)==0){knitr::knit_exit()}else{
 tmap_mode("plot")
-
-
-
 
 
 image <- tm_shape(st_as_sf(mislocated_continent %>% mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 

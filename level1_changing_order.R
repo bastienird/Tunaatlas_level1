@@ -112,13 +112,18 @@ create_latex = function(x,last = FALSE,unique = FALSE){
   file.copy(paste0(wd2,"/",
                    x), paste0(wd,"/",name_output,x), overwrite = TRUE)
   # setwd(paste0(wd,"/",output_file))
-  if(unique == TRUE){rmarkdown::render(paste0(name_output,x),params = list(final = last))}
+  conection_db <- postgresqlConnectionInfo(con)
+  if(unique == TRUE){rmarkdown::render(paste0(name_output,x),params = list(final = last#, host = conection_db$host, 
+                                                                           #port = connection_db$port, 
+                                                                           #user = connection_db$user,
+                                                                           #dbname=connection_db$dbname,
+                                                                           ))}
   if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last))}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   
   print("Output_created")
   tex <- gsub(".Rmd", ".tex", paste0(name_output,x)) 
-  tools::texi2dvi(tex, pdf = TRUE, clean = FALSE, quiet = TRUE,
+  tools::texi2dvi(tex, pdf = TRUE, clean = TRUE, quiet = TRUE,
            texi2dvi = getOption("texi2dvi"))
   # system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
   #        ignore.stdout = FALSE, ignore.stderr = FALSE,
@@ -130,6 +135,7 @@ create_latex = function(x,last = FALSE,unique = FALSE){
   # file.rename("comp_sans_shiny.tex", paste0(gsub(".Rmd", "", x),name_output,".tex"))
   # unlink("comp_sans_shiny.Rmd")
   # setwd(wd)
+  # rm(paste0(name_output,x))
 }
 
 # mapping_map_code_lists <- options$mapping_map_code_lists
@@ -154,8 +160,7 @@ con <- config$software$output$dbi
 
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/96683c75f389270612dbcfbb6ea1e30a0b878945/fonction_dossier.R")
 # function_creation_options()
-
-  
+library(RPostgreSQL)
   j <- 1
   
   list_options <-assign("list_options", data.frame(matrix(ncol =2 , nrow = 1)), envir= .GlobalEnv)
