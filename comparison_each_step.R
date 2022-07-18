@@ -101,7 +101,7 @@ comparison_each_step <- function(entity, config, options){
         if(options_format == "Rmd"){table%>% flextable_to_rmd()}else{table}
         
       }
-      save_as_image(FitFlextableToPage(df), path = "/table.png", webshot = "webshot")
+      save_as_image(FitFlextableToPage(df), path = paste0(getwd(),"/table.png"), webshot = "webshot")
       # assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), df, envir = .GlobalEnv)
       # list <- append(list,tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1))
       
@@ -140,7 +140,7 @@ comparison_each_step <- function(entity, config, options){
         
         ggtitle("Evolution of the repartition of captures depending on units and Steps")+
         theme(axis.text.x = element_text(angle = 90))
-      ggsave("myplot.png")
+      ggsave(paste0(getwd(),"/myplot.png"))
       no_fish <- ggplot(reduced,aes(x = Step,group = 1)) +
         geom_line( aes(y=`Sum in number of fish`,group = 1), size=0.5)+
         
@@ -153,7 +153,7 @@ comparison_each_step <- function(entity, config, options){
         theme(axis.text.x = element_text(angle = 90))
       library(cowplot)
       cowplot::plot_grid(tons, no_fish)
-      ggsave("myplot2.png")
+      ggsave(paste0(getwd(),"/myplot2.png"))
     }
     
 # 

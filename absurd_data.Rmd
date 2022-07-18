@@ -42,8 +42,8 @@ library(RPostgreSQL)
 library(sf)
 library(tmap)
 library(devtools)
-# install("./../studycatchesird")
-# library(studycatchesird)
+install_github("BastienIRD/sutdycatchesird")
+library(studycatchesird)
 library(scales)
 library(RColorBrewer)
 pie_chart_2 = function(dimension, unit = c("MT","MTNO","Tons","t"), first, second) {
@@ -317,11 +317,11 @@ tmap_mode("plot")
 
 
 image <- tm_shape(st_as_sf(mislocated_continent %>% dplyr::mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
-image
+plot(image)
 
 
 image2 <- tm_shape(st_as_sf(mislocated_continent %>% dplyr::mutate(st_area = as.factor(st_area))))+tm_fill("source_authority")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
-image2
+plot(image2)
 # tmap::tmap_save(image, "image.png")
 # # mapshot(image, file = "image.png")
 # knitr::include_graphics('image.png')
@@ -434,7 +434,7 @@ perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
 ```
 
 ```{r}
-image <- tm_shape(WCPFC_shape %>% dplyr::mutate(name = "WCPFC"))+tm_borders( col = "red")+tm_text("name")+tm_shape(ICCAT_shape%>% dplyr::mutate(name = "ICCAT"))+tm_borders( col = "yellow")+tm_text("name")+tm_shape(IOTC_shape%>% dplyr::mutate(name = "IOTC"))+tm_borders( col = "purple")+tm_text("name")+tm_shape(IATTC_shape%>% dplyr::mutate(name = "IATTC"))+tm_borders( col = "skyblue")+tm_text("name")+tm_shape(st_as_sf(mislocated %>% dplyr::filter(mislocated ==FALSE) %>% dplyr::filter(source_authority!="ccsbt") %>%  dplyr::filter(area_competence != "") %>% dplyr::filter(!is.null(area_competence))))+tm_polygons(col = "source_authority")+tm_text("source_authority")+tm_facets("unit")
+image <- tm_shape(WCPFC_shape %>% dplyr::mutate(name = "WCPFC"))+tm_borders( col = "red")+tm_text("name")+tm_shape(ICCAT_shape%>% dplyr::mutate(name = "ICCAT"))+tm_borders( col = "yellow")+tm_text("name")+tm_shape(IOTC_shape%>% dplyr::mutate(name = "IOTC"))+tm_borders( col = "purple")+tm_text("name")+tm_shape(IATTC_shape%>% dplyr::mutate(name = "IATTC"))+tm_borders( col = "skyblue")+tm_text("name")+tm_shape(st_as_sf(mislocated %>% dplyr::filter(mislocated ==FALSE) %>% dplyr::filter(source_authority!="ccsbt") %>%  dplyr::filter(area_competence != "") %>% dplyr::filter(!is.null(area_competence))))+tm_polygons(col = "source_authority")+tm_facets("unit") +tm_shape(continent)+tm_borders()#+tm_text("source_authority")
 # tmap::tmap_save(image, "image.png")
 # # mapshot(image, file = "image.png")
 # knitr::include_graphics('image.png')

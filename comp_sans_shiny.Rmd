@@ -77,7 +77,8 @@ set_flextable_defaults(
   theme_fun = "theme_box"
   )
 # qflextable2 = function(x){x <- autofit(kable(x))}
-
+install_github("BastienIRD/sutdycatchesird")
+library(studycatchesird)
 last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 plotting_type <- "plot" 
 if (knitr::is_html_output()){plotting_type <- "view" }
@@ -363,7 +364,7 @@ qflextable2(differences_between_options2)}
 The options used to create the initial data frame are: 
 
 ```{r}
-s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% mutate(Options = gsub("_","-",Options))%>% mutate(Value = gsub("_","-",Value))
+s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% mutate(Options = gsub("_","-",Options))%>% mutate(Options = gsub("=","=\n",Options))%>% mutate(Value = gsub("_","-",Value))%>% mutate(Value = gsub("=","=\n",Value))
 qflextable2(s)
 ```
 
@@ -442,9 +443,9 @@ pourcentage_strates_perdues <- 100-(100*((nombres_de_strates_totales-nombre_stra
 rm(init_no, init_t, final_no, final_t)
 gc()
 
-strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension)%>% slice(1:10) %>%dplyr::select(Dimension, everything())
+strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension,unit)%>% slice(1:10) %>%dplyr::select(Dimension, everything())
 
-if (nrow(strates_perdues_first_10)== 0){strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension)%>% slice(1:10) %>%dplyr::select(Dimension, everything()) }
+if (nrow(strates_perdues_first_10)== 0){strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension,unit)%>% slice(1:10) %>%dplyr::select(Dimension, everything()) }
 
 strates_perdues_first_10[strates_perdues_first_10==""] <- "NA"
 strates_perdues_first_10[is.na(strates_perdues_first_10)] <- "NA"
@@ -477,7 +478,7 @@ The stratas differences between the first one and the second one are :
 ```{r}
 # qflextable2(head(strates_perdues,10))
 if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>%dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(Dimension,unit,`Loss / Gain`)%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>%dplyr::group_by(`Loss / Gain`,Dimension, unit) %>% arrange(`Loss / Gain`,Dimension,unit)%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Loss / Gain","Dimension","unit"))
 towrite = ""
 qflextable2(groupe_df)
 } else {towrite =("No strata is gain nor lost")}
@@ -790,7 +791,7 @@ unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_
 
 
 ```{r paged.print=TRUE}
-t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% group_by(`Loss / Gain`, Dimension, unit) %>% arrange(`Loss / Gain`, Dimension, unit,desc(`Difference in millions of tons`)),groups = c("Loss / Gain","Dimension","unit"))
+t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons`)),groups = c("Dimension","unit","Loss / Gain"))
 
 qflextable2(t3)
 

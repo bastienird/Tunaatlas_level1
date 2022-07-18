@@ -32,7 +32,8 @@ library(readr)
 library(webshot)
 if(require("htmltools"))
 div(flextable_html_dependency())
-
+install_github("BastienIRD/sutdycatchesird")
+library(studycatchesird)
 ```
 
 ```{r}
