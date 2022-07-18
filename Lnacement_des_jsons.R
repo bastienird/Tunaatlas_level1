@@ -92,7 +92,7 @@ jobdir <- initWorkflowJob(config)
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
  # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220616115652"
 config$job <- jobdir
-config$job <- "~/Documents/Tunaatlas_level1/jobs/20220621155426"
+config$job <- "~/Documents/Tunaatlas_level1/jobs/20220718010321"
 initWorkflowJob(config)
 executeWorkflowJob(config)
 # geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")

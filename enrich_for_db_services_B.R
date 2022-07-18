@@ -6,7 +6,7 @@ enrich_db_for_services <- function(entity, config, options){
   #set information required for (meta)data services
   geom_table <- "area.area_labels"
   if(!is.null(entity$resources$geom_table)) geom_table <- entity$resources$geom_table
-  
+  #tocmit
   df_codelists <- read.csv(entity$resources$codelists)
   dimensions <- c(df_codelists$dimension [df_codelists$dimension != "area"], "time_start", "time_end", "year", "quarter", "month", "aggregation_method")
   

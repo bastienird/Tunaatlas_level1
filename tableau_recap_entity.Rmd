@@ -5,7 +5,7 @@ output:
   word_document: default
 date: '2022-03-23'
 params:
-  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220622123750"
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/all_25_avril"
   species_filter: !r c('YFT','SKJ', 'BET')
 ---
 

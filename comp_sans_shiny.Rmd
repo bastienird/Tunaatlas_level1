@@ -7,8 +7,8 @@ output:
     toc: true
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220622114010/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/rawdata"
-  final: "~/Documents/Tunaatlas_level1/jobs/20220622114010/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/treatment_after_binding"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220717131053/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/treatment_after_binding"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220717131053/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/mapping_codelist"
   further_analysis: "FALSE"
   filter_species: !r NULL
   filter_source_authority: !r NULL
@@ -363,7 +363,7 @@ qflextable2(differences_between_options2)}
 The options used to create the initial data frame are: 
 
 ```{r}
-s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2)
+s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% mutate(Options = gsub("_","-",Options))%>% mutate(Value = gsub("_","-",Value))
 qflextable2(s)
 ```
 
@@ -478,9 +478,9 @@ The stratas differences between the first one and the second one are :
 # qflextable2(head(strates_perdues,10))
 if (nrow(strates_perdues_first_10)!=0){
   groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>%dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(Dimension,unit,`Loss / Gain`)%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit","Loss / Gain"))
-
+towrite = ""
 qflextable2(groupe_df)
-towrite = ""} else {towrite =("No strata is gain nor lost")}
+} else {towrite =("No strata is gain nor lost")}
 ```
 
 `r towrite`
@@ -553,7 +553,7 @@ We check the distribution of the value of each dimension in tons and number of f
 ```{r}
 
 pie_chart_2 = function(dimension, first, second) {
-  library(dplyr)
+library(dplyr)
            if(any(first$unit == "MTNO")) first[first$unit == "MTNO", ]$unit <- "MT"
          if(any(first$unit == "NOMT")) first[first$unit == "NOMT", ]$unit <- "NO"
            if(any(second$unit == "MTNO")) second[second$unit == "MTNO", ]$unit <- "MT"
