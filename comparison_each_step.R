@@ -18,7 +18,6 @@ comparison_each_step <- function(entity, config, options){
   con_database <- config$software$output$dbi
   user_database <- config$software$output$dbi_config$parameters$user
 
-#tocommit
   
     # list_dir <- list.dirs(path ="Markdown")
     # list <- c()
@@ -86,9 +85,75 @@ comparison_each_step <- function(entity, config, options){
       }
       df = df[-1,]
       write_csv(df, paste0(getwd(),"/table.csv"))
+      
+
+      FitFlextableToPage <- function(ft, pgwidth = 6,options_format ="Rmd"){
+        table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
+        
+        table %>% 
+          color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
+          color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>% 
+          colformat_num(col_keys = c("`Difference (in % of fish)`"), digits = 2) %>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
+          color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>% 
+          colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2) %>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
+          color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)%>% 
+          colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2)
+        if(options_format == "Rmd"){table%>% flextable_to_rmd()}else{table}
+        
+      }
+      save_as_image(FitFlextableToPage(df), path = "/table.png", webshot = "webshot")
       # assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), df, envir = .GlobalEnv)
       # list <- append(list,tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1))
       
+      
+
+      reduced <- df %>% select(Step = global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
+      reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
+      
+      library(ggplot2)
+      library(ggplot2)
+      library(patchwork) # To display 2 charts together
+      library(hrbrthemes)
+      coeff <- 3
+      temperatureColor <- "#69b3a2"
+      
+      priceColor <- rgb(0.2, 0.6, 0.9, 1)
+      ggplot(reduced,aes(x = Step,group = 1))+ 
+        geom_line( aes(y=`Sum in tons` ,group = 1), size=0.5, color=priceColor)+geom_point( aes(y=`Sum in tons` ,group = 1)) +
+        geom_line( aes(y=`Sum in number of fish`/ coeff,group = 1), size=0.5, color=temperatureColor)+geom_point( aes(y=`Sum in number of fish`/ coeff))  +
+        
+        scale_y_continuous(
+          
+          # Features of the first axis
+          name = "Tons",
+          
+          # Add a second axis and specify its features
+          sec.axis = sec_axis(~.*coeff, name="Number of fish")
+        ) + 
+        
+        
+        
+        theme(
+          axis.title.y = element_text(color = priceColor, size=8),
+          axis.title.y.right = element_text(color = temperatureColor, size=8)
+        ) +
+        
+        ggtitle("Evolution of the repartition of captures depending on units and Steps")+
+        theme(axis.text.x = element_text(angle = 90))
+      ggsave("myplot.png")
+      no_fish <- ggplot(reduced,aes(x = Step,group = 1)) +
+        geom_line( aes(y=`Sum in number of fish`,group = 1), size=0.5)+
+        
+        theme(axis.text.x = element_text(angle = 90))
+      
+      tons <- ggplot(reduced,aes(x = Step,group = 1)) +
+        geom_line( aes(y=`Sum in tons`,group = 1), size=0.5)+
+        
+        
+        theme(axis.text.x = element_text(angle = 90))
+      library(cowplot)
+      cowplot::plot_grid(tons, no_fish)
+      ggsave("myplot2.png")
     }
     
 # 

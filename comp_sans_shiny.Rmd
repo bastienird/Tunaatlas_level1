@@ -7,8 +7,8 @@ output:
     toc: true
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220717131053/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/treatment_after_binding"
-  final: "~/Documents/Tunaatlas_level1/jobs/20220717131053/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/mapping_codelist"
+  init: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/level1realocate_remove"
+  final: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/rawdata"
   further_analysis: "FALSE"
   filter_species: !r NULL
   filter_source_authority: !r NULL
@@ -552,7 +552,7 @@ We check the distribution of the value of each dimension in tons and number of f
 
 ```{r}
 
-pie_chart_2 = function(dimension, first, second) {
+pie_chart_2 = function(dimension, first, second, topn = 5) {
 library(dplyr)
            if(any(first$unit == "MTNO")) first[first$unit == "MTNO", ]$unit <- "MT"
          if(any(first$unit == "NOMT")) first[first$unit == "NOMT", ]$unit <- "NO"
@@ -562,13 +562,15 @@ library(dplyr)
          second[is.na(second)] <- "NA"
 
 r <- deparse(substitute(dimension))
+
   colnames <- dplyr::enquo(dimension)
+
   name1 <- dplyr::enquo(titre_1)
   name2 <- dplyr::enquo(titre_2)
   provisoire_i <-na.omit(first) %>%  dplyr::group_by(!!colnames, unit
   )  %>% dplyr::summarise(value = sum(value, na.rm = TRUE)) %>% dplyr::group_by(unit) %>%
     dplyr::arrange(desc(value)) %>%   dplyr::mutate(id = row_number())%>%
-    dplyr::mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    dplyr::mutate(class = as.factor(ifelse(id<topn  ,!!colnames,"Others"))) %>%
     dplyr::group_by(class, unit
     ) %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))%>%dplyr::ungroup()%>%
     dplyr::select( value, class,unit) %>%   dplyr::group_by(unit) %>%
@@ -582,7 +584,7 @@ r <- deparse(substitute(dimension))
 
   provisoire_t <- na.omit(second) %>%  dplyr::group_by(!!colnames, unit)%>% dplyr::summarise(value = sum(value, na.rm = TRUE)) %>% dplyr::group_by(unit) %>%
     dplyr::arrange(desc(value)) %>%   dplyr::mutate(id = row_number())%>%
-    dplyr::mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
+    dplyr::mutate(class = as.factor(ifelse(id<topn,!!colnames,"Others"))) %>% 
     dplyr::group_by(class, unit
     ) %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))%>%dplyr::ungroup()%>%
     dplyr::select( value, class,unit
@@ -597,7 +599,7 @@ r <- deparse(substitute(dimension))
   # print(unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
   number <- length(unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
   # print(number)
-  pal <- brewer.pal(number,"Set2")
+  pal <- brewer.pal(number,"Paired")
 #   display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE,
 # colorblindFriendly=TRUE)
   # print(number)
@@ -659,7 +661,7 @@ r <- deparse(substitute(dimension))
       plot.margin = margin(0, 0, 0, 7)
     )
   graph <<- plot_grid(ggplot_i+ theme(legend.position = "none"), ggplot_t, nrow = 2,labels = c( gsub('"','',gsub('~"','',deparse(substitute(name1)))),gsub('"','',gsub('~"','',deparse(substitute(name2))))),
-                      label_size = 10, vjust = 1.3)
+                      label_size = 10, vjust = 1.3, label_x = c(0,0), label_y = 1.025, axis = "l", align = "v")
 
   plot_grid(title, nrow=2,plot_grid(graph,legend,ncol = 2),
             # rel_heights values control vertical title margins
@@ -681,8 +683,8 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
 
 ```{r}
 
-fishing_fleet <- pie_chart_2(fishingfleet, init, final)
-source_authority <- pie_chart_2(source_authority, init, final)
+fishing_fleet <- pie_chart_2(fishingfleet,  init, final)
+source_authority <- pie_chart_2(source_authority, init, final, topn = 6)
 cat_geo <- pie_chart_2(cat_geo, init, final)
 species <- pie_chart_2(species, init, final)
 species_group <- pie_chart_2(species_group, init, final)
@@ -775,15 +777,10 @@ We will look for each dimension the `r topn` most important differences
 
 ```{r paged.print=TRUE}
 
-
-
 valeur_totale <- sum(init$value, na.rm = TRUE)
 ligne_totale <- nrow(init)
 
-
-
-unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group","gear",
-                                                                           "Name_En")) %>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by( Dimension, unit) %>% arrange(desc(`Difference (in %)`))   %>%  dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
+unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group","gear", "Name_En")) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
 
 # %>% dplyr::ungroup()%>%dplyr::group_by(test,Dimension) %>%dplyr::mutate_all(sum) %>% dplyr::ungroup() %>%dplyr::mutate(`Difference (in %)` =`Difference in millions of tons`/sum(`Difference in millions of tons`)) %>%dplyr::mutate(Precision = test) %>% dplyr::mutate_if(is.character, as.factor)%>%dplyr::select(-c(test,id)) %>% dplyr::group_by(Dimension) %>%arrange(Dimension,desc(`Difference (in %)`))
 
@@ -793,8 +790,10 @@ unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_
 
 
 ```{r paged.print=TRUE}
-t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Dimension","unit"))
+t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% group_by(`Loss / Gain`, Dimension, unit) %>% arrange(`Loss / Gain`, Dimension, unit,desc(`Difference in millions of tons`)),groups = c("Loss / Gain","Dimension","unit"))
+
 qflextable2(t3)
+
 ```
 
 

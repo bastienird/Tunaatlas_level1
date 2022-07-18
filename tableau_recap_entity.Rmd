@@ -5,7 +5,7 @@ output:
   word_document: default
 date: '2022-03-23'
 params:
-  working_directory: "~/Documents/Tunaatlas_level1/jobs/all_25_avril"
+  working_directory: "~/Documents/Tunaatlas_level1/jobs/20220718111457"
   species_filter: !r c('YFT','SKJ', 'BET')
 ---
 
@@ -131,6 +131,7 @@ for (sub_list_dir in list_dir){
 
     }
   df = df[-1,]
+  df <- df%>%dplyr::mutate_if(is.numeric, round, digits=2)
   write_csv(df, paste0(sub_list_dir,"/table.csv"))
   dt <- FitFlextableToPage(df,options_format = "Flextable")
   save_as_image(dt, paste0(sub_list_dir,"/table.png"), webshot = "webshot")
@@ -179,7 +180,7 @@ ggplot(reduced,aes(x = Step,group = 1))+
 
   ggtitle("Evolution of the repartition of captures depending on units and Steps")+
   theme(axis.text.x = element_text(angle = 90))
-
+  ggsave("myplot.png")
 no_fish <- ggplot(reduced,aes(x = Step,group = 1)) +
     geom_line( aes(y=`Sum in number of fish`,group = 1), size=0.5)+
 
@@ -192,6 +193,7 @@ tons <- ggplot(reduced,aes(x = Step,group = 1)) +
   theme(axis.text.x = element_text(angle = 90))
 library(cowplot)
 cowplot::plot_grid(tons, no_fish)
+  ggsave("myplot2.png")
 # lapply(list, FitFlextableToPage)
 # FitFlextableToPage(global_catch_1deg_1m_ps_bb_ird_level1)
 ```
