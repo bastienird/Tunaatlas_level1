@@ -7,7 +7,7 @@ output:
     number_sections: true
 date: '2022-05-11'
 params:
-  final: "~/Documents/Tunaatlas_level1/jobs/20220716210940/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220718151439/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
   plotting: "plot"
   world_coastline: "gshhs_world_coastlines"
 
@@ -317,11 +317,9 @@ tmap_mode("plot")
 
 
 image <- tm_shape(st_as_sf(mislocated_continent %>% dplyr::mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
-plot(image)
 
 
 image2 <- tm_shape(st_as_sf(mislocated_continent %>% dplyr::mutate(st_area = as.factor(st_area))))+tm_fill("source_authority")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
-plot(image2)
 # tmap::tmap_save(image, "image.png")
 # # mapshot(image, file = "image.png")
 # knitr::include_graphics('image.png')
@@ -345,7 +343,8 @@ qflextable2 =function(x){
   FitFlextableToPage(qflextable(y))
   }
 
-
+image
+image2
 
 ```
 

@@ -39,6 +39,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
+require(remotes)
 library(tidyr)
 library(stringr)
 library(readr)
@@ -877,4 +878,15 @@ dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precisi
 
 ```
 
+#Spatial coverage
 
+
+```{r}
+spatial_coverage_init <- sum((init %>% select(geographic_identifier)%>%distinct() %>%left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)
+
+spatial_coverage_final <- sum((final %>% select(geographic_identifier) %>%distinct() %>% left_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% distinct)$st_area, na.rm = TRUE)
+
+difference_coverage <- spatial_coverage_init - spatial_coverage_final
+```
+
+The coverage difference is `r difference_coverage` km square.
