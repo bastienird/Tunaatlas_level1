@@ -125,6 +125,8 @@ create_latex = function(x,last = FALSE,unique = FALSE){
   tex <- gsub(".Rmd", ".tex", paste0(name_output,x)) 
   tools::texi2dvi(tex, pdf = TRUE, clean = TRUE, quiet = TRUE,
            texi2dvi = getOption("texi2dvi"))
+  # rm(paste0(name_output,x))
+  # rm(tex)
   # system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
   #        ignore.stdout = FALSE, ignore.stderr = FALSE,
   #        wait = TRUE, input = NULL, show.output.on.console = FALSE,
