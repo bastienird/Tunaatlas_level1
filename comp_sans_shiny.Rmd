@@ -7,8 +7,13 @@ output:
     toc: true
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/level1realocate_remove"
-  final: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/rawdata"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/overlap_ccsbt_wcpfc"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
+  dbname: "tunaatlas_sandbox2"
+  host: "localhost"
+  port: 5432
+  user: "tunaatlas_u"
+  password: "21c0551e7ed2911"
   further_analysis: "FALSE"
   filter_species: !r NULL
   filter_source_authority: !r NULL
@@ -97,25 +102,16 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 }
 library(dplyr)
 
-# library(conflicted)
-# conflict_prefer("summarise","dplyr")
-# conflict_prefer("group_by","dplyr")
-# conflict_prefer("group_by_","dplyr")
-# conflict_prefer("filter","dplyr")
-# conflict_prefer_all("dplyr", quiet = TRUE)
-# write("options_written", paste0("options.txt"))
+
 
 ```
 
 
 ```{r}
-drv <- dbDriver("PostgreSQL")
-con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox2", host = "localhost", 
-                 port = 5432,
-                 user = "tunaatlas_u",
-                 password = "21c0551e7ed2911")
-
-
+drv <- RSQLite::dbDriver("PostgreSQL")
+con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+                 user = params$user,
+                 password = params$password)
 
 # dbExistsTable(con,"iattc_after_treatment")
 # dbExistsTable(con,"/../area.area_wkt")
@@ -855,6 +851,16 @@ image
 ```
 
 
+```{r}
+spatial_coverage_init <- sum((init %>% select(geographic_identifier)%>%distinct() %>%left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)
+
+spatial_coverage_final <- sum((final %>% select(geographic_identifier) %>%distinct() %>% left_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% distinct)$st_area, na.rm = TRUE)
+
+difference_coverage <- spatial_coverage_init - spatial_coverage_final
+```
+
+The coverage difference is `r difference_coverage` km square.
+
 ## Differences in temporal data
 
 Here is represented the differences in percent for each year.
@@ -878,15 +884,5 @@ dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precisi
 
 ```
 
-#Spatial coverage
 
 
-```{r}
-spatial_coverage_init <- sum((init %>% select(geographic_identifier)%>%distinct() %>%left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)
-
-spatial_coverage_final <- sum((final %>% select(geographic_identifier) %>%distinct() %>% left_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% distinct)$st_area, na.rm = TRUE)
-
-difference_coverage <- spatial_coverage_init - spatial_coverage_final
-```
-
-The coverage difference is `r difference_coverage` km square.

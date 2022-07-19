@@ -111,7 +111,6 @@ comparison_each_step <- function(entity, config, options){
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
       library(ggplot2)
-      library(ggplot2)
       library(patchwork) # To display 2 charts together
       library(hrbrthemes)
       coeff <- 3

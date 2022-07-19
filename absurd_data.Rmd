@@ -8,6 +8,11 @@ output:
 date: '2022-05-11'
 params:
   final: "~/Documents/Tunaatlas_level1/jobs/20220718151439/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
+  dbname: "tunaatlas_sandbox2"
+  host: "localhost"
+  port: 5432
+  user: "tunaatlas_u"
+  password: "21c0551e7ed2911"
   plotting: "plot"
   world_coastline: "gshhs_world_coastlines"
 
@@ -224,9 +229,9 @@ cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv",
 data <- data %>% dplyr::full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
 drv <- dbDriver("PostgreSQL")      
-con <- DBI::dbConnect(drv , dbname = "tunaatlas_sandbox2", host = "localhost",   port = 5432,
-                 user = "tunaatlas_u",
-                 password = "21c0551e7ed2911")
+con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+                 user = params$user,
+                 password = params$password)
 
 
 query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"

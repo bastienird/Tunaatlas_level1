@@ -113,17 +113,24 @@ create_latex = function(x,last = FALSE,unique = FALSE){
                    x), paste0(wd,"/",name_output,x), overwrite = TRUE)
   # setwd(paste0(wd,"/",output_file))
   conection_db <- postgresqlConnectionInfo(con)
-  if(unique == TRUE){rmarkdown::render(paste0(name_output,x),params = list(final = last#, host = conection_db$host, 
-                                                                           #port = connection_db$port, 
-                                                                           #user = connection_db$user,
-                                                                           #dbname=connection_db$dbname,
+  if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
+                                       params = list(final = last, host = config$software$output$dbi_config$parameters$host, 
+                                                                           port = config$software$output$dbi_config$parameters$port, 
+                                                                           user = config$software$output$dbi_config$parameters$user,
+                                                                           dbname=config$software$output$dbi_config$parameters$dbname,
+                                                     password = config$software$output$dbi_config$parameters$password
                                                                            ))}
-  if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last))}#,
+  if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$output$dbi_config$parameters$host, 
+                                                                                        port = config$software$output$dbi_config$parameters$port, 
+                                                                                        user = config$software$output$dbi_config$parameters$user,
+                                                                                        dbname=config$software$output$dbi_config$parameters$dbname,
+                                                                                        password = config$software$output$dbi_config$parameters$password
+                                                                          ))}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   
   print("Output_created")
   tex <- gsub(".Rmd", ".tex", paste0(name_output,x)) 
-  tools::texi2dvi(tex, pdf = TRUE, clean = TRUE, quiet = TRUE,
+  tools::texi2dvi(tex, pdf = TRUE, clean = FALSE, quiet = TRUE,
            texi2dvi = getOption("texi2dvi"))
   # rm(paste0(name_output,x))
   # rm(tex)
@@ -237,7 +244,11 @@ georef_dataset <- left_join(georef_dataset, irregular_iotc , by =c("geographic_i
   select(-c(code_cwp))
 
 georef_dataset$geographic_identifier = str_replace_all(georef_dataset$geographic_identifier,"6130045\n","6130045")
- 
+
+fonction_dossier("rawdata_modyfing_georeferenced_errors",
+                 georef_dataset, 
+                 "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
+                 "get_rfmos_datasets_level0"  )
 #-----------------------------------------------------------------
 
 variable <- options$fact
@@ -481,7 +492,7 @@ fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc
                    options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
                    ) )
 create_latex("comp_sans_shiny.Rmd")
-
+create_latex("short_comp.Rmd")
 
 
 
@@ -505,6 +516,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                    "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
                    "map_codelists", c(options_mapping_map_code_lists))
   create_latex("comp_sans_shiny.Rmd")
+  create_latex("short_comp.Rmd")
+  
   
   
 
@@ -534,7 +547,8 @@ if (!is.null(options$mapping_map_code_lists)) if(options$mapping_map_code_lists)
                             "Keeping data from IATTC or WCPFC ",
                             "function_overlapped" , c(options_include_IATTC, 
                                                       options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
-           create_latex("comp_sans_shiny.Rmd")
+             create_latex("comp_sans_shiny.Rmd") 
+             create_latex("short_comp.Rmd")
            
 
            }
@@ -569,8 +583,8 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
   
 }
 
-create_latex("comp_sans_shiny.Rmd")
-
+  create_latex("comp_sans_shiny.Rmd")   
+  create_latex("short_comp.Rmd")
          
     
          
@@ -598,7 +612,7 @@ create_latex("comp_sans_shiny.Rmd")
     
          }
    create_latex("comp_sans_shiny.Rmd")
-    
+   create_latex("short_comp.Rmd")
       
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -628,7 +642,7 @@ create_latex("comp_sans_shiny.Rmd")
            
          }
    create_latex("comp_sans_shiny.Rmd")
-    
+   create_latex("short_comp.Rmd")
          
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -656,7 +670,7 @@ create_latex("comp_sans_shiny.Rmd")
            
            }
    create_latex("comp_sans_shiny.Rmd")
-    
+   create_latex("short_comp.Rmd")
    
 
 # #### unit treatment
@@ -719,7 +733,7 @@ create_latex("comp_sans_shiny.Rmd")
          }         
 
    create_latex("comp_sans_shiny.Rmd")
-    
+   create_latex("short_comp.Rmd")
    create_latex("absurd_data.Rmd",unique =TRUE)
          
          if (options$spatial_curation_data_mislocated %in% c("reallocate","remove")){
@@ -763,7 +777,7 @@ create_latex("comp_sans_shiny.Rmd")
          }
 
    create_latex("comp_sans_shiny.Rmd")
-    
+   create_latex("short_comp.Rmd")
 
 
         
@@ -926,7 +940,7 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
                    ))
   
   create_latex("comp_sans_shiny.Rmd")
-   
+  create_latex("short_comp.Rmd")
   
   
   
@@ -1040,7 +1054,7 @@ if(!is.null(options$raising_georef_to_nominal)) if (options$raising_georef_to_no
                    ))
   
   create_latex("comp_sans_shiny.Rmd")
-   
+  create_latex("short_comp.Rmd")
   
 
   
@@ -1151,7 +1165,7 @@ fonction_dossier("Level2_RF3without_gears",
                             c(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            gc()
            create_latex("comp_sans_shiny.Rmd")
-            
+           create_latex("short_comp.Rmd")
            
          } else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
@@ -1174,7 +1188,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "Apply filters on WCPFC at the end to see what's lost ",
                             "", c(options_filter_WCPFC_at_the_end))
            create_latex("comp_sans_shiny.Rmd")
-            
+           create_latex("short_comp.Rmd")
            
            
          }
@@ -1204,7 +1218,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "spatial_curation_upgrade_resolution", 
                             c(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
            create_latex("comp_sans_shiny.Rmd")
-            
+           create_latex("short_comp.Rmd")
            
          }
          # conflict_prefer("startsWith", "gdata")
@@ -1238,7 +1252,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "Grid spatial resolution filter",
                             "", c(options_resolution_filter))
            create_latex("comp_sans_shiny.Rmd")
-            
+           create_latex("short_comp.Rmd")
            
          }
          
@@ -1258,7 +1272,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "", c(options_gear_filter))
            create_latex("comp_sans_shiny.Rmd")
            create_latex("comp_sans_shiny.Rmd", last = TRUE)
-           
+           create_latex("short_comp.Rmd")
            
            
          }
