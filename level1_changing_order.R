@@ -99,7 +99,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE){
   
   file.copy(paste0(wd2,"/",'data2/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
   file.copy(paste0(wd2,"/",'data2/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
-  if(!rawdataneeded = FALSE){
+  if(!rawdataneeded == FALSE){
   file.copy(paste0(wd,"/","Markdown/",rawdataneeded,"/rds.rds"),paste0(wd,"/",'data/rawdata.rds') , overwrite = TRUE)
   }
   setwd(wd)
