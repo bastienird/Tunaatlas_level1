@@ -80,7 +80,7 @@ last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
 # step_for_rmd <- 1
-create_latex = function(x,last = FALSE,unique = FALSE){
+create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   
   wd <- getwd()
@@ -97,10 +97,11 @@ create_latex = function(x,last = FALSE,unique = FALSE){
     # x), paste0(wd,"/",x), overwrite = TRUE)
   # config$logger.info(paste0("jsute after copying rmd"))
   
-  file.copy(paste0(wd2,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
-  file.copy(paste0(wd2,"/",'data/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
-  file.copy(paste0(wd2,"/",'data/rawdata.rds'),paste0(wd,"/",'data/rawdata.rds') , overwrite = TRUE)
-  
+  file.copy(paste0(wd2,"/",'data2/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = TRUE)
+  file.copy(paste0(wd2,"/",'data2/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = TRUE)
+  if(!rawdataneeded = FALSE){
+  file.copy(paste0(wd,"/","Markdown/",rawdataneeded,"/rds.rds"),paste0(wd,"/",'data/rawdata.rds') , overwrite = TRUE)
+  }
   setwd(wd)
   print(getwd())
   list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
@@ -738,7 +739,7 @@ if (options$include_IOTC && options$include_WCPFC && !is.null(options$overlappin
 
    create_latex("comp_sans_shiny.Rmd")
    create_latex("short_comp.Rmd")
-   create_latex("absurd_data.Rmd",unique =TRUE)
+   create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
          
          if (options$spatial_curation_data_mislocated %in% c("reallocate","remove")){
            
