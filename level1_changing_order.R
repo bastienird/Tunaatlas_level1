@@ -74,7 +74,7 @@ if(!require(tools)){
   require(tools)
 }
 
-fact <- options$fact
+
 
 last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
@@ -115,7 +115,7 @@ create_latex = function(x,last = FALSE,unique = FALSE){
   file.copy(paste0(wd2,"/",
                    x), paste0(wd,"/",name_output,x), overwrite = TRUE)
   # setwd(paste0(wd,"/",output_file))
-  conection_db <- postgresqlConnectionInfo(con)
+  # conection_db <- postgresqlConnectionInfo(con)
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
                                        params = list(final = last, host = config$software$output$dbi_config$parameters$host, 
                                                                            port = config$software$output$dbi_config$parameters$port, 
@@ -210,6 +210,7 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 #LEVEL 0 FIRMS PRODUCTS
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+config$logger.info(paste0("testBABABABBABA",class(con)))
 
 #### 1) Retrieve tuna RFMOs data from Tuna atlas DB at level 0. Level 0 is the merging of the tRFMOs primary datasets, with the more complete possible value of georef_dataset per stratum (i.e. duplicated or splitted strata among the datasets are dealt specifically -> this is the case for ICCAT and IATTC)  ####
 config$logger.info("Begin: Retrieving primary datasets from Tuna atlas DB... ")
@@ -1207,7 +1208,7 @@ fonction_dossier("Level2_RF3without_gears",
          if(!is.null(options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg)) if (options$aggregate_on_5deg_data_with_resolution_inferior_to_5deg) {
            
            config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant...")
-           source("~/Documents/Tunaatlas_level1/spatial_curation_upgrade_resolution_Bastien.R")
+           source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/spatial_curation_upgrade_resolution_Bastien.R")
            georef_dataset<-spatial_curation_bastien(con, georef_dataset, 5)
            # georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
            georef_dataset<-georef_dataset$df
