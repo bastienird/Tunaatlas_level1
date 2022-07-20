@@ -211,7 +211,6 @@ DATA_LEVEL <- unlist(strsplit(entity$identifiers[["id"]], "_level"))[2]
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 #LEVEL 0 FIRMS PRODUCTS
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
-config$logger.info(paste0("testBABABABBABA",class(con)))
 
 #### 1) Retrieve tuna RFMOs data from Tuna atlas DB at level 0. Level 0 is the merging of the tRFMOs primary datasets, with the more complete possible value of georef_dataset per stratum (i.e. duplicated or splitted strata among the datasets are dealt specifically -> this is the case for ICCAT and IATTC)  ####
 config$logger.info("Begin: Retrieving primary datasets from Tuna atlas DB... ")
@@ -237,7 +236,7 @@ fonction_dossier("rawdata",
 
 
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
-irregular_iotc <- dbGetQuery(con, paste0(query))
+irregular_iotc <- DBI::dbGetQuery(con, paste0(query))
 irregular_iotc <-irregular_iotc  %>% distinct()
 irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
 irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
