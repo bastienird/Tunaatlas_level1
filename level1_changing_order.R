@@ -1,4 +1,6 @@
 function(action, entity, config){
+  opts <- action$options
+  
   ######################################################################
 ##### 52North WPS annotations ##########
 ######################################################################
@@ -73,10 +75,21 @@ if(!require(tools)){
   install.packages("tools")
   require(tools)
 }
-opts <- action$options
+
+if(!require(RPostgreSQL)){
+  install.packages("RPostgreSQL")
+  require(RPostgreSQL)
+  } 
+if(!require(DBI)){
+    install.packages("DBI")
+    require(DBI)
+  } 
+
+  if(!require(googledrive)){
+    install.packages("googledrive")
+    require(googledrive)
+  }
   
-
-
 last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
@@ -119,17 +132,17 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE){
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
-                                       params = list(final = last, host = config$software$output$dbi_config$parameters$host, 
-                                                                           port = config$software$output$dbi_config$parameters$port, 
-                                                                           user = config$software$output$dbi_config$parameters$user,
-                                                                           dbname=config$software$output$dbi_config$parameters$dbname,
-                                                     password = config$software$output$dbi_config$parameters$password
+                                       params = list(final = last, host = config$software$input$dbi_config$parameters$host, 
+                                                                           port = config$software$input$dbi_config$parameters$port, 
+                                                                           user = config$software$input$dbi_config$parameters$user,
+                                                                           dbname=config$software$input$dbi_config$parameters$dbname,
+                                                     password = config$software$input$dbi_config$parameters$password
                                                                            ))}
-  if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$output$dbi_config$parameters$host, 
-                                                                                        port = config$software$output$dbi_config$parameters$port, 
-                                                                                        user = config$software$output$dbi_config$parameters$user,
-                                                                                        dbname=config$software$output$dbi_config$parameters$dbname,
-                                                                                        password = config$software$output$dbi_config$parameters$password
+  if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
+                                                                                        port = config$software$input$dbi_config$parameters$port, 
+                                                                                        user = config$software$input$dbi_config$parameters$user,
+                                                                                        dbname=config$software$input$dbi_config$parameters$dbname,
+                                                                                        password = config$software$input$dbi_config$parameters$password
                                                                           ))}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   
@@ -881,7 +894,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
     
     rm(dataset_catch)
     #@juldebar : update with the new name of "flag" dimension (now "fishingfleet")
-    x_raising_dimensions=c("fishingfleet","gear","year","source_authority")
+    # x_raising_dimensions=c("fishingfleet","gear","year","source_authority")
   }
   
   class(dataset_to_compute_rf$value) <- "numeric"
@@ -1000,7 +1013,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
     
     rm(dataset_catch)
     #@juldebar : update with the new name of "flag" dimension (now "fishingfleet")
-    x_raising_dimensions=c("species","gear","year","source_authority")
+    # x_raising_dimensions=c("species","gear","year","source_authority")
   }
   
   class(dataset_to_compute_rf$value) <- "numeric"
@@ -1049,7 +1062,73 @@ if (fact=="catch"){
   config$logger.info("Fact=catch !")
   dataset_to_compute_rf=georef_dataset
   #@juldebar why do we use "year' as time dimension here ?
+  if(!is.null(opts$x_raising_dimensions)){
     x_raising_dimensions=c("species","year","source_authority")}
+} else if (fact=="effort"){    ## If we raise the efforts, the RF is calculated using the georeferenced catch data. Hence, we need to retrieve the georeferenced catch data.
+  cat("Catch datasets must be retrieved and processed in order to raise efforts. \nRetrieving georeferenced catch datasets from the Tuna atlas database...\n")
+  dataset_catch<-NULL
+  if (include_IOTC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("IOTC","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_WCPFC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("WCPFC","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_CCSBT=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("CCSBT","catch",datasets_year_release)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_IATTC=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("IATTC",
+                                                        "catch",
+                                                        datasets_year_release,
+                                                        iattc_ps_raise_flags_to_schooltype=iattc_ps_raise_flags_to_schooltype,
+                                                        iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype=iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+                                                        iattc_ps_catch_billfish_shark_raise_to_effort=TRUE)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  if (include_ICCAT=="TRUE"){
+    rfmo_dataset<-rtunaatlas::get_rfmos_datasets_level0("ICCAT",
+                                                        "catch",
+                                                        datasets_year_release,
+                                                        iccat_ps_include_type_of_school=iccat_ps_include_type_of_school)
+    dataset_catch<-rbind(dataset_catch,rfmo_dataset)
+    rm(rfmo_dataset)
+  }
+  
+  
+  if (mapping_map_code_lists=="TRUE"){
+    dataset_catch<-function_map_code_lists("catch",mapping_csv_mapping_datasets_url,dataset_catch,mapping_keep_src_code)$dataset
+  }
+  
+  if (!is.null(gear_filter)){
+    dataset_catch<-function_gear_filter(gear_filter,dataset_catch)$dataset
+  }
+  dataset_catch$time_start<-substr(as.character(dataset_catch$time_start), 1, 10)
+  dataset_catch$time_end<-substr(as.character(dataset_catch$time_end), 1, 10)
+  if (unit_conversion_convert=="TRUE"){ 
+    # We use our conversion factors (IRD). This should be an input parameter of the script
+    #@juldebar URL for unit_conversion_csv_conversion_factor_url of should not be hard coded, temporary patch
+    dataset_catch<-function_unit_conversion_convert(con,
+                                                    fact="catch",
+                                                    unit_conversion_csv_conversion_factor_url="https://drive.google.com/open?id=1csQ5Ww8QRTaYd1DG8chwuw0UVUOGkjNL",
+                                                    unit_conversion_codelist_geoidentifiers_conversion_factors="areas_conversion_factors_numtoweigth_ird",
+                                                    mapping_map_code_lists,
+                                                    dataset_catch)$dataset
+  }
+  
+  dataset_to_compute_rf=dataset_catch
+  #@juldebar insert patch below to fix error in rtunaatlas::raise_get_rf function
+  
+  rm(dataset_catch)
+  #@juldebar : update with the new name of "flag" dimension (now "fishingfleet")
+  # x_raising_dimensions=c("species","gear","year","source_authority")
+}
   
   
 
@@ -1327,6 +1406,6 @@ fonction_dossier("Level2_RF3without_gears",
          rm(georef_dataset)
 
          gc()
-}
+         }
          
 

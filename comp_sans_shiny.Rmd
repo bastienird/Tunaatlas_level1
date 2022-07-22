@@ -49,30 +49,20 @@ library(tidyr)
 library(stringr)
 library(readr)
 library(ggplot2)
-library(shiny)
-library(DBI)
-library(RMySQL)
-library(dbplyr)
-library(RPostgreSQL)
 library(DBI)
 library(odbc)
 library(sf)
 library(tmap)
-library(leaflet)
 library(tidyr)
-library(DT)
 library(kableExtra)
 library(flextable)
 library(stringr)
 library(readxl)
-library(rlang)
 library(cowplot)
 library(RColorBrewer)
-library(gdata)
 library(knitr)
-library(DT)
 library(kableExtra)
-library(tools)
+
 
 
 set_flextable_defaults(
@@ -881,6 +871,7 @@ dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precisi
 #  geom_bar(fill = "#112446") +
 #  theme_minimal()+facet_wrap("unit")
 
+dbDisconnect(con)
 
 ```
 

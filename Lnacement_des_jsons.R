@@ -3,7 +3,7 @@ getwd()
 setwd("~/Documents/Tunaatlas_level1")
 require(remotes)
 require(devtools)
-# install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"))
+# remotes::install_github("eblondel/geoflow", force = TRUE)
 library(geoflow)
 require(RPostgreSQL)
 library(RPostgres)
@@ -85,6 +85,8 @@ executeWorkflowJob(config)
 #1. Init the workflow based on configuration file
 config <- initWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json")
 #2. Inits workflow job (create directories)
+initWorkflowJob(config)
+
 jobdir <- initWorkflowJob(config)
 # config$job <- "~/Documents/Tunaatlas_level1/jobs/all_new_reference"
 # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220601110916"
@@ -93,7 +95,6 @@ jobdir <- initWorkflowJob(config)
  # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220616115652"
 config$job <- jobdir
 config$job <- "~/Documents/Tunaatlas_level1/jobs/20220718010321"
-initWorkflowJob(config)
 executeWorkflowJob(config)
 # geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")
 

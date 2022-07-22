@@ -37,7 +37,7 @@ library(studycatchesird)
 ```
 
 ```{r}
-nominal_dataset <- readRDS("data/nominalmapped.rds")
+try(nominal_dataset <- readRDS("data/nominalmapped.rds"))
 
 if(!(is.null(params$species_filter))){nominal <- sum((nominal_dataset %>% filter(species %in% params$species_filter))$value)} else {nominal <- sum(nominal_dataset$value)}
 

@@ -39,21 +39,20 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
   write_csv(data.frame(somme_t, somme_no, lines), paste0(nom_dossier,"/sums.csv"))
   if (!is.null(options)){
     options_substi <- as.list(substitute(options))[-1]
+    print(options_substi)
     options_written <- ""
     for (i in 1:length(options_substi)){
       options_written <- paste0(options_written, (paste0(options_substi[i], " = ", options[i])), 
-                               sep = " , \n ")
+                                sep = " , \n ")
       
-
+      
       
       
       
     }
-    write(options_written, paste0(nom_dossier,"/options.txt"))
-    assign("options_written_total", paste0(options_written, options_written_total), envir = .GlobalEnv)
-    
-    } else {options_written = "NONE"}
-    
+    print(options_written)
+  } else {options_written = "NONE"}
+  
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
   write(fonctions, paste0(nom_dossier,"/fonctions.txt"))
