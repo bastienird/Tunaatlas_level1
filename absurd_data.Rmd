@@ -7,10 +7,10 @@ output:
     number_sections: true
 date: '2022-05-11'
 params:
-  final: "~/Documents/Tunaatlas_level1/jobs/20220718151439/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220723181100/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
   rawdata: "data/rawdata"
-  dbname: "tunaatlas_sandbox2"
-  host: "localhost"
+  dbname: "tunaatlas"
+  host: "db-tunaatlas.d4science.org"
   port: 5432
   user: "tunaatlas_u"
   password: "21c0551e7ed2911"
@@ -25,8 +25,66 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
-library(readtext)
-library(flextable)
+
+
+```
+
+
+```{r include=FALSE}
+
+if(!(require(base))){ 
+ install.packages(base) 
+ (require(base))} 
+ if(!(require(flextable))){ 
+ install.packages(flextable) 
+ (require(flextable))} 
+ if(!(require(devtools))){ 
+ install.packages(devtools) 
+ (require(devtools))} 
+ if(!(require(ggplot2))){ 
+ install.packages(ggplot2) 
+ (require(ggplot2))} 
+ if(!(require(dplyr))){ 
+ install.packages(dplyr) 
+ (require(dplyr))} 
+ if(!(require(RColorBrewer))){ 
+ install.packages(RColorBrewer) 
+ (require(RColorBrewer))} 
+ if(!(require(stats))){ 
+ install.packages(stats) 
+ (require(stats))} 
+ if(!(require(cowplot))){ 
+ install.packages(cowplot) 
+ (require(cowplot))} 
+ if(!(require(readr))){ 
+ install.packages(readr) 
+ (require(readr))} 
+ if(!(require(RPostgres))){ 
+ install.packages(RPostgres) 
+ (require(RPostgres))} 
+ if(!(require(RPostgreSQL))){ 
+ install.packages(RPostgreSQL) 
+ (require(RPostgreSQL))} 
+ if(!(require(sf))){ 
+ install.packages(sf) 
+ (require(sf))} 
+ if(!(require(tmap))){ 
+ install.packages(tmap) 
+ (require(tmap))} 
+ if(!(require(stringr))){ 
+ install.packages(stringr) 
+ (require(stringr))} 
+ if(!(require(lubridate))){ 
+ install.packages(lubridate) 
+ (require(lubridate))} 
+ if(!(require(studycatchesird))){ 
+ install.packages(studycatchesird) 
+ (require(studycatchesird))} 
+ if(!(require(utils))){ 
+ install.packages(utils) 
+ (require(utils))} 
+
+if(require("htmltools"))
 set_flextable_defaults(
   font.size = 30,
   font.color = "black",
@@ -34,24 +92,10 @@ set_flextable_defaults(
   digits = NULL,
   theme_fun = "theme_box"
   )
-library(dplyr)
-library(stringr)
-library(readr)
-library(webshot)
-if(require("htmltools"))
-library(ggplot2)
-library(cowplot)
 div(flextable_html_dependency())
-library(DBI)
-library(RPostgres)
-library(RPostgreSQL)
-library(sf)
-library(tmap)
-library(devtools)
+
 install_github("BastienIRD/sutdycatchesird", dependencies = c("Depends", "Imports"))
-library(studycatchesird)
-library(scales)
-library(RColorBrewer)
+
 pie_chart_2 = function(dimension, unit = c("MT","MTNO","Tons","t"), first, second) {
   r <- deparse(substitute(dimension))
   colnames <- enquo(dimension)
@@ -222,7 +266,7 @@ titre <- enquo(init)
 ```{r}
 data <- readRDS(paste0(as.character(params$final),"/rds.rds"))
   data <- data%>% dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
-cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+  cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
     col_types = cols(Identifier = col_skip(), 
         Abbreviation = col_skip(), Name_Fr = col_skip(), 
         Name_Es = col_skip(), Name_Ar = col_skip()))
@@ -240,14 +284,14 @@ world_sf <- st_make_valid(st_read(con, query = query))%>% dplyr::filter(!st_is_e
 
 query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
 competence_area <- st_make_valid(st_read(con, query = query_area)) %>% dplyr::filter(!st_is_empty(.))
-IOTC_shape <- competence_area %>% dplyr::filter(code == "IOTC")
-IATTC_shape <- competence_area %>% dplyr::filter(code == "IATTC")
-WCPFC_shape <- competence_area %>% dplyr::filter(code == "WCPFC")
-ICCAT_shape <- competence_area %>% dplyr::filter(code == "ICCAT")
+IOTC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "IOTC"))
+IATTC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "IATTC"))
+WCPFC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "WCPFC"))
+ICCAT_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "ICCAT"))
 query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
-continent <- st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+continent <- sf::st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
 query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
-irregular_iotc <- st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+irregular_iotc <- sf::st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
 irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
 # test <- data %>% dplyr::inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier = code_cwp)
 irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
@@ -255,8 +299,8 @@ irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
 irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
 if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
 
-world_sf <- world_sf %>% dplyr::mutate(code_cwp = code)
-
+world_sf <- sf::st_make_valid(world_sf %>% dplyr::mutate(code_cwp = code))
+world_sf <- world_sf[sf::st_is_valid(world_sf),]
 tmap_mode("plot")
 # tm_shape(st_as_sf(test %>% dplyr::inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
 pakistan <- irregular_iotc %>% dplyr::filter(code_cwp== "3120060")
@@ -271,6 +315,7 @@ data <- dplyr::left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("
 # test <- t %>% dplyr::group_by(code, source) %>% slice(1)
 # tm_shape(st_as_sf(t))+tm_polygons()+tm_fill(col = "source")
 # 
+
 IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iotc = "iotc")
 
 IATTC <- world_sf[IATTC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iattc = "iattc")
@@ -577,7 +622,7 @@ data <- data %>% dplyr::full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
 
 query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
-library(sf)
+
 world_sf <- st_make_valid(st_read(con, query = query))%>% dplyr::filter(!st_is_empty(.))
 
 query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
@@ -597,8 +642,9 @@ irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
 irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
 if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
 
-world_sf <- world_sf %>% dplyr::mutate(code_cwp = code)
-library(tmap)
+world_sf <- sf::st_make_valid(world_sf %>% dplyr::mutate(code_cwp = code))
+world_sf <- world_sf[sf::st_is_valid(world_sf),]
+
 tmap_mode("plot")
 # tm_shape(st_as_sf(test %>% dplyr::inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
 pakistan <- irregular_iotc %>% dplyr::filter(code_cwp== "3120060")
@@ -697,8 +743,7 @@ pie_chart_2(species,unit=c("MTNO","MT"),mislocated_continent_init,rawdata)
 Albacore is mislocated, as well as BET. 
 
 ```{r}
-library(sf)
-library(lubridate)
+
 # mislocated_continent <- mislocated_continent %>% st_set_geometry(NULL)
 # st_geometry(mislocated_continent) <- NULL
 

@@ -1,16 +1,15 @@
 ---
-title: "Comparison of two data sets at different levels/options of the tuna atlas"
+title: "Short comp sans shiny"
 author: "Bastien Grasset"
 date: "09/02/2022"
 output:
   latex_document:
-    toc: true
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/overlap_ccsbt_wcpfc"
-  final: "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
-  dbname: "tunaatlas"
-  host: "db-tunaatlas.d4science.org"
+  init: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/level1realocate_remove"
+  final: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/rawdata"
+  dbname: "tunaatlas_sandbox2"
+  host: "localhost"
   port: 5432
   user: "tunaatlas_u"
   password: "21c0551e7ed2911"
@@ -86,33 +85,13 @@ if(!(require(base))){
  if(!(require(tidyr))){ 
  install.packages(tidyr) 
  (require(tidyr))} 
- if(!(require(ggplot2))){ 
- install.packages(ggplot2) 
- (require(ggplot2))} 
- if(!(require(stats))){ 
- install.packages(stats) 
- (require(stats))} 
- if(!(require(RColorBrewer))){ 
- install.packages(RColorBrewer) 
- (require(RColorBrewer))} 
- if(!(require(cowplot))){ 
- install.packages(cowplot) 
- (require(cowplot))} 
- if(!(require(studycatchesird))){ 
- install.packages(studycatchesird) 
- (require(studycatchesird))} 
  if(!(require(tmap))){ 
  install.packages(tmap) 
  (require(tmap))} 
- if(!(require(RPostgreSQL))){ 
- install.packages(RPostgreSQL) 
- (require(RPostgreSQL))} 
+ if(!(require(ggplot2))){ 
+ install.packages(ggplot2) 
+ (require(ggplot2))} 
  
-
- 
-
-
-
 
 
 set_flextable_defaults(
@@ -130,28 +109,13 @@ plotting_type <- "plot"
 if (knitr::is_html_output()){plotting_type <- "view" }
 ```
 
-
 ```{r}
-
-fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
-
-  if(!exists("df_robinson")){
-    df_robinson <- df}
-  return(df_robinson)
-  
-}
-library(dplyr)
-
-
-
-```
-
-
-```{r}
-drv <- RSQLite::dbDriver("PostgreSQL")
+drv <- dbDriver("PostgreSQL")
 con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                  user = params$user,
                  password = params$password)
+
+
 
 # dbExistsTable(con,"iattc_after_treatment")
 # dbExistsTable(con,"/../area.area_wkt")
@@ -171,7 +135,8 @@ kbl <- function(data) {
 }
 
 query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
-continent <- fSpatPlan_Convert2PacificRobinson(st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
+continent <- #fSpatPlan_Convert2PacificRobinson(
+  st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.))#)
 
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
 irregular_iotc <- dbGetQuery(con, paste0(query))
@@ -210,7 +175,6 @@ colnames_to_keep <- c("fishingfleet",         "gear",                 "time_star
  "unit",                 "value",                "source_authority")
 
 ```
-
 
 The purpose of this markdown is to describe the differences of data from the World Tuna Atlas following the different filters. 
 It describes the differences between the initial data and the final data, and is intended for users of the final data who might be tempted to use it without taking into account the various filtering specificities.
@@ -343,69 +307,6 @@ if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0 | nrow(final%>% dplyr
 # palette3
 ```
 
-
-```{r}
-differences_in_optionsinit <- readr::read_delim(paste0(params$init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct() 
-# differences_in_optionsinit <- tidyr::unite_(differences_in_optionsinit, paste0(colnames(differences_in_optionsinit), collapse="_"), colnames(differences_in_optionsinit))
-differences_in_optionsinit$X1 <- gsub(" ","",differences_in_optionsinit$X1)
-differences_in_optionsinit$X1 <- gsub("options_","",differences_in_optionsinit$X1) 
-differences_in_optionsinit$X2 <- gsub(" ","",differences_in_optionsinit$X2)
-differences_in_optionsinit$X2 <- gsub("options_","",differences_in_optionsinit$X2) 
-
-differences_in_optionsinit_base <- differences_in_optionsinit %>% dplyr::distinct()
-
-
-differences_in_optionsfinal <- readr::read_delim(paste0(params$final,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
-# write.csv(differences_in_optionsfinal,"differences_in_optionsfinal.csv")
-
-# differences_in_optionsfinal <- tidyr::unite_(differences_in_optionsfinal, paste0(colnames(differences_in_optionsfinal), collapse="_"), colnames(differences_in_optionsfinal))
-differences_in_optionsfinal$X1 <- gsub(" ","",differences_in_optionsfinal$X1)
-differences_in_optionsfinal$X1 <- gsub("options_","",differences_in_optionsfinal$X1)
-differences_in_optionsfinal$X2 <- gsub(" ","",differences_in_optionsfinal$X2)
-differences_in_optionsfinal$X2 <- gsub("options_","",differences_in_optionsfinal$X2)
-
-
-# differences_in_optionsinit <- differences_in_optionsinit[startsWith(differences_in_optionsinit$X1_X2,"options_")|startsWith(differences_in_optionsinit$X1_X2," options_"),]
-
-colnames(differences_in_optionsinit) <- "Options init"
-
-
-# differences_in_optionsfinal <- differences_in_optionsfinal[startsWith(differences_in_optionsfinal$X1_X2,"options_")|startsWith(differences_in_optionsfinal$X1_X2," options_"),]
-
-colnames(differences_in_optionsfinal) <- "Options final"
-# write.csv(differences_in_optionsinit,"differences_in_optionsinit.csv")
-differences_in_optionsinit <- as.data.frame(stringr::str_split_fixed(differences_in_optionsinit$`Options init`, "=", 2)) %>% dplyr::rename(Options_initial =V2)%>%dplyr::filter(Options_initial!="")
-
-differences_in_optionsfinal <- as.data.frame(stringr::str_split_fixed(differences_in_optionsfinal$`Options final`, "=", 2)) %>% dplyr::rename(Options_final =V2) %>%dplyr::filter(Options_final!="")
-
-differences_between_options <- full_join(differences_in_optionsfinal,differences_in_optionsinit) %>% dplyr::distinct()
-
-differences_between_options[is.na(differences_between_options)] = "none"
-
-differences_between_options2 <-differences_between_options %>%dplyr::filter(Options_final != Options_initial)
-
-```
-
-
-
-
-```{r}
-if (nrow(differences_between_options2) == 0){
-  towrite ="There are no differences between the options to create the two datasets.They are created by the same workflow."
-} else { towrite ="The differences in options choosen between the two dataframes are : "
-qflextable2(differences_between_options2)}
-```
-
-`r towrite`
-
-The options used to create the initial data frame are: 
-
-```{r}
-s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% mutate(Options = gsub("_","-",Options))%>% mutate(Options = gsub("=","=\n",Options))%>% mutate(Value = gsub("_","-",Value))%>% mutate(Value = gsub("=","=\n",Value))
-qflextable2(s)
-```
-
-
 ```{r}
 fonction_groupement = function(x, init, final){
   require(dplyr)
@@ -423,8 +324,8 @@ fonction_groupement = function(x, init, final){
             dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in millions of tons` = Loss_en_milliers_de_tonne,
                   `Difference in number of lines` = loss_nb_ligne) %>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0))) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))
 }
-```
 
+```
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -507,246 +408,11 @@ The final dataset has a total of  `r round(somme_final_t)` in tons and of `r rou
 
 The differences is `r loss_en_tonnes` in tons (**`r loss_en_tonnes_pourcent`%**). The differences is `r loss_en_nombre` in number of fish (**`r ifelse(is.na(loss_en_nombre_pourcent), "0% (There was no data in number of fish neither in the first dataset nor in the second)",loss_en_nombre_pourcent) `**).
 
-The stratas differences between the first one and the second one are :
-
-
-(only first 10 per Dimension showed), representing `r round(pourcentage_strates_perdues)` % of the total number of stratas.
-
-```{r}
-# qflextable2(head(strates_perdues,10))
-if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>%dplyr::group_by(`Loss / Gain`,Dimension, unit) %>% arrange(`Loss / Gain`,Dimension,unit)%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Loss / Gain","Dimension","unit"))
-towrite = ""
-qflextable2(groupe_df)
-} else {towrite =("No strata is gain nor lost")}
-```
-
-`r towrite`
+The stratas differences between the first one and the second one represents `r round(pourcentage_strates_perdues)` % of the total number of stratas.
 
 # Introduction to the two datasets
 
 We first present the main characteristics of each dimension for each dataset.
-
-## Comparison of the two catch evolutions
-
-For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish.
-
-```{r}
-captures_par_time <- testtime_start %>%dplyr::mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>%dplyr::mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
-
-
-ggplot(captures_par_time) +
-  aes(
-    x = Time,
-    y = Captures,
-    fill = Origin,
-    colour = Origin,
-    group = Origin
-  ) +
-  geom_line(size = 0.5) +
-  scale_fill_hue(direction = 1) +
-  scale_color_hue(direction = 1) +
-  theme_dark() +
-  theme(legend.position = "top") +
-  facet_wrap(vars(unit), nrow = 2L)+
-  labs(x = "Time", y = "Captures")+
-  facet_grid("unit", scales = "free_y")
-```
-
-## Comparison of the evolution of the cumulative catches
-
-```{r}
-captures_par_time <- captures_par_time %>%dplyr::mutate(Time = as.Date(Precision))%>% arrange(Precision) %>%dplyr::group_by(unit, Origin) %>% dplyr::mutate(`Captures cumulées` = cumsum(`Captures`)) %>% dplyr::distinct()
-
-ggplot_capt_par_time = function(x){
-
-  ggplot(captures_par_time %>%dplyr::filter(unit==x)) +
-  aes(
-    x = Time,
-    y = `Captures cumulées`,
-    colour = Origin
-  ) +
-  geom_line(size = 0.5) +
-  scale_color_hue(direction = 1) +
-  theme_minimal() +
-  facet_wrap(vars(unit)) +
-  labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
-}
-
-ggplot_capt_par_time("Tons")
-
-```
-
-```{r}
-
-if(is_there_no){
-try(ggplot_capt_par_time("Number of fish"))}
-
-```
-
-## Comparison of the two datasets
-
-We check the distribution of the value of each dimension in tons and number of fish for each dataset.
-
-```{r}
-
-pie_chart_2 = function(dimension, first, second, topn = 5) {
-library(dplyr)
-           if(any(first$unit == "MTNO")) first[first$unit == "MTNO", ]$unit <- "MT"
-         if(any(first$unit == "NOMT")) first[first$unit == "NOMT", ]$unit <- "NO"
-           if(any(second$unit == "MTNO")) second[second$unit == "MTNO", ]$unit <- "MT"
-         if(any(second$unit == "NOMT")) second[second$unit == "NOMT", ]$unit <- "NO"
-         first[is.na(first)] <- "NA"
-         second[is.na(second)] <- "NA"
-
-r <- deparse(substitute(dimension))
-
-  colnames <- dplyr::enquo(dimension)
-
-  name1 <- dplyr::enquo(titre_1)
-  name2 <- dplyr::enquo(titre_2)
-  provisoire_i <-na.omit(first) %>%  dplyr::group_by(!!colnames, unit
-  )  %>% dplyr::summarise(value = sum(value, na.rm = TRUE)) %>% dplyr::group_by(unit) %>%
-    dplyr::arrange(desc(value)) %>%   dplyr::mutate(id = row_number())%>%
-    dplyr::mutate(class = as.factor(ifelse(id<topn  ,!!colnames,"Others"))) %>%
-    dplyr::group_by(class, unit
-    ) %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))%>%dplyr::ungroup()%>%
-    dplyr::select( value, class,unit) %>%   dplyr::group_by(unit) %>%
-    dplyr::mutate(pourcentage = prop.table(value)*100)%>%
-    dplyr::mutate(labels = paste0(pourcentage," ",  " % "))%>% dplyr::arrange(desc(class))%>%
-    dplyr::mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
-    dplyr::distinct() %>% dplyr::filter(!is.na(class))
-
-
-
-
-  provisoire_t <- na.omit(second) %>%  dplyr::group_by(!!colnames, unit)%>% dplyr::summarise(value = sum(value, na.rm = TRUE)) %>% dplyr::group_by(unit) %>%
-    dplyr::arrange(desc(value)) %>%   dplyr::mutate(id = row_number())%>%
-    dplyr::mutate(class = as.factor(ifelse(id<topn,!!colnames,"Others"))) %>% 
-    dplyr::group_by(class, unit
-    ) %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))%>%dplyr::ungroup()%>%
-    dplyr::select( value, class,unit
-    ) %>%   dplyr::group_by(unit) %>%
-    dplyr::mutate(pourcentage = prop.table(value)*100)%>%
-    dplyr::mutate(labels = paste0(pourcentage," ",  " % "))%>% dplyr::arrange(desc(class))%>%
-    dplyr::mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
-    dplyr::distinct()%>% dplyr::filter(!is.na(class))
-
-  set.seed(2) # For reproducibility of random color vector
-  # print(c(provisoire_i$class, provisoire_t$class))
-  # print(unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
-  number <- length(unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
-  # print(number)
-  pal <- brewer.pal(number,"Paired")
-#   display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE,
-# colorblindFriendly=TRUE)
-  # print(number)
-
-  # myColors <- ColorRampPalette(brewer.pal(120,"Spectral"))
-  # names(myColors) <- levels(dat$grp)
-  # set.seed(2)
-  # print(pal)
-  pal = setNames(pal, unique(unlist(as.character(c(provisoire_i$class, provisoire_t$class)))))
-  # print(pal)
-
-  ggplot_i <<- ggplot(provisoire_i%>% dplyr::filter(!is.na(class))) +
-    aes(
-      x = "",
-      fill = class,
-      group = class,
-      weight = pourcentage
-    ) +
-    geom_bar(position = "fill") +
-    scale_fill_hue(direction = 1) +
-    scale_color_hue(direction = 1) +
-    theme_minimal()+ coord_polar("y", start=0)+ geom_text(first = (provisoire_i %>% dplyr::filter(!is.na(class))%>%dplyr::mutate_if(is.numeric, round)), size = 3,
-                                                          aes( x = 1 ,y = ypos_ligne/100, label = paste0(round(pourcentage),"%")), color = "black")+
-    theme(axis.ticks.x = element_blank(),
-          axis.text.x = element_blank())+
-    labs(x = "", y="")+ scale_fill_manual(values=pal)+ guides(fill=guide_legend(title=toupper(r)))+facet_wrap("unit")+ 
-           scale_fill_discrete(na.translate = F)
-  # print("ggplot_i")
-  legend <- cowplot::get_legend(ggplot_i+ 
-           scale_fill_discrete(na.translate = F))
-
-  ggplot_t <<- ggplot(provisoire_t%>% dplyr::filter(!is.na(class))) +
-    aes(
-      x = "",
-      fill = class,
-      group = class,
-      weight = pourcentage
-    ) +
-    geom_bar(position = "fill") +
-    scale_fill_hue(direction = 1) +
-    scale_color_hue(direction = 1) +
-    theme_minimal()+ coord_polar("y", start=0)+ geom_text(first = (provisoire_t%>% dplyr::filter(!is.na(class)) %>%dplyr::mutate_if(is.numeric, round)), size = 3,
-                                                          aes( x = 1, y = ypos_ligne/100, label = paste0(round(pourcentage),"%")), color = "black")+
-    theme(axis.ticks.x = element_blank(),
-          axis.text.x = element_blank())+
-    labs(x = "", y="")+ scale_fill_manual(values=pal)+ theme(legend.position = "none")+facet_wrap("unit")+ 
-           scale_fill_discrete(na.translate = F)
-
-  title <- ggdraw() +
-    draw_label(
-      paste0("Distribution in value for the dimension : ",r),
-      fontface = 'bold',
-      x = 0,
-      hjust = 0
-    ) +
-    theme(
-      # add margin on the left of the drawing canvas,
-      # so title is aligned with left edge of first plot
-      plot.margin = margin(0, 0, 0, 7)
-    )
-  graph <<- plot_grid(ggplot_i+ theme(legend.position = "none"), ggplot_t, nrow = 2,labels = c( gsub('"','',gsub('~"','',deparse(substitute(name1)))),gsub('"','',gsub('~"','',deparse(substitute(name2))))),
-                      label_size = 10, vjust = 1.3, label_x = c(0,0), label_y = 1.025, axis = "l", align = "v")
-
-  plot_grid(title, nrow=2,plot_grid(graph,legend,ncol = 2),
-            # rel_heights values control vertical title margins
-            rel_heights = c(0.1, 1))+
-    theme(plot.background = element_rect(color = "black"))
-
-
-}
-
-
-# ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(class)))
-
-Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&
-                               colnames(init)!= "time_start"&
-                               colnames(init)!= "time_end"&
-                               colnames(init)!= "geographic_identifier"]
-  # t <- init[0,]
-```
-
-```{r}
-
-fishing_fleet <- pie_chart_2(fishingfleet,  init, final)
-source_authority <- pie_chart_2(source_authority, init, final, topn = 6)
-cat_geo <- pie_chart_2(cat_geo, init, final)
-species <- pie_chart_2(species, init, final)
-species_group <- pie_chart_2(species_group, init, final)
-# gear <- pie_chart_2(gear, init, final)
-Name_En <- pie_chart_2(Name_En, init, final)
-
-```
-
-```{r}
-species
-
-cat_geo
-
-fishing_fleet
-
-source_authority
-
-species_group
-
-Name_En
-
-# plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
-```
-
 
 ## Spatial coverage
 
@@ -780,21 +446,16 @@ number_of_cat_geo <- nrow(unique(t$cat_geo))
 cat_geo <- (unique(t$cat_geo))
 ```
 
-We represent the spatial coverage, faceted by the geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).
-
-### Spatial coverage in tons
 
 ```{r}
-fonction_empreinte_spatiale("Tons")
+spatial_coverage_init <- sum((init %>% select(geographic_identifier)%>%distinct() %>%left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)
+
+spatial_coverage_final <- sum((final %>% select(geographic_identifier) %>%distinct() %>% left_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% distinct)$st_area, na.rm = TRUE)
+
+difference_coverage <- spatial_coverage_init - spatial_coverage_final
 ```
 
-### Spatial coverage in number of fish
-
-```{r}
-if(is_there_no){
-try(fonction_empreinte_spatiale("Number of fish"))}
-
-```
+The coverage difference is `r difference_coverage` km square.
 
 # Differences
 
@@ -818,7 +479,7 @@ We will look for each dimension the `r topn` most important differences
 valeur_totale <- sum(init$value, na.rm = TRUE)
 ligne_totale <- nrow(init)
 
-unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group","gear", "Name_En")) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
+unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority", "species_group", "Name_En")) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
 
 # %>% dplyr::ungroup()%>%dplyr::group_by(test,Dimension) %>%dplyr::mutate_all(sum) %>% dplyr::ungroup() %>%dplyr::mutate(`Difference (in %)` =`Difference in millions of tons`/sum(`Difference in millions of tons`)) %>%dplyr::mutate(Precision = test) %>% dplyr::mutate_if(is.character, as.factor)%>%dplyr::select(-c(test,id)) %>% dplyr::group_by(Dimension) %>%arrange(Dimension,desc(`Difference (in %)`))
 
@@ -845,33 +506,6 @@ qflextable2(t3)
 <!-- ``` -->
 
 ## Differences in geographical data
-
-```{r testnaming, out.width="100%"}
-tmap_mode(plotting_type)
-inner_join <- inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
-
-if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
-image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
-  tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-				 id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
-  tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()
-#   tmap::tmap_save(image,"image2.png")
-# # mapshot(image, file = "image.png")
-# knitr::include_graphics("image2.png")
-image
-} else{
-
-image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
-  tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
-  tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
-image
-#   tmap::tmap_save(image,"image3.png")
-# # mapshot(image, file = "image.png")
-# knitr::include_graphics("image3.png")
-
-}
-```
 
 Here is represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information.
 
@@ -920,10 +554,7 @@ dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precisi
 #  aes(x = Precision, weight = `Difference in millions of tons`) +
 #  geom_bar(fill = "#112446") +
 #  theme_minimal()+facet_wrap("unit")
-
 dbDisconnect(con)
 
 ```
-
-
 

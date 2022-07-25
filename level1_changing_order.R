@@ -178,6 +178,10 @@ source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/disagregate_on_resdeg_Bastien.R")
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/get_rfmos_dataset_leve0_bastien.R")
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/get_rfmos_datasets_level0_B2.R")
+source(file.path(url_scripts_create_own_tuna_atlas, "raising_georef_to_nominal.R")) #modified for geoflow
+source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated.R")) #modified for geoflow
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/spatial_curation_upgrade_resolution_Bastien.R")
+
 # source("~/Documents/Tunaatlas_level1/analyse_raising_iattc_schooltype_and_fishingfleet.Rmd")
 # source("~/Documents/Tunaatlas_level1/comp_sans_shiny.Rmd")
 # connect to Tuna atlas database
@@ -743,7 +747,6 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            ntons_before_this_step <- round(georef_dataset %>% select(value)  %>% sum())
            config$logger.info(sprintf("STEP 3/5 : Gridded catch dataset before Reallocation of mislocated data has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
 
-           source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated.R")) #modified for geoflow
            # source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated_bastien.R")) #modified for geoflow
            config$logger.info("STEP 3/5: BEGIN function_spatial_curation_data_mislocated() function")
            georef_dataset<-function_spatial_curation_data_mislocated(entity=entity,
@@ -805,7 +808,6 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   config$logger.info("-----------------------------------------------------------------------------------------------------")
   config$logger.info("LEVEL 2 => STEP 3/3: Raise IRD gridded Level 1 (1 or 5 deg) input with FIRMS Level O total (nominal) catch dataset")
   config$logger.info("-----------------------------------------------------------------------------------------------------")
-  source(file.path(url_scripts_create_own_tuna_atlas, "raising_georef_to_nominal.R")) #modified for geoflow
   
   config$logger.info("Extract and load FIRMS Level 0 nominal catch data input (required if raising process is asked) ")
   	nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
@@ -1175,7 +1177,7 @@ fonction_dossier("Level2_RF3without_gears",
            
            config$logger.info("STEP 4/5: BEGIN function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
 
-           georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,options,
+           georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,opts,
                              georef_dataset=georef_dataset,
                                         resolution=5,
                                       action_to_do=opts$disaggregate_on_5deg_data_with_resolution_superior_to_5deg)
@@ -1210,7 +1212,7 @@ fonction_dossier("Level2_RF3without_gears",
            config$logger.info(sprintf("STEP 5/5 : Gridded catch dataset before Disaggregate data on 1° has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
            
            config$logger.info("STEP 5/5: BEGIN function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg() function")
-           georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,options,
+           georef_dataset<-function_disaggregate_on_resdegBastien(entity,config,opts,
                                                 georef_dataset=georef_dataset,
                                                                                                    resolution=1,
                                                                                                    action_to_do=opts$disaggregate_on_1deg_data_with_resolution_superior_to_1deg)
@@ -1268,7 +1270,6 @@ fonction_dossier("Level2_RF3without_gears",
          if(!is.null(opts$aggregate_on_5deg_data_with_resolution_inferior_to_5deg)) if (opts$aggregate_on_5deg_data_with_resolution_inferior_to_5deg) {
            
            config$logger.info("Aggregating data that are defined on quadrants or areas inferior to 5° quadrant resolution to corresponding 5° quadrant...")
-           source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/spatial_curation_upgrade_resolution_Bastien.R")
            georef_dataset<-spatial_curation_bastien(con, georef_dataset, 5)
            # georef_dataset<-rtunaatlas::spatial_curation_upgrade_resolution(con, georef_dataset, 5)
            georef_dataset<-georef_dataset$df
