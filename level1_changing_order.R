@@ -520,10 +520,12 @@ create_latex("comp_sans_shiny.Rmd")
 create_latex("short_comp.Rmd")
 
 
+con <- config$software$output$dbi
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
 if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   
   config$logger.info("Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.")
@@ -534,7 +536,8 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   
   config$logger.info("Mapping code lists of georeferenced datasets...")
   georef_dataset <- map_codelists(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
-  config$logger.info("Mapping code lists of georeferenced datasets OK")
+  config$logger.info("Mapping codecon <- config$software$output$dbi
+ lists of georeferenced datasets OK")
   
   fonction_dossier("mapping_codelist",
                    georef_dataset, 
@@ -547,9 +550,11 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   
 
   }
-
+  dbDisconnect(con)
 
  
+  con <- config$software$output$dbi
+  
 
 
 #adding treatment for all the data in irregular zone given by ctoi.
@@ -605,6 +610,8 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
   create_latex("comp_sans_shiny.Rmd")   
   create_latex("short_comp.Rmd")
+  
+  
          
     
          
@@ -688,7 +695,11 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                                options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
        
            
-           }
+         }
+   dbDisconnect(con)
+   con <- config$software$output$dbi
+   
+
    create_latex("comp_sans_shiny.Rmd")
    create_latex("short_comp.Rmd")
    
@@ -782,9 +793,13 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
    create_latex("comp_sans_shiny.Rmd")
    create_latex("short_comp.Rmd")
+   
+   dbDisconnect(con)
 
+   con <- config$software$output$dbi
+   
 
-        
+   
          #end switch LEVEL 1
 
        
@@ -1192,7 +1207,7 @@ fonction_dossier("Level2_RF3without_gears",
            config$logger.info(sprintf("STEP 4/5 : Gridded catch dataset after Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_after_disaggregation_5deg))	
            config$logger.info(sprintf("STEP 4/5 : Disaggregate data on 5° generated [%s] additionnal tons", ntons_after_disaggregation_5deg-ntons_before_this_step))
            config$logger.info("END STEP 4/5")
-           fonction_dossier("level1disagreggate5deg",
+           fonction_dossier("Disaggregate5deg",
                             georef_dataset, 
                             "Gridded catch dataset before Disaggregate data on 5° resolution has [%s] lines and total catch is [%s] Tons",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
@@ -1227,7 +1242,7 @@ fonction_dossier("Level2_RF3without_gears",
            config$logger.info(sprintf("STEP 5/5 : Gridded catch dataset after Disaggregate data on 1° has [%s] lines and total catch is now [%s] Tons", nrow(georef_dataset),ntons_after_disaggregation_1deg))	
            config$logger.info(sprintf("STEP 5/5 : Disaggregate data on 1° generated [%s] additionnal tons", ntons_after_disaggregation_1deg-ntons_before_this_step))
            config$logger.info("END STEP 5/5")
-           fonction_dossier("disagreggateallin1deg",
+           fonction_dossier("Disaggregate1deg",
                             georef_dataset, 
                             "Gridded catch dataset before Disaggregate data on 1° resolution has [%s] lines and total catch is [%s] Tons",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
@@ -1242,6 +1257,9 @@ fonction_dossier("Level2_RF3without_gears",
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
          gc()
+         dbDisconnect(con)
+         
+         con <- config$software$output$dbi
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: WCPFC at the end")
@@ -1289,6 +1307,9 @@ fonction_dossier("Level2_RF3without_gears",
            create_latex("short_comp.Rmd")
            
          }
+         dbDisconnect(con)
+         
+         con <- config$software$output$dbi
          # conflict_prefer("startsWith", "gdata")
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1312,6 +1333,9 @@ fonction_dossier("Level2_RF3without_gears",
            shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom) %>% filter(st_area == as.numeric(area))
            georef_dataset <- georef_dataset %>% semi_join(shape_without_geom, by =c("geographic_identifier"= "code"))} else{
       georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, opts$resolution_filter),]
+      dbDisconnect(con)
+      
+      con <- config$software$output$dbi
              
            }
            # georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, opts$resolution_filter),]
@@ -1323,6 +1347,7 @@ fonction_dossier("Level2_RF3without_gears",
            create_latex("short_comp.Rmd")
            
          }
+         
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: Apply filters on fishing gears if needed (Filter data by groups of gears) ")
@@ -1411,5 +1436,6 @@ fonction_dossier("Level2_RF3without_gears",
 
          gc()
          }
-         
+
+
 
