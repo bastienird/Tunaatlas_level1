@@ -263,7 +263,8 @@ if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_
 
 
 dbDisconnect(con)
-dbConnect(con)
+con <- config$software$output$dbi
+# # dbConnect(con)
 georef_dataset <- left_join(georef_dataset, irregular_iotc , by =c("geographic_identifier"= "code")) %>%
   mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
   select(-c(code_cwp))
@@ -551,9 +552,10 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
 
   }
   dbDisconnect(con)
-  dbConnect(con)
- 
   con <- config$software$output$dbi
+  
+  # dbConnect(con)
+ 
   
 
 
@@ -697,7 +699,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            
          }
    dbDisconnect(con)
-   dbConnect(con)
+   # dbConnect(con)
    con <- config$software$output$dbi
    
 
@@ -796,7 +798,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
    create_latex("short_comp.Rmd")
    
    dbDisconnect(con)
-   dbConnect(con)
+   # dbConnect(con)
 
    con <- config$software$output$dbi
    
@@ -1260,7 +1262,7 @@ fonction_dossier("Level2_RF3without_gears",
          }
          gc()
          dbDisconnect(con)
-         dbConnect(con)
+         # dbConnect(con)
          con <- config$software$output$dbi
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1310,7 +1312,7 @@ fonction_dossier("Level2_RF3without_gears",
            
          }
          dbDisconnect(con)
-         dbConnect(con)
+         # dbConnect(con)
          con <- config$software$output$dbi
          # conflict_prefer("startsWith", "gdata")
          
@@ -1336,7 +1338,7 @@ fonction_dossier("Level2_RF3without_gears",
            georef_dataset <- georef_dataset %>% semi_join(shape_without_geom, by =c("geographic_identifier"= "code"))} else{
       georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, opts$resolution_filter),]
       dbDisconnect(con)
-      dbConnect(con)
+      # dbConnect(con)
       con <- config$software$output$dbi
              
            }
