@@ -1,14 +1,48 @@
 
 getwd()
 setwd("~/Documents/Tunaatlas_level1")
+if(!require(remotes)){
+  install.packages("remotes")
 require(remotes)
-require(devtools)
-# remotes::install_github("eblondel/geoflow", force = TRUE)
+  }
+if(!require(devtools)){
+  install.packages("devtools")
+  require(devtools)
+}
+# remotes::install_github("eblondel/geoflow")
 library(geoflow)
-require(RPostgreSQL)
-library(RPostgres)
-library(RSQLite)
-library(gsheet)
+if(!require(RPostgreSQL)){
+  install.packages("RPostgreSQL")
+  require(RPostgreSQL)
+}
+if(!require(RPostgres)){
+  install.packages("RPostgres")
+  require(RPostgres)
+}
+if(!require(RSQLite)){
+  install.packages("RSQLite")
+  require(RSQLite)
+}
+if(!require(googledrive)){
+  install.packages("googledrive")
+  require(googledrive)
+}
+if(!require(DBI)){
+  install.packages("DBI")
+  require(DBI)
+}
+if(!require(gsheet)){
+  install.packages("gsheet")
+  require(gsheet)
+}
+if(!require(data.table)){
+  install.packages("data.table")
+  require(data.table)
+}
+library(geoflow)
+
+install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"))
+
 library(rtunaatlas)
 library(DBI)
 library(readr)
