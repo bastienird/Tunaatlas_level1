@@ -148,7 +148,7 @@ library(dplyr)
 
 
 ```{r}
-drv <- RSQLite::dbDriver("PostgreSQL")
+# drv <- RSQLite::dbDriver("PostgreSQL")
 con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                  user = params$user,
                  password = params$password)

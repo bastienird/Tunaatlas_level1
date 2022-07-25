@@ -110,7 +110,7 @@ if (knitr::is_html_output()){plotting_type <- "view" }
 ```
 
 ```{r}
-drv <- dbDriver("PostgreSQL")
+# drv <- dbDriver("PostgreSQL")
 con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                  user = params$user,
                  password = params$password)

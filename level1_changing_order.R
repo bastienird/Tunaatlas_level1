@@ -1,6 +1,6 @@
 function(action, entity, config){
   opts <- action$options
-  
+  con <- config$software$output$dbi
   ######################################################################
 ##### 52North WPS annotations ##########
 ######################################################################
@@ -185,7 +185,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/spati
 # source("~/Documents/Tunaatlas_level1/analyse_raising_iattc_schooltype_and_fishingfleet.Rmd")
 # source("~/Documents/Tunaatlas_level1/comp_sans_shiny.Rmd")
 # connect to Tuna atlas database
-con <- config$software$output$dbi
+# con <- config$software$output$dbi
 
 #set parameterization
 
@@ -254,7 +254,7 @@ fonction_dossier("rawdata",
 
 
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
-irregular_iotc <- DBI::dbGetQuery(con, paste0(query))
+irregular_iotc <- st_read(con, query = query)
 irregular_iotc <-irregular_iotc  %>% distinct()
 irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
 irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
@@ -262,8 +262,8 @@ irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
 if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
 
 
-dbDisconnect(con)
-con <- config$software$output$dbi
+ #dbDisconnect(con)
+# con <- config$software$output$dbi
 # # dbConnect(con)
 georef_dataset <- left_join(georef_dataset, irregular_iotc , by =c("geographic_identifier"= "code")) %>%
   mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
@@ -521,7 +521,7 @@ create_latex("comp_sans_shiny.Rmd")
 create_latex("short_comp.Rmd")
 
 
-con <- config$software$output$dbi
+
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
 config$logger.info("LEVEL 0 => STEP 2/8: Map code lists ")
@@ -537,7 +537,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   
   config$logger.info("Mapping code lists of georeferenced datasets...")
   georef_dataset <- map_codelists(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
-  config$logger.info("Mapping codecon <- config$software$output$dbi
+  config$logger.info("Mapping code# con <- config$software$output$dbi
  lists of georeferenced datasets OK")
   
   fonction_dossier("mapping_codelist",
@@ -551,8 +551,8 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   
 
   }
-  dbDisconnect(con)
-  con <- config$software$output$dbi
+   #dbDisconnect(con)
+  # con <- config$software$output$dbi
   
   # dbConnect(con)
  
@@ -698,9 +698,9 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
        
            
          }
-   dbDisconnect(con)
+    #dbDisconnect(con)
    # dbConnect(con)
-   con <- config$software$output$dbi
+   # con <- config$software$output$dbi
    
 
    create_latex("comp_sans_shiny.Rmd")
@@ -797,10 +797,10 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
    create_latex("comp_sans_shiny.Rmd")
    create_latex("short_comp.Rmd")
    
-   dbDisconnect(con)
+    #dbDisconnect(con)
    # dbConnect(con)
 
-   con <- config$software$output$dbi
+   # con <- config$software$output$dbi
    
 
    
@@ -1261,9 +1261,9 @@ fonction_dossier("Level2_RF3without_gears",
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
          gc()
-         dbDisconnect(con)
+          #dbDisconnect(con)
          # dbConnect(con)
-         con <- config$software$output$dbi
+         # con <- config$software$output$dbi
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: WCPFC at the end")
@@ -1311,9 +1311,9 @@ fonction_dossier("Level2_RF3without_gears",
            create_latex("short_comp.Rmd")
            
          }
-         dbDisconnect(con)
+          #dbDisconnect(con)
          # dbConnect(con)
-         con <- config$software$output$dbi
+         # con <- config$software$output$dbi
          # conflict_prefer("startsWith", "gdata")
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1337,9 +1337,9 @@ fonction_dossier("Level2_RF3without_gears",
            shape_without_geom  <- shapefile.fix %>% as_tibble() %>% select(-geom) %>% filter(st_area == as.numeric(area))
            georef_dataset <- georef_dataset %>% semi_join(shape_without_geom, by =c("geographic_identifier"= "code"))} else{
       georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, opts$resolution_filter),]
-      dbDisconnect(con)
+       #dbDisconnect(con)
       # dbConnect(con)
-      con <- config$software$output$dbi
+      # con <- config$software$output$dbi
              
            }
            # georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, opts$resolution_filter),]
