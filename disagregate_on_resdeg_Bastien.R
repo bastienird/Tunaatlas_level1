@@ -61,10 +61,10 @@ function_disaggregate_on_resdegBastien = function(entity,config,options,georef_d
   
   if (nrow(areas_to_project_data_to_disaggregate) > 0) {
     
-    library(sf)
     query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
     world_sf <- dbGetQuery(con, query)
     world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
+    world_sf <- world_sf[sf::st_is_valid(world_sf),]
     query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
     continent <- st_read(con, query = query)%>% filter(!st_is_empty(.))
     world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
