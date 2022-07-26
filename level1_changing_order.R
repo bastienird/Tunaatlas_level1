@@ -181,7 +181,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/get_r
 source(file.path(url_scripts_create_own_tuna_atlas, "raising_georef_to_nominal.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated.R")) #modified for geoflow
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/spatial_curation_upgrade_resolution_Bastien.R")
-
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/function_spatial_curation_data_mislocatedB.R")
 # source("~/Documents/Tunaatlas_level1/analyse_raising_iattc_schooltype_and_fishingfleet.Rmd")
 # source("~/Documents/Tunaatlas_level1/comp_sans_shiny.Rmd")
 # connect to Tuna atlas database
