@@ -1,5 +1,7 @@
-spatial_curation_intersect_areasB = function (con, df_input, df_spatial_code_list_name, intersection_spatial_code_list_name) 
+spatial_curation_intersect_areasB = function (entity, config, df_input, df_spatial_code_list_name, intersection_spatial_code_list_name) 
 {
+  con <- config$software$output$dbi
+  
   cat(paste0("Please ignore here-under warning messages 'unrecognized PostgreSQL field type unknown'"))
   inputAreas_forQuery <- paste(unique(df_input$geographic_identifier), 
                                collapse = "','")
@@ -10,7 +12,7 @@ spatial_curation_intersect_areasB = function (con, df_input, df_spatial_code_lis
   query_data_inland <- paste("WITH \n                           source_layer AS (\n                           SELECT code, label, geom FROM area.", 
                              df_spatial_code_list_name, " WHERE code IN ('", inputAreas_forQuery, 
                              "')\n                           ),intersection_layer\n                           AS (\n                           SELECT code, label, geom FROM area.", 
-                             intersection_spatial_code_list_name, "\n                           )\n                           SELECT \n                           source_layer.code as geographic_identifier_source_layer,\n                           intersection_layer.code as geographic_identifier_intersection_layer,\n                           '", 
+                             intersection_spatial_code_list_name, "\n entity,config                          )\n                           SELECT \n                           source_layer.code as geographic_identifier_source_layer,\n                           intersection_layer.code as geographic_identifier_intersection_layer,\n                           '", 
                              df_spatial_code_list_name, "' as codelist_source_layer,\n                           '", 
                              intersection_spatial_code_list_name, "' as codelist_intersection_layer,\n                           ST_Area(ST_Intersection(source_layer.geom, intersection_layer.geom))/ST_Area(source_layer.geom) as proportion_source_area_intersection\n                           FROM \n                           source_layer,intersection_layer\n                           WHERE\n                           ST_Intersects(source_layer.geom, intersection_layer.geom)", 
                              sep = "")
