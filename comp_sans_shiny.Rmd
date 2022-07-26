@@ -26,11 +26,13 @@ params:
   filter_schooltype: !r NULL
   titre_dataset_1: !r NULL
   titre_dataset_2: !r NULL
+  interest: "catch"
   colnames_to_keep: [ fishingfleet ,           species ,                  
   unit ,                  value ,                 source_authority ]
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Captures table 1"         ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
+   
 
 ---
 
@@ -293,7 +295,7 @@ fonction_filtre = function(dataframe_tot_filter) {
     }
 
   # dataframe_tot_filter <- dataframe_tot_filter 
-  dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish")) %>%dplyr::mutate(gear = as.character(gear))
+  dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ "Unknown/Effort")) %>%dplyr::mutate(gear = as.character(gear))
   
   cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
     col_types = cols(Identifier = col_skip(), 
