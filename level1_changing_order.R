@@ -769,7 +769,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
            # source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated_bastien.R")) #modified for geoflow
            config$logger.info("STEP 3/5: BEGIN function_spatial_curation_data_mislocated() function")
-           georef_dataset<-function_spatial_curation_data_mislocated(entity=entity,
+           georef_dataset<-function_spatial_curation_data_mislocatedB(entity=entity,
                                                                      config=config,
                                                                      df=georef_dataset,
                                                                      spatial_curation_data_mislocated=opts$spatial_curation_data_mislocated)
