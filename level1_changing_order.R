@@ -540,12 +540,12 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   config$logger.info("Mapping code# con <- config$software$output$dbi
  lists of georeferenced datasets OK")
   
-  # fonction_dossier("mapping_codelist",
-  #                  georef_dataset, 
-  #                  "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
-  #                  "map_codelists", list(options_mapping_map_code_lists))
-  # create_latex("comp_sans_shiny.Rmd")
-  # create_latex("short_comp.Rmd")
+  fonction_dossier("mapping_codelist",
+                   georef_dataset,
+                   "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
+                   "map_codelists", list(options_mapping_map_code_lists))
+  create_latex("comp_sans_shiny.Rmd")
+  create_latex("short_comp.Rmd")
   
   
   
