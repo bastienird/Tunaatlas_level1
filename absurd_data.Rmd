@@ -274,24 +274,24 @@ data <- readRDS(paste0(as.character(params$final),"/rds.rds"))
 data <- data %>% dplyr::full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
 drv <- dbDriver("PostgreSQL")      
-con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+conn<- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                  user = params$user,
                  password = params$password)
 
 
 query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
-world_sf <- st_make_valid(st_read(con, query = query))%>% dplyr::filter(!st_is_empty(.))
+world_sf <- st_make_valid(st_read(conn, query = query))%>% dplyr::filter(!st_is_empty(.))
 
 query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
-competence_area <- st_make_valid(st_read(con, query = query_area)) %>% dplyr::filter(!st_is_empty(.))
+competence_area <- st_make_valid(st_read(conn, query = query_area)) %>% dplyr::filter(!st_is_empty(.))
 IOTC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "IOTC"))
 IATTC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "IATTC"))
 WCPFC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "WCPFC"))
 ICCAT_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "ICCAT"))
 query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
-continent <- sf::st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+continent <- sf::st_read(conn, query = query)%>% dplyr::filter(!st_is_empty(.))
 query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
-irregular_iotc <- sf::st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+irregular_iotc <- sf::st_read(conn, query = query)%>% dplyr::filter(!st_is_empty(.))
 irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
 # test <- data %>% dplyr::inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier = code_cwp)
 irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
@@ -342,7 +342,7 @@ world_sf_with_competence_area <- world_sf %>% dplyr::mutate(area_competence = as
 
 inner_join <- data %>% dplyr::inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
 query2 <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
-world_sf2 <- st_make_valid(st_read(con, query = query2))%>% dplyr::filter(!st_is_empty(.))%>%dplyr::rename(geographic_identifier=code)
+world_sf2 <- st_make_valid(st_read(conn, query = query2))%>% dplyr::filter(!st_is_empty(.))%>%dplyr::rename(geographic_identifier=code)
 # print(colnames(inner_join))
 # print(colnames(world_sf2))
 # qflextable(head(inner_join))
@@ -395,6 +395,10 @@ qflextable2 =function(x){
   }
 
 image
+```
+
+
+```{r}
 image2
 
 ```
@@ -623,18 +627,18 @@ data <- data %>% dplyr::full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
 query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
 
-world_sf <- st_make_valid(st_read(con, query = query))%>% dplyr::filter(!st_is_empty(.))
+world_sf <- st_make_valid(st_read(conn, query = query))%>% dplyr::filter(!st_is_empty(.))
 
 query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
-competence_area <- st_make_valid(st_read(con, query = query_area)) %>% dplyr::filter(!st_is_empty(.))
+competence_area <- st_make_valid(st_read(conn, query = query_area)) %>% dplyr::filter(!st_is_empty(.))
 IOTC_shape <- competence_area %>% dplyr::filter(code == "IOTC")
 IATTC_shape <- competence_area %>% dplyr::filter(code == "IATTC")
 WCPFC_shape <- competence_area %>% dplyr::filter(code == "WCPFC")
 ICCAT_shape <- competence_area %>% dplyr::filter(code == "ICCAT")
 query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
-continent <- st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+continent <- st_read(conn, query = query)%>% dplyr::filter(!st_is_empty(.))
 query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
-irregular_iotc <- st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+irregular_iotc <- st_read(conn, query = query)%>% dplyr::filter(!st_is_empty(.))
 irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
 # test <- data %>% dplyr::inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier = code_cwp)
 irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
@@ -772,7 +776,7 @@ lapply(source_authority, function(x){assign(paste0("table_",x), a #%>% dplyr::fi
                                             , envir = .GlobalEnv)
   write.csv(paste0("table_",x), file = paste0("data/issues_with_data_table",x,".csv"))})
 
-dbDisconnect(con)
+dbDisconnect(conn)
 
 ```
 

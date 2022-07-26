@@ -10,7 +10,7 @@ function(action, entity, config){
 # wps.in: id = include_ICCAT, type = string, title = Include ICCAT data (Atlantic Ocean) in the tuna atlas?, value = "TRUE|FALSE";
 # wps.in: id = include_IATTC, type = string, title = Include IATTC data (Eastern Pacific Ocean) in the tuna atlas?, value = "TRUE|FALSE";
 # wps.in: id = include_WCPFC, type = string, title = Include WCPFC data (Western Pacific Ocean) in the tuna atlas?, value = "TRUE|FALSE";
-# wps.in: id = include_CCSBT, type = string, title = Include CCSBT data (Southern hemisphere Oceans - only Southern Bluefin Tuna) in the atlas?, value = "TRUE|FALSE";
+# wps.in: id = include_CCSBT, type = string, title = Include CCSBT data db(Southern hemisphere Oceans - only Southern Bluefin Tuna) in the atlas?, value = "TRUE|FALSE";
 # wps.in: id = datasets_year_release, type = string, title = Year of release of the datasets by the tRFMOs. First available year is 2017. Usually datasets released in the year Y contain the time series from the beginning of the fisheries (e.g. 1950) to year Y-2 (included). For instance 2017 will extract the datasets released in 2017 and that cover the time series from 1950 to 2015 (included), value = "2017";
 # wps.in: id = iccat_ps_include_type_of_school, type = string, title = Concerns ICCAT Purse Seine data. Use only if parameter include_ICCAT is set to TRUE. ICCAT disseminates two catch-and-efforts datasets: one that provides the detail of the type of school (Fad|Free school) for purse seine fisheries only and that starts in 1994 (called Task II catch|effort by operation mode Fad|Free school) and one that does not provide the information of the type of school and that covers all the time period (from 1950) (called Task II catch|effort). These data are redundant (i.e. the data from the dataset Task II catch|effort by operation mode are also available in the dataset Task II catch|effort but in the latter the information on the type of school is not available). Combine both datasets to produce a dataset with fishing mode information (Fad | Free school)? TRUE : both datasets will be combined to produce a dataset with fishing mode information (Fad | free school). FALSE : Only the dataset without the type of school will be used. In that case the output dataset will not have the information on the fishing mode for ICCAT., value = "TRUE|FALSE";
 # wps.in: id = iattc_ps_raise_flags_to_schooltype, type = string, title = Concerns IATTC Purse Seine data. Use only if parameter include_IATTC is set to TRUE. For confidentiality policies information on fishing country (flag) and type of school for the geo-referenced catches is available in separate files for the Eastern Pacific Ocean purse seine datasets. IATTC hence provides two public domain dataset: one with the information on the type of school and one with the information on the flag. Both datasets can be combined - using raising methods - to estimate the catches by both flag and type of school for purse seine fisheries. Combine both datasets? TRUE : both datasets (by fishing mode and by flag) will be combined - using raising methods i.e. dataset with the information on the flag will be raised to the dataset with the information on the type of school - to have the detail on both fishing mode and flag for each stratum. FALSE : Only one dataset will be used (either Flag or Type of school). The parameter dimension_to_use_if_no_raising_flags_to_schooltype allows to decide which dataset to use., value = "TRUE|FALSE";
@@ -189,7 +189,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/spati
 
 #set parameterization
 
-source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/96683c75f389270612dbcfbb6ea1e30a0b878945/fonction_dossier.R")
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
 # function_creation_options()
 library(RPostgreSQL)
   j <- 1
@@ -243,13 +243,13 @@ georef_dataset<-dataset
 class(georef_dataset$value) <- "numeric"
 rm(dataset)
 fonction_dossier("rawdata",
-                 georef_dataset, 
+                 georef_dataset,
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-                 "get_rfmos_datasets_level0"  , list(options_include_IOTC,options_include_ICCAT, 
-                                                  options_include_IATTC,options_include_WCPFC, 
+                 "get_rfmos_datasets_level0"  , list(options_include_IOTC,options_include_ICCAT,
+                                                  options_include_IATTC,options_include_WCPFC,
                                                   options_include_CCSBT, options_iattc_ps_catch_billfish_shark_raise_to_effort,
                                                   options_iattc_ps_raise_flags_to_schooltype,
-                                                  options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype, 
+                                                  options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
                                                   options_iccat_ps_include_type_of_school))
 
 
@@ -271,10 +271,10 @@ georef_dataset <- left_join(georef_dataset, irregular_iotc , by =c("geographic_i
 
 georef_dataset$geographic_identifier = str_replace_all(georef_dataset$geographic_identifier,"6130045\n","6130045")
 
-fonction_dossier("rawdata_modyfing_georeferenced_errors",
-                 georef_dataset, 
-                 "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-                 "get_rfmos_datasets_level0"  )
+# fonction_dossier("rawdata_modyfing_georeferenced_errors",
+#                  georef_dataset, 
+#                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
+#                  "get_rfmos_datasets_level0"  )
 #-----------------------------------------------------------------
 
 variable <- opts$fact
@@ -513,12 +513,12 @@ if(variable == "catch") {
   georef_dataset <- rbind(georef_dataset %>% filter(source_authority!= "IATTC"), iattc_data)
 }
 
-fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc and iccat data", "raise_datasets_by_dimension", 
-                 list(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
-                   options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
-                   ) )
-create_latex("comp_sans_shiny.Rmd")
-create_latex("short_comp.Rmd")
+# fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc and iccat data", "raise_datasets_by_dimension", 
+#                  list(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+#                    options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
+#                    ) )
+# create_latex("comp_sans_shiny.Rmd")
+# create_latex("short_comp.Rmd")
 
 
 
@@ -540,12 +540,12 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   config$logger.info("Mapping code# con <- config$software$output$dbi
  lists of georeferenced datasets OK")
   
-  fonction_dossier("mapping_codelist",
-                   georef_dataset, 
-                   "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
-                   "map_codelists", list(options_mapping_map_code_lists))
-  create_latex("comp_sans_shiny.Rmd")
-  create_latex("short_comp.Rmd")
+  # fonction_dossier("mapping_codelist",
+  #                  georef_dataset, 
+  #                  "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
+  #                  "map_codelists", list(options_mapping_map_code_lists))
+  # create_latex("comp_sans_shiny.Rmd")
+  # create_latex("short_comp.Rmd")
   
   
   
@@ -574,13 +574,13 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
            georef_dataset <- function_overlapped(dataset = georef_dataset , con =con , rfmo_to_keep = overlapping_zone_iattc_wcpfc_data_to_keep,
                                                  rfmo_not_to_keep = (if (overlapping_zone_iattc_wcpfc_data_to_keep == "IATTC"){"WCPFC"} else {"IATTC"}), 
                                                  strata = options_strata_overlap_iattc_wcpfc)
-           fonction_dossier("overlap_iattc_wcpfc",
-                            georef_dataset, 
-                            "Keeping data from IATTC or WCPFC ",
-                            "function_overlapped" , list(options_include_IATTC, 
-                                                      options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
-             create_latex("comp_sans_shiny.Rmd") 
-             create_latex("short_comp.Rmd")
+           # fonction_dossier("overlap_iattc_wcpfc",
+           #                  georef_dataset, 
+           #                  "Keeping data from IATTC or WCPFC ",
+           #                  "function_overlapped" , list(options_include_IATTC, 
+           #                                            options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
+             # create_latex("comp_sans_shiny.Rmd") 
+             # create_latex("short_comp.Rmd")
            
 
            }
@@ -600,18 +600,18 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
   
   config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_wcpfc_data_to_keep," in the IOTC/WCPFC overlapping zone OK"))
  
-  fonction_dossier("overlap_iotc_wcpfc",
-                   georef_dataset, 
-                   "Keeping data from wcpfc or iotc",
-                   "function_overlapped",
-                   list(options_include_WCPFC, 
-                     options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep, options_strata_overlap_iotc_wcpfc))
+  # fonction_dossier("overlap_iotc_wcpfc",
+  #                  georef_dataset, 
+  #                  "Keeping data from wcpfc or iotc",
+  #                  "function_overlapped",
+  #                  list(options_include_WCPFC, 
+  #                    options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep, options_strata_overlap_iotc_wcpfc))
  }
   
 
 
-  create_latex("comp_sans_shiny.Rmd")   
-  create_latex("short_comp.Rmd")
+  # create_latex("comp_sans_shiny.Rmd")   
+  # create_latex("short_comp.Rmd")
   
   
          
@@ -631,17 +631,17 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
           
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_wcpfc_ccsbt_data_to_keep," in the WCPFC/CCSBT overlapping zone OK"))
  
-           fonction_dossier("overlap_ccsbt_wcpfc",
-                            georef_dataset, 
-                            "Keeping data from CCSBT or WCPFC ",
-                            "function_overlapped", 
-                            list( options_include_CCSBT  , 
-                               options_include_WCPFC ,
-                               options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
+           # fonction_dossier("overlap_ccsbt_wcpfc",
+           #                  georef_dataset, 
+           #                  "Keeping data from CCSBT or WCPFC ",
+           #                  "function_overlapped", 
+           #                  list( options_include_CCSBT  , 
+           #                     options_include_WCPFC ,
+           #                     options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
     
          }
-   create_latex("comp_sans_shiny.Rmd")
-   create_latex("short_comp.Rmd")
+   # create_latex("comp_sans_shiny.Rmd")
+   # create_latex("short_comp.Rmd")
       
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -660,18 +660,18 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_iccat_ccsbt_data_to_keep," in the ICCAT/CCSBT overlapping zone OK"))
        
-           fonction_dossier("overlap_iccat_ccsbt",
-                            georef_dataset, 
-                            "Keeping data from CCSBT or ICCAT ",
-                            "function_overlapped", 
-                            list(options_include_CCSBT,
-                              options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
+           # fonction_dossier("overlap_iccat_ccsbt",
+           #                  georef_dataset, 
+           #                  "Keeping data from CCSBT or ICCAT ",
+           #                  "function_overlapped", 
+           #                  list(options_include_CCSBT,
+           #                    options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
            
         
            
          }
-   create_latex("comp_sans_shiny.Rmd")
-   create_latex("short_comp.Rmd")
+   # create_latex("comp_sans_shiny.Rmd")
+   # create_latex("short_comp.Rmd")
          
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -689,12 +689,12 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_ccsbt_data_to_keep," in the IOTC/CCSBT overlapping zone OK"))
   
-           fonction_dossier("overlap_iotc_ccsbt",
-                            georef_dataset, 
-                            "Keeping data from CCSBT or IOTC ",
-                            "function_overlapped", 
-                            list( options_include_CCSBT  , 
-                               options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
+           # fonction_dossier("overlap_iotc_ccsbt",
+           #                  georef_dataset, 
+           #                  "Keeping data from CCSBT or IOTC ",
+           #                  "function_overlapped", 
+           #                  list( options_include_CCSBT  , 
+           #                     options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
        
            
          }
@@ -743,6 +743,10 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                                options_unit_conversion_csv_conversion_factor_url ,
                                options_unit_conversion_codelist_geoidentifiers_conversion_factors ,
                                options_unit_conversion_convert))
+           
+           create_latex("comp_sans_shiny.Rmd")
+           create_latex("short_comp.Rmd")
+           
 
            
          }else{
@@ -751,11 +755,10 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }         
 
-   create_latex("comp_sans_shiny.Rmd")
-   create_latex("short_comp.Rmd")
-   create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+
          
          if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
+           create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
            
            config$logger.info("-----------------------------------------------------------------------------------------------------")
            config$logger.info(sprintf("LEVEL 1 => STEP 3/5  for file [%s] is executed: Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
@@ -786,6 +789,9 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             "Reallocation of mislocated data, and just before, taking care of irregular zone given by ctoi",
                             "function_spatial_curation_data_mislocated",
                             list(options_spatial_curation_data_mislocated))
+           create_latex("comp_sans_shiny.Rmd")
+           create_latex("short_comp.Rmd")
+           create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
            gc()
            
          }else{
@@ -794,8 +800,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            config$logger.info("-----------------------------------------------------------------------------------------------------")
          }
 
-   create_latex("comp_sans_shiny.Rmd")
-   create_latex("short_comp.Rmd")
+
    
     #dbDisconnect(con)
    # dbConnect(con)

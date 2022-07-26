@@ -111,19 +111,19 @@ if (knitr::is_html_output()){plotting_type <- "view" }
 
 ```{r}
 # drv <- dbDriver("PostgreSQL")
-con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                  user = params$user,
                  password = params$password)
 
 
 
-# dbExistsTable(con,"iattc_after_treatment")
-# dbExistsTable(con,"/../area.area_wkt")
+# dbExistsTable(conn,"iattc_after_treatment")
+# dbExistsTable(conn,"/../area.area_wkt")
 
 # summary(con)
 # dbListTables(con)
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-world_sf <- st_read(con, query = query) 
+world_sf <- st_read(conn, query = query) 
 
 shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
@@ -136,10 +136,10 @@ kbl <- function(data) {
 
 query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
 continent <- #fSpatPlan_Convert2PacificRobinson(
-  st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.))#)
+  st_read(conn, query = query)%>%dplyr::filter(!st_is_empty(.))#)
 
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
-irregular_iotc <- dbGetQuery(con, paste0(query))
+irregular_iotc <- dbGetQuery(conn, paste0(query))
 irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
 irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
 irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
@@ -554,7 +554,7 @@ dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precisi
 #  aes(x = Precision, weight = `Difference in millions of tons`) +
 #  geom_bar(fill = "#112446") +
 #  theme_minimal()+facet_wrap("unit")
-dbDisconnect(con)
+dbDisconnect(conn
 
 ```
 
