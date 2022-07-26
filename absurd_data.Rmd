@@ -499,7 +499,7 @@ image
 Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
 
 ```{r}
-rawdata<- readRDS(paste0(params$rawdata,".rds")) #%>% dplyr::filter(source_authority == params$source_authority)
+rawdata<- readRDS(paste0(params$rawdata,"/rds.rds")) #%>% dplyr::filter(source_authority == params$source_authority)
 rdslevel0 <- rawdata
 
 strata_nomt <- rdslevel0 %>% dplyr::filter(unit %in% c("NOMT")) #%>% dplyr::select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% dplyr::summarise(value = sum(value)) #%>% dplyr::mutate(unit = "NO", unit_target = "MT")
