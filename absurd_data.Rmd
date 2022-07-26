@@ -184,7 +184,7 @@ pie_chart_2 = function(dimension, unit = c("MT","MTNO","Tons","t"), first, secon
       paste0("Distribution in value for the dimension : ",r),
       fontface = 'bold',
       x = 0,
-      hjust = 0tunaatlas.d4science.org
+      hjust = 0
     ) +
     theme(
       # add margin on the left of the drawing canvas,
@@ -273,8 +273,7 @@ data <- readRDS(paste0(as.character(params$final),"/rds.rds"))
 
 data <- data %>% dplyr::full_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
-# drv <- dbDriver("PostgreSQL")   
-
+# drv <- dbDriver("PostgreSQL")      
 conn<- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                  user = params$user,
                  password = params$password)
@@ -500,7 +499,7 @@ image
 Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
 
 ```{r}
-rawdata<- readRDS(paste0(params$rawdata,".rds")) #%>% dplyr::filter(source_authority == params$source_authority)
+rawdata<- readRDS(paste0(params$rawdata,"/rds.rds")) #%>% dplyr::filter(source_authority == params$source_authority)
 rdslevel0 <- rawdata
 
 strata_nomt <- rdslevel0 %>% dplyr::filter(unit %in% c("NOMT")) #%>% dplyr::select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% dplyr::summarise(value = sum(value)) #%>% dplyr::mutate(unit = "NO", unit_target = "MT")
