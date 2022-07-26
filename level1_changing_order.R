@@ -689,12 +689,12 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_ccsbt_data_to_keep," in the IOTC/CCSBT overlapping zone OK"))
   
-           # fonction_dossier("overlap_iotc_ccsbt",
-           #                  georef_dataset, 
-           #                  "Keeping data from CCSBT or IOTC ",
-           #                  "function_overlapped", 
-           #                  list( options_include_CCSBT  , 
-           #                     options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
+           fonction_dossier("overlap_iotc_ccsbt",
+                            georef_dataset,
+                            "Keeping data from CCSBT or IOTC ",
+                            "function_overlapped",
+                            list( options_include_CCSBT  ,
+                               options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
        
            
          }
