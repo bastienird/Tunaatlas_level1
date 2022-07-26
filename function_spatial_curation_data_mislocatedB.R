@@ -45,7 +45,7 @@ spatial_curation_intersect_areasB = function (con, df_input, df_spatial_code_lis
 
 ############################
 
-function_spatial_curation_data_mislocated = function(entity,config,df,spatial_curation_data_mislocated){
+function_spatial_curation_data_mislocatedB = function(entity,config,df,spatial_curation_data_mislocated){
   con <- config$software$output$dbi
   config$logger.info("Reallocating data that are in land areas")
   
