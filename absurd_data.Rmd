@@ -776,7 +776,7 @@ lapply(source_authority, function(x){assign(paste0("table_",x), a #%>% dplyr::fi
                                             , envir = .GlobalEnv)
   write.csv(paste0("table_",x), file = paste0("data/issues_with_data_table",x,".csv"))})
 
-dbDisconnect(conn)
+# dbDisconnect(conn)
 
 ```
 
