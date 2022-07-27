@@ -13,7 +13,7 @@ function_spatial_curation_data_mislocatedB = function(entity,config,df,spatial_c
     query_data_inland <- paste("WITH \n                           source_layer AS (\n                           SELECT code, label, geom FROM area.", 
                                df_spatial_code_list_name, " WHERE code IN ('", inputAreas_forQuery, 
                                "')\n                           ),intersection_layer\n                           AS (\n                           SELECT code, label, geom FROM area.", 
-                               intersection_spatial_code_list_name, "\n entity,config                          )\n                           SELECT \n                           source_layer.code as geographic_identifier_source_layer,\n                           intersection_layer.code as geographic_identifier_intersection_layer,\n                           '", 
+                               intersection_spatial_code_list_name, "\n                  )\n                           SELECT \n                           source_layer.code as geographic_identifier_source_layer,\n                           intersection_layer.code as geographic_identifier_intersection_layer,\n                           '", 
                                df_spatial_code_list_name, "' as codelist_source_layer,\n                           '", 
                                intersection_spatial_code_list_name, "' as codelist_intersection_layer,\n                           ST_Area(ST_Intersection(source_layer.geom, intersection_layer.geom))/ST_Area(source_layer.geom) as proportion_source_area_intersection\n                           FROM \n                           source_layer,intersection_layer\n                           WHERE\n                           ST_Intersects(source_layer.geom, intersection_layer.geom)", 
                                sep = "")
@@ -52,7 +52,7 @@ function_spatial_curation_data_mislocatedB = function(entity,config,df,spatial_c
   config$logger.info("Executing rtunaatlas::spatial_curation_intersect_areas")
   #@juldebar => georef_dataset was not set
   georef_dataset <- df
-  areas_in_land<-spatial_curation_intersect_areasB(con,georef_dataset,"areas_tuna_rfmos_task2","gshhs_world_coastlines")
+  areas_in_land<-spatial_curation_intersect_areasB(entity, config,georef_dataset,"areas_tuna_rfmos_task2","gshhs_world_coastlines")
   
   areas_in_land<-areas_in_land$df_input_areas_intersect_intersection_layer %>%
     group_by(geographic_identifier_source_layer) %>%
