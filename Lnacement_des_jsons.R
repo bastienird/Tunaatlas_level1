@@ -11,6 +11,10 @@ if(!require(devtools)){
 }
 # remotes::install_github("eblondel/geoflow")
 library(geoflow)
+if(!require(RSQLite)){
+  install.packages("RSQLite")
+  require(RSQLite)
+}
 if(!require(RPostgreSQL)){
   install.packages("RPostgreSQL")
   require(RPostgreSQL)
@@ -19,10 +23,7 @@ if(!require(RPostgres)){
   install.packages("RPostgres")
   require(RPostgres)
 }
-if(!require(RSQLite)){
-  install.packages("RSQLite")
-  require(RSQLite)
-}
+
 if(!require(googledrive)){
   install.packages("googledrive")
   require(googledrive)
@@ -39,10 +40,10 @@ if(!require(data.table)){
   install.packages("data.table")
   require(data.table)
 }
+
+
+# install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"))
 library(geoflow)
-
-install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"))
-
 library(rtunaatlas)
 library(DBI)
 library(readr)
@@ -70,6 +71,12 @@ executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iccat.json") #fais abor
 executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
 config <- initWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
 # executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")
+# fonction_dossier("overlap_iotc_ccsbt",
+#                  georef_dataset, 
+#                  "Keeping data from CCSBT or IOTC ",
+#                  "function_overlapped", 
+#                  list( options_include_CCSBT  , 
+#                     options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
 
 executeWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_global_L0_datasets_catch_d4science_2022.json")
 
@@ -84,7 +91,13 @@ config <- initWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_data
 
 if(!require(rtunaatlas)) {
   install_github("eblondel/rtunaatlas", force=TRUE)
-  library(rtunaatlas)
+  library(rtunaatlas)           # fonction_dossier("overlap_iotc_ccsbt",
+  #                  georef_dataset, 
+  #                  "Keeping data from CCSBT or IOTC ",
+  #                  "function_overlapped", 
+  #                  list( options_include_CCSBT  , 
+  #                     options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
+  
   }
 setwd("~/Documents/Tunaatlas_level1")
 files <- "from_scratch/json/tunaatlas_qa_datasets_iattc.json"
@@ -128,7 +141,7 @@ jobdir <- initWorkflowJob(config)
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
  # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220616115652"
 config$job <- jobdir
-config$job <- "~/Documents/Tunaatlas_level1/jobs/20220718010321"
+config$job <- "~/Documents/Tunaatlas_level1/jobs/20220725163707"
 executeWorkflowJob(config)
 # geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")
 
@@ -141,7 +154,7 @@ contacts <- config$metadata$content$contacts
 
 entity <- config$metadata$content$entities[[1]]
 # entity <- entities[[1]]
-
+action <- entity$data$actions[[1]]
 options <- entity$data$actions[[1]]$options
 #options <-config$actions[[1]]$options
 

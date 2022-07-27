@@ -7,7 +7,7 @@ output:
     number_sections: true
 date: '2022-05-11'
 params:
-  final: "~/Documents/Tunaatlas_level1/jobs/20220726122346/entities/global_catch_1deg_level0/Markdown/mapping_codelist"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220723181100/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
   rawdata: "data/rawdata"
   dbname: "tunaatlas"
   host: "db-tunaatlas.d4science.org"
@@ -499,7 +499,7 @@ image
 Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
 
 ```{r}
-rawdata<- readRDS(paste0(params$rawdata,"/rds.rds")) #%>% dplyr::filter(source_authority == params$source_authority)
+rawdata<- readRDS(paste0(params$rawdata,".rds")) #%>% dplyr::filter(source_authority == params$source_authority)
 rdslevel0 <- rawdata
 
 strata_nomt <- rdslevel0 %>% dplyr::filter(unit %in% c("NOMT")) #%>% dplyr::select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% dplyr::summarise(value = sum(value)) #%>% dplyr::mutate(unit = "NO", unit_target = "MT")
