@@ -3,14 +3,27 @@ comparison_each_step <- function(entity, config, options){
   #create and load metadata table with entities as dataframe
   if(dir.exists("Markdown")){
     Msg <- "Creating comparison for each step"
-    config$logger.error(Msg)
-  
-  nominal_dataset <- readr::read_csv("data2/global_nominal_catch_firms_level0.csv")
+    config$logger.info(Msg)
+
+  nominal_dataset <- readr::read_csv("data/global_nominal_catch_firms_level0.csv")
   
   if(!require(readtext)){
     install.packages("readtext")
     require(readtext)
   }
+  if(!require(ggplot2)){
+    install.packages("ggplot2")
+    require(ggplot2)
+  }
+  if(!require(patchwork)){
+    install.packages("patchwork")
+    require(patchwork)
+  }
+  if(!require(hrbrthemes)){
+    install.packages("hrbrthemes")
+    require(hrbrthemes)
+  }
+  
   if(!(is.null(options$species_filter))){nominal <- sum((nominal_dataset %>% 
                                                           filter(species %in% options$species_filter))$value)
   } else {nominal <- sum(nominal_dataset$value)}
@@ -110,9 +123,7 @@ comparison_each_step <- function(entity, config, options){
       reduced <- df %>% select(Step = global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
-      library(ggplot2)
-      library(patchwork) # To display 2 charts together
-      library(hrbrthemes)
+
       coeff <- 3
       temperatureColor <- "#69b3a2"
       
