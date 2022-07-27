@@ -758,7 +758,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
          
          if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
-           # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+           create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
            
            config$logger.info("---------------------------------------spatial_curation_intersect_areasB--------------------------------------------------------------")
            config$logger.info(sprintf("LEVEL 1 => STEP 3/5  for file [%s] is executed: Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
