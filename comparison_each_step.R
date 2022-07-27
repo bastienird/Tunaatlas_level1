@@ -5,7 +5,7 @@ comparison_each_step <- function(entity, config, options){
     Msg <- "Creating comparison for each step"
     config$logger.error(Msg)
   
-  nominal_dataset <- readr::read_csv("data/global_nominal_catch_firms_level0.csv")
+  nominal_dataset <- readr::read_csv("data2/global_nominal_catch_firms_level0.csv")
   
   if(!require(readtext)){
     install.packages("readtext")
