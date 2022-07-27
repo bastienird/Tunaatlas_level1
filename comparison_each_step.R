@@ -2,8 +2,8 @@ comparison_each_step <- function(entity, config, options){
   
   #create and load metadata table with entities as dataframe
   if(dir.exists("Markdown")){
-    Msg <- "Creating comparison for each step"
-    config$logger.info(Msg)
+    # Msg <- "Creating comparison for each step"
+    # config$logger.info(Msg)
 
   nominal_dataset <- readr::read_csv("data/global_nominal_catch_firms_level0.csv")
   
