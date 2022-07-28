@@ -32,7 +32,7 @@ params:
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Captures table 1"         ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
-  conn: con
+  con: con
    
 
 ---
@@ -151,11 +151,12 @@ library(dplyr)
 
 
 ```{r}
+conn <- params$con
 # drv <- RSQLite::dbDriver("PostgreSQL")
-conn<- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
-                 user = params$user,
-                 password = params$password)
-
+# conn<- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+#                  user = params$user,
+#                  password = params$password)
+# 
 # dbExistsTable(conn,"iattc_after_treatment")
 # dbExistsTable(conn,"/../area.area_wkt")
 

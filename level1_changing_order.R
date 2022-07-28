@@ -136,13 +136,13 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                                            port = config$software$input$dbi_config$parameters$port, 
                                                                            user = config$software$input$dbi_config$parameters$user,
                                                                            dbname=config$software$input$dbi_config$parameters$dbname,
-                                                     password = config$software$input$dbi_config$parameters$password, conn = con
+                                                     password = config$software$input$dbi_config$parameters$password, con = con
                                                                            ))}
   if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
-                                                                                        password = config$software$input$dbi_config$parameters$password, conn = con
+                                                                                        password = config$software$input$dbi_config$parameters$password, con = con
                                                                           ))}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   

@@ -30,7 +30,7 @@ params:
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Captures table 1"         ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
-  conn: con
+  con: con
 
 ---
 
@@ -112,10 +112,11 @@ if (knitr::is_html_output()){plotting_type <- "view" }
 
 ```{r}
 # drv <- dbDriver("PostgreSQL")
-conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
-                 user = params$user,
-                 password = params$password)
+# conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+#                  user = params$user,
+#                  password = params$password)
 
+conn <- params$con
 
 
 # dbExistsTable(conn,"iattc_after_treatment")
