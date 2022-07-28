@@ -30,6 +30,7 @@ params:
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Captures table 1"         ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
+  conn: con
 
 ---
 

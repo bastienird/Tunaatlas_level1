@@ -94,7 +94,7 @@ last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
 # step_for_rmd <- 1
-create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE){
+create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, con= con){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   
   wd <- getwd()
@@ -136,13 +136,13 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE){
                                                                            port = config$software$input$dbi_config$parameters$port, 
                                                                            user = config$software$input$dbi_config$parameters$user,
                                                                            dbname=config$software$input$dbi_config$parameters$dbname,
-                                                     password = config$software$input$dbi_config$parameters$password
+                                                     password = config$software$input$dbi_config$parameters$password, conn = con
                                                                            ))}
   if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
-                                                                                        password = config$software$input$dbi_config$parameters$password
+                                                                                        password = config$software$input$dbi_config$parameters$password, conn = con
                                                                           ))}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   
