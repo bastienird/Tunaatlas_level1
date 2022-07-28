@@ -271,10 +271,10 @@ georef_dataset <- left_join(georef_dataset, irregular_iotc , by =c("geographic_i
 
 georef_dataset$geographic_identifier = str_replace_all(georef_dataset$geographic_identifier,"6130045\n","6130045")
 
-# fonction_dossier("rawdata_modyfing_georeferenced_errors",
-#                  georef_dataset, 
-#                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-#                  "get_rfmos_datasets_level0"  )
+fonction_dossier("rawdata_modyfing_georeferenced_errors",
+                 georef_dataset,
+                 "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
+                 "get_rfmos_datasets_level0"  )
 #-----------------------------------------------------------------
 
 variable <- opts$fact
@@ -513,12 +513,12 @@ if(variable == "catch") {
   georef_dataset <- rbind(georef_dataset %>% filter(source_authority!= "IATTC"), iattc_data)
 }
 
-# fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc and iccat data", "raise_datasets_by_dimension", 
-#                  list(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
-#                    options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
-#                    ) )
-# create_latex("comp_sans_shiny.Rmd")
-# create_latex("short_comp.Rmd")
+fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc and iccat data", "raise_datasets_by_dimension",
+                 list(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+                   options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
+                   ) )
+create_latex("comp_sans_shiny.Rmd")
+create_latex("short_comp.Rmd")
 
 
 
@@ -574,13 +574,13 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
            georef_dataset <- function_overlapped(dataset = georef_dataset , con =con , rfmo_to_keep = overlapping_zone_iattc_wcpfc_data_to_keep,
                                                  rfmo_not_to_keep = (if (overlapping_zone_iattc_wcpfc_data_to_keep == "IATTC"){"WCPFC"} else {"IATTC"}), 
                                                  strata = options_strata_overlap_iattc_wcpfc)
-           # fonction_dossier("overlap_iattc_wcpfc",
-           #                  georef_dataset, 
-           #                  "Keeping data from IATTC or WCPFC ",
-           #                  "function_overlapped" , list(options_include_IATTC, 
-           #                                            options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
-             # create_latex("comp_sans_shiny.Rmd") 
-             # create_latex("short_comp.Rmd")
+           fonction_dossier("overlap_iattc_wcpfc",
+                            georef_dataset,
+                            "Keeping data from IATTC or WCPFC ",
+                            "function_overlapped" , list(options_include_IATTC,
+                                                      options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
+           create_latex("comp_sans_shiny.Rmd")
+           create_latex("short_comp.Rmd")
            
 
            }
@@ -600,18 +600,19 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
   
   config$logger.info(paste0("Keeping only data from ",overlapping_zone_iotc_wcpfc_data_to_keep," in the IOTC/WCPFC overlapping zone OK"))
  
-  # fonction_dossier("overlap_iotc_wcpfc",
-  #                  georef_dataset, 
-  #                  "Keeping data from wcpfc or iotc",
-  #                  "function_overlapped",
-  #                  list(options_include_WCPFC, 
-  #                    options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep, options_strata_overlap_iotc_wcpfc))
+  fonction_dossier("overlap_iotc_wcpfc",
+                   georef_dataset,
+                   "Keeping data from wcpfc or iotc",
+                   "function_overlapped",
+                   list(options_include_WCPFC,
+                     options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep, options_strata_overlap_iotc_wcpfc))
+  create_latex("comp_sans_shiny.Rmd")
+  create_latex("short_comp.Rmd")
+  
  }
   
 
 
-  # create_latex("comp_sans_shiny.Rmd")   
-  # create_latex("short_comp.Rmd")
   
   
          
@@ -631,17 +632,18 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
           
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_wcpfc_ccsbt_data_to_keep," in the WCPFC/CCSBT overlapping zone OK"))
  
-           # fonction_dossier("overlap_ccsbt_wcpfc",
-           #                  georef_dataset, 
-           #                  "Keeping data from CCSBT or WCPFC ",
-           #                  "function_overlapped", 
-           #                  list( options_include_CCSBT  , 
-           #                     options_include_WCPFC ,
-           #                     options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
+           fonction_dossier("overlap_ccsbt_wcpfc",
+                            georef_dataset,
+                            "Keeping data from CCSBT or WCPFC ",
+                            "function_overlapped",
+                            list( options_include_CCSBT  ,
+                               options_include_WCPFC ,
+                               options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
+           create_latex("comp_sans_shiny.Rmd")
+           create_latex("short_comp.Rmd")
     
          }
-   # create_latex("comp_sans_shiny.Rmd")
-   # create_latex("short_comp.Rmd")
+
       
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -660,18 +662,18 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            
            config$logger.info(paste0("Keeping only data from ",overlapping_zone_iccat_ccsbt_data_to_keep," in the ICCAT/CCSBT overlapping zone OK"))
        
-           # fonction_dossier("overlap_iccat_ccsbt",
-           #                  georef_dataset, 
-           #                  "Keeping data from CCSBT or ICCAT ",
-           #                  "function_overlapped", 
-           #                  list(options_include_CCSBT,
-           #                    options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
-           
+           fonction_dossier("overlap_iccat_ccsbt",
+                            georef_dataset,
+                            "Keeping data from CCSBT or ICCAT ",
+                            "function_overlapped",
+                            list(options_include_CCSBT,
+                              options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
+           create_latex("comp_sans_shiny.Rmd")
+           create_latex("short_comp.Rmd")
         
            
          }
-   # create_latex("comp_sans_shiny.Rmd")
-   # create_latex("short_comp.Rmd")
+
          
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -695,7 +697,8 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             "function_overlapped",
                             list( options_include_CCSBT  ,
                                options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
-       
+           create_latex("comp_sans_shiny.Rmd")
+           create_latex("short_comp.Rmd")
            
          }
     #dbDisconnect(con)
@@ -703,8 +706,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
    # con <- config$software$output$dbi
    
 
-   create_latex("comp_sans_shiny.Rmd")
-   create_latex("short_comp.Rmd")
+
    
          if(!is.null(opts$unit_conversion_convert)) if (opts$unit_conversion_convert){
            config$logger.info("-----------------------------------------------------------------------------------------------------")
