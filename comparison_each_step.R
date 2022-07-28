@@ -1,4 +1,4 @@
-comparison_each_step <- function(entity, config, options){
+comparison_each_step <- function(entity, config, options = NULL){
   
   #create and load metadata table with entities as dataframe
   if(dir.exists("Markdown")){
@@ -6,10 +6,15 @@ comparison_each_step <- function(entity, config, options){
     # config$logger.info(Msg)
 
   nominal_dataset <- readr::read_csv("data/global_nominal_catch_firms_level0.csv")
+  print(options)
   
   if(!require(readtext)){
     install.packages("readtext")
     require(readtext)
+  }
+  if(!require(dplyr)){
+    install.packages("dplyr")
+    require(dplyr)
   }
   if(!require(ggplot2)){
     install.packages("ggplot2")
@@ -23,8 +28,23 @@ comparison_each_step <- function(entity, config, options){
     install.packages("hrbrthemes")
     require(hrbrthemes)
   }
-  
-  if(!(is.null(options$species_filter))){nominal <- sum((nominal_dataset %>% 
+  if(!require(stringr)){
+    install.packages("stringr")
+    require(stringr)
+  }
+  if(!require(readr)){
+    install.packages("readr")
+    require(readr)
+  }
+  if(!require(cowplot)){
+    install.packages("cowplot")
+    require(cowplot)
+  }
+  if(!require(flextable)){
+    install.packages("flextable")
+    require(flextable)
+  }
+  if(!(is.null(options))){nominal <- sum((nominal_dataset %>% 
                                                           filter(species %in% options$species_filter))$value)
   } else {nominal <- sum(nominal_dataset$value)}
   
@@ -48,7 +68,7 @@ comparison_each_step <- function(entity, config, options){
                         # "Explanation", "Fonctions", 
                         "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
       )
-      if((!is.null(options$species_filter))){
+      if((!is.null(options))){ #have ot change for species$filter
         tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
         lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
         nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
@@ -98,9 +118,18 @@ comparison_each_step <- function(entity, config, options){
       }
       df = df[-1,]
       write_csv(df, paste0(getwd(),"/table.csv"))
-      
+      df[df == -Inf] <- 0
+      df <- df %>%  rename(Step = rawdata)
+
 
       FitFlextableToPage <- function(ft, pgwidth = 6,options_format ="notRmd"){
+        set_flextable_defaults(
+          font.size = 10,
+          font.color = "black",
+          table.layout = "autofit",
+          digits = 2,
+          theme_fun = "theme_box"
+        )
         table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
         
         table %>% 
@@ -114,13 +143,14 @@ comparison_each_step <- function(entity, config, options){
         if(options_format == "Rmd"){table%>% flextable_to_rmd()}else{table}
         
       }
+
       save_as_image(FitFlextableToPage(df), path = paste0(getwd(),"/table.png"), webshot = "webshot")
       # assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), df, envir = .GlobalEnv)
       # list <- append(list,tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1))
       
       
 
-      reduced <- df %>% select(Step = config$metadata$content$entities[[1]]$identifiers[[1]], `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
+      reduced <- df %>% select(Step, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
 
@@ -161,7 +191,7 @@ comparison_each_step <- function(entity, config, options){
         
         
         theme(axis.text.x = element_text(angle = 90))
-      library(cowplot)
+   
       cowplot::plot_grid(tons, no_fish)
       ggsave(paste0(getwd(),"/myplot2.png"))
     }
