@@ -28,6 +28,7 @@
 
 fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", option_list=NULL) {
   if(!exists("options_written_total")){assign("options_written_total", "", envir = .GlobalEnv)}
+  if(!exists("explenation_total")){assign("explenation_total", "", envir = .GlobalEnv)}
   dir.create("Markdown")
   dir.create(paste0("Markdown/",nom_dossier))
   nom_dossier <- paste0("Markdown/",nom_dossier)
@@ -52,9 +53,12 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
     }
     print(options_written)
   } else {options_written = "NONE"}
+  explenation_total <- paste0(explenation_total, explication)
+  options_written_total <- assign("options_written_total", paste0(options_written_total, options_written), envir = .GlobalEnv)
   options_written_total <- assign("options_written_total", paste0(options_written_total, options_written), envir = .GlobalEnv)
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
+  write(explenation_total, paste0(nom_dossier,"/explenation_total.txt")) 
   write(fonctions, paste0(nom_dossier,"/fonctions.txt"))
   write(options_written_total, "options_total.txt")
   write(options_written_total, paste0(nom_dossier,"/options_total.txt"))
