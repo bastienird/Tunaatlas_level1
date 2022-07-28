@@ -66,8 +66,8 @@ comparison_each_step <- function(entity, config, options){
         sums <- read.csv(paste0(i,"/sums.csv"))
         Explanation <- readtext(paste0(i,"/explication.txt"))[2]
         Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
-        if (file.exists(paste0(i,"/options.txt"))){
-          Options <- pull(readtext(paste0(i,"/options.txt"))[2])} else {Options <- "Aucune"}
+        if (file.exists(paste0(i,"/options_written.txt"))){
+          Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
         if(!is.null(options$species_filter)){
           main <- readRDS(paste0(i,"/rds.rds")) %>% filter(species%in%options$species_filter)
           sum_t <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
