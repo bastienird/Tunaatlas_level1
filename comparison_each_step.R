@@ -100,7 +100,7 @@ comparison_each_step <- function(entity, config, options){
       write_csv(df, paste0(getwd(),"/table.csv"))
       
 
-      FitFlextableToPage <- function(ft, pgwidth = 6,options_format ="Rmd"){
+      FitFlextableToPage <- function(ft, pgwidth = 6,options_format ="notRmd"){
         table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
         
         table %>% 
