@@ -120,7 +120,7 @@ comparison_each_step <- function(entity, config, options){
       
       
 
-      reduced <- df %>% select(Step = global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
+      reduced <- df %>% select(Step = config$metadata$content$entities[[1]]$identifiers[[1]], `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
 
