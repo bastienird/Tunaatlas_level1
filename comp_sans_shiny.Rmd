@@ -3,7 +3,7 @@ title: "Comparison of two data sets at different levels/options of the tuna atla
 author: "Bastien Grasset"
 date: "09/02/2022"
 output:
-  html_document: 
+  html_document: default
   latex_document:
     toc: true
     number_sections: true
@@ -786,17 +786,22 @@ inner_join <- st_as_sf(geo_data%>% dplyr::group_by(geographic_identifier, unit,s
 if(nrow(inner_join %>% dplyr::filter(unit == variable_affichee)) != 0){
 
 
-image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
+
+
+if (plotting_type == "view"){image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
   tm_fill("value", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)+tm_shape(continent)+tm_borders()
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)} else {image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
+  tm_fill("value", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0) +
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)+tm_shape(continent)+tm_borders()}
+
 image
 #   tmap::tmap_save(image, "image.png")
 # # mapshot(image, file = "image.png")
 # knitr::include_graphics("image.png")
 }
 }
-tmap_mode(plotting_type)
 
 number_of_cat_geo <- nrow(unique(t$cat_geo))
 cat_geo <- (unique(t$cat_geo))
@@ -807,6 +812,7 @@ We represent the spatial coverage, faceted by the geographical category. The geo
 ### Spatial coverage in tons
 
 ```{r}
+
 fonction_empreinte_spatiale("Tons")
 ```
 
@@ -873,10 +879,14 @@ tmap_mode(plotting_type)
 inner_join <- inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
 
 if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
+  if(plotting_type == "plot"){
 image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
   tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
-  tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()
+  tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()} else {image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
+  tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+  tm_layout(legend.outside = TRUE)}
 #   tmap::tmap_save(image,"image2.png")
 # # mapshot(image, file = "image.png")
 # knitr::include_graphics("image2.png")
@@ -898,13 +908,18 @@ image
 Here is represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information.
 
 ```{r testnaming2, out.width="100%"}
-tmap::tmap_mode(plotting_type)
+if(plotting_type == "plot"){
 image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data lost' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
          # %>%dplyr::filter(unit == "Tons")
          )+
   tm_fill( "Impact on the data", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+
-  tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
+  tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()} else {image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data lost' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
+         # %>%dplyr::filter(unit == "Tons")
+         )+
+  tm_fill( "Impact on the data", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+
+  tm_layout(legend.outside = TRUE)}
 image
 #   tmap::tmap_save(image, "image4.png")
 # # mapshot(image, file = "image.png")

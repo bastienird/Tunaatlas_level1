@@ -3,13 +3,15 @@ title: "Short comp sans shiny"
 author: "Bastien Grasset"
 date: "09/02/2022"
 output:
+  html_document: 
+    number_sections: true
   latex_document:
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/level1realocate_remove"
-  final: "~/Documents/Tunaatlas_level1/jobs/all_25_avril/entities/global_catch_firms_Bastien_rds_level0/Markdown/rawdata"
-  dbname: "tunaatlas_sandbox2"
-  host: "localhost"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220729204045/entities/global_catch_1deg_level0/Markdown/rawdata_modyfing_georeferenced_errors"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220729204045/entities/global_catch_1deg_level0/Markdown/treatment_after_binding"
+  dbname: "tunaatlas"
+  host: "db-tunaatlas.d4science.org"
   port: 5432
   user: "tunaatlas_u"
   password: "21c0551e7ed2911"
@@ -452,10 +454,16 @@ inner_join <- st_as_sf(geo_data%>% dplyr::group_by(geographic_identifier, unit,s
 if(nrow(inner_join %>% dplyr::filter(unit == variable_affichee)) != 0){
 
 
-image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
+
+
+if (plotting_type == "view"){image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
   tm_fill("value", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0) +
-  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)+tm_shape(continent)+tm_borders()
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)} else {image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
+  tm_fill("value", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0) +
+  tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)+tm_shape(continent)+tm_borders()}
+
 image
 #   tmap::tmap_save(image, "image.png")
 # # mapshot(image, file = "image.png")
@@ -532,13 +540,18 @@ qflextable2(t3)
 Here is represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information.
 
 ```{r testnaming2, out.width="100%"}
-tmap::tmap_mode(plotting_type)
+if(plotting_type == "plot"){
 image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data lost' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
          # %>%dplyr::filter(unit == "Tons")
          )+
   tm_fill( "Impact on the data", palette="RdYlGn", style="cont", n=8,
 				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+
-  tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
+  tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()} else {image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data lost' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
+         # %>%dplyr::filter(unit == "Tons")
+         )+
+  tm_fill( "Impact on the data", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+
+  tm_layout(legend.outside = TRUE)}
 image
 #   tmap::tmap_save(image, "image4.png")
 # # mapshot(image, file = "image.png")
