@@ -131,8 +131,6 @@ set_flextable_defaults(
   theme_fun = "theme_box"
   )
 # qflextable2 = function(x){x <- autofit(kable(x))}
-install_github("BastienIRD/sutdycatchesird", dependencies = c("Depends", "Imports"))
-library(studycatchesird)
 last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 plotting_type <- "plot" 
 if (knitr::is_html_output()){plotting_type <- "view" }
