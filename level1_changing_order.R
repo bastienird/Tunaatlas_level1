@@ -35,10 +35,10 @@ function(action, entity, config){
 # wps.out: id = zip_namefile, type = text/zip, title = Outputs are 3 csv files: the dataset of georeferenced catches + a dataset of metadata (including informations on the computation, i.e. how the primary datasets were transformed by each correction) [TO DO] + a dataset providing the code lists used for each dimension (column) of the output dataset [TO DO]. All outputs and codes are compressed within a single zip file. ; 
 #packages
 if(!require(rtunaatlas)){
-  if(!require(devtools)){
-    install.packages("devtools")
-  }
-  require(devtools)
+  # if(!require(devtools)){
+  #   install.packages("devtools")
+  # }
+  # require(devtools)
   install_github("eblondel/rtunaatlas")
   require(rtunaatlas)
 }

@@ -102,10 +102,10 @@ if(!(require(base))){
  install.packages(cowplot) 
  (require(cowplot))} 
 if(!require(sutdycatchesird)){
-  if(!require(devtools)){
-    install.packages("devtools")
+  if(!require(remotes)){
+    install.packages("remotes")
   }
-  require(devtools)
+  require(remotes)
   install_github("BastienIRD/sutdycatchesird")
   require(sutdycatchesird)
 }

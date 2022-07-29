@@ -5,10 +5,10 @@ if(!require(remotes)){
   install.packages("remotes")
 require(remotes)
   }
-if(!require(devtools)){
-  install.packages("devtools")
-  require(devtools)
-}
+# if(!require(devtools)){
+#   install.packages("devtools")
+#   require(devtools)
+# }
 # remotes::install_github("eblondel/geoflow")
 library(geoflow)
 if(!require(RSQLite)){
@@ -52,8 +52,64 @@ library(rpostgis)
 library(stringr)
 library(sf)
 library(googledrive)
+
+use_github_file(
+  "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd",
+  path = NULL,
+  save_as = "jobs/20220728154152/test.Rmd",
+  ref = NULL,
+  ignore = FALSE,
+  open = TRUE,
+  host = NULL
+)
+
+renderingigthub = function(file_path, saveas, params,output_file){
+  require(stringr)
+  use_github_file(
+    file_path,
+    path = NULL,
+    save_as = saveas,
+    ref = NULL,
+    ignore = FALSE,
+    open = FALSE,
+    host = NULL
+  )
+
+  last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+  wd <- getwd()
+  print(saveas)
+  print(gsub(last_path(saveas),"",saveas))
+  setwd(gsub(last_path(saveas),"",saveas))
+  print(getwd())
+  rmarkdown::render(last_path(saveas),
+                    params,output_file = "")
+  setwd(wd)
+  
+  
+}
+
+renderingigthub("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd",
+                "jobs/20220728154152/entities/global_catch_1deg_level0/comp_sans_shiny.Rmd", 
+                params = list(init = "Markdown/overlap_ccsbt_wcpfc", 
+                     final = "Markdown/raising",
+                     con = con))
+
+rmarkdown::render(use_github_file(
+  "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd",
+  path = NULL,
+  save_as = "jobs/20220728154152/test.Rmd",
+  ref = NULL,
+  ignore = FALSE,
+  open = TRUE,
+  host = NULL
+), 
+            params = list(init = "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/overlap_ccsbt_wcpfc", 
+                          final = "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising",
+con = con), output_file  = paste0("test"))
+
+
 #effort https://docs.google.com/spreadsheets/d/1F7BgP4i_BClk2slgh3ziVedWEQ_ATaGsC51NkwiD-xY/edit#gid=1994835658
-executeWorkflow("~/Documents/Tunaatlas_level1/lancing_workflow_effort.json")
+# executeWorkflow("~/Documents/Tunaatlas_level1/lancing_workflow_effort.json")
 # executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_dbmodel+codelists_d4science.json")
 # executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")
 executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")#works
@@ -100,7 +156,7 @@ if(!require(rtunaatlas)) {
   
   }
 setwd("~/Documents/Tunaatlas_level1")
-files <- "from_scratch/json/tunaatlas_qa_datasets_iattc.json"
+files <- "from_scratch/json/tunaatlas_qa_dbmodel+codelists.json"
 config <- initWorkflow(files)
 
 executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_dbmodel+codelists_d4science.json")
@@ -141,7 +197,7 @@ jobdir <- initWorkflowJob(config)
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
  # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220616115652"
 config$job <- jobdir
-config$job <- "~/Documents/Tunaatlas_level1/jobs/20220725163707"
+config$job <- "~/Documents/Tunaatlas_level1/jobs/20220728154152/entities/global_catch_1deg_level0"
 executeWorkflowJob(config)
 # geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")
 
@@ -154,8 +210,8 @@ contacts <- config$metadata$content$contacts
 
 entity <- config$metadata$content$entities[[1]]
 # entity <- entities[[1]]
-action <- entity$data$actions[[1]]
-options <- entity$data$actions[[1]]$options
+# action <- entity$data$actions[[1]]
+# opts <- entity$data$actions[[1]]$opts
 #options <-config$actions[[1]]$options
 
 

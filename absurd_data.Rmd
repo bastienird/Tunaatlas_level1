@@ -39,9 +39,7 @@ if(!(require(base))){
  if(!(require(flextable))){ 
  install.packages(flextable) 
  (require(flextable))} 
- if(!(require(devtools))){ 
- install.packages(devtools) 
- (require(devtools))} 
+ 
  if(!(require(ggplot2))){ 
  install.packages(ggplot2) 
  (require(ggplot2))} 
@@ -79,10 +77,10 @@ if(!(require(base))){
  install.packages(lubridate) 
  (require(lubridate))} 
 if(!require(sutdycatchesird)){
-  if(!require(devtools)){
-    install.packages("devtools")
+  if(!require(remotes)){
+    install.packages("remotes")
   }
-  require(devtools)
+  require(remotes)
   install_github("BastienIRD/sutdycatchesird")
   require(sutdycatchesird)
 }
