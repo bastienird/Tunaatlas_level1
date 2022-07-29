@@ -148,7 +148,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                                                         password = config$software$input$dbi_config$parameters$password, con = config$software$output$dbi
                                                                           ),output_format = output_format)}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
-  if (output_format = "latex_document"){
+  if (output_format =="latex_document"){
   print("Output_created")
   tex <- gsub(".Rmd", ".tex", paste0(name_output,x)) 
   tools::texi2dvi(tex, pdf = TRUE, clean = FALSE, quiet = TRUE,
