@@ -3,12 +3,13 @@ title: "Comparison of two data sets at different levels/options of the tuna atla
 author: "Bastien Grasset"
 date: "09/02/2022"
 output:
+  html_document: 
   latex_document:
     toc: true
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/overlap_ccsbt_wcpfc"
-  final: "~/Documents/Tunaatlas_level1/jobs/20220719140637/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220729204045/entities/global_catch_1deg_level0/Markdown/rawdata_modyfing_georeferenced_errors"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220729204045/entities/global_catch_1deg_level0/Markdown/treatment_after_binding"
   dbname: "tunaatlas"
   host: "db-tunaatlas.d4science.org"
   port: 5432
@@ -165,6 +166,11 @@ conn <- params$con
 
 # summary(con
 # dbListTables(con
+out <- try((DBI::dbConnect(conn)), silent = TRUE)
+if(!any(class(out) == "error")){conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+                  user = params$user,
+                 password = params$password)}
+
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 world_sf <- st_read(conn, query = query) 
 

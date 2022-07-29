@@ -126,6 +126,10 @@ if (knitr::is_html_output()){plotting_type <- "view" }
 
 conn <- params$con
 
+out <- try((DBI::dbConnect(conn)), silent = TRUE)
+if(!any(class(out) == "error")){conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+                  user = params$user,
+                 password = params$password)}
 
 # dbExistsTable(conn,"iattc_after_treatment")
 # dbExistsTable(conn,"/../area.area_wkt")
@@ -399,6 +403,14 @@ strates_perdues_first_10[strates_perdues_first_10==""] <- "NA"
 strates_perdues_first_10[is.na(strates_perdues_first_10)] <- "NA"
 
 ```
+
+```{r}
+if (round(sum_valeur_init) == round(sum_valeur_final)){
+  print("There are no differences between the two datasets, this step is not changing the data in any way")
+
+  knitr::knit_exit()}
+```
+
 
 ```{r}
 if (nrow(t %>%dplyr::filter(`Loss / Gain` != 'Egal'))==0){

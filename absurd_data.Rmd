@@ -272,6 +272,12 @@ div(flextable_html_dependency())
 
 ```{r}
 conn <- params$con
+
+out <- try((DBI::dbConnect(conn)), silent = TRUE)
+if(!any(class(out) == "error")){conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+                  user = params$user,
+                 password = params$password)}
+
 data <- readRDS(paste0(as.character(params$final),"/rds.rds"))
   data <- data%>% dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
   cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
