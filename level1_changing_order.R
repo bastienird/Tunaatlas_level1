@@ -1,6 +1,6 @@
 function(action, entity, config){
   opts <- action$options
-  con <- config$software$output$dbi
+  con <- config$software$input$dbi
   ######################################################################
 ##### 52North WPS annotations ##########
 ######################################################################
@@ -131,21 +131,21 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                    x), paste0(wd,"/",name_output,x), overwrite = TRUE)
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
-  print(config$software$output$dbi)
+  print(config$software$input$dbi)
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
                                        params = list(final = last, host = config$software$input$dbi_config$parameters$host, 
                                                                            port = config$software$input$dbi_config$parameters$port, 
                                                                            user = config$software$input$dbi_config$parameters$user,
                                                                            dbname=config$software$input$dbi_config$parameters$dbname,
                                                      password = config$software$input$dbi_config$parameters$password, 
-                                                     con = config$software$output$dbi
+                                                     con = config$software$input$dbi
 
                                                                            ), output_format = output_format)}
   if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
-                                                                                        password = config$software$input$dbi_config$parameters$password, con = config$software$output$dbi
+                                                                                        password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi
                                                                           ),output_format = output_format)}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   if (output_format =="latex_document"){
@@ -189,7 +189,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/funct
 # source("~/Documents/Tunaatlas_level1/analyse_raising_iattc_schooltype_and_fishingfleet.Rmd")
 # source("~/Documents/Tunaatlas_level1/comp_sans_shiny.Rmd")
 # connect to Tuna atlas database
-# con <- config$software$output$dbi
+# con <- config$software$input$dbi
 
 #set parameterization
 
@@ -268,7 +268,7 @@ if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_
 
 
  #dbDisconnect(con)
-# con <- config$software$output$dbi
+# con <- config$software$input$dbi
 # # dbConnect(con)
 georef_dataset <- left_join(georef_dataset, irregular_iotc , by =c("geographic_identifier"= "code")) %>%
   mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
@@ -545,7 +545,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   
   config$logger.info("Mapping code lists of georeferenced datasets...")
   georef_dataset <- map_codelists(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
-  config$logger.info("Mapping code# con <- config$software$output$dbi
+  config$logger.info("Mapping code# con <- config$software$input$dbi
  lists of georeferenced datasets OK")
   
   fonction_dossier("mapping_codelist",
@@ -560,7 +560,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
 
   }
    #dbDisconnect(con)
-  # con <- config$software$output$dbi
+  # con <- config$software$input$dbi
   
   # dbConnect(con)
  
@@ -711,7 +711,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
          }
     #dbDisconnect(con)
    # dbConnect(con)
-   # con <- config$software$output$dbi
+   # con <- config$software$input$dbi
    
 
 
@@ -815,7 +815,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
     #dbDisconnect(con)
    # dbConnect(con)
 
-   # con <- config$software$output$dbi
+   # con <- config$software$input$dbi
    
 
    
@@ -1278,7 +1278,7 @@ fonction_dossier("Level2_RF3without_gears",
          gc()
           #dbDisconnect(con)
          # dbConnect(con)
-         # con <- config$software$output$dbi
+         # con <- config$software$input$dbi
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 3/8: WCPFC at the end")
@@ -1328,7 +1328,7 @@ fonction_dossier("Level2_RF3without_gears",
          }
           #dbDisconnect(con)
          # dbConnect(con)
-         # con <- config$software$output$dbi
+         # con <- config$software$input$dbi
          # conflict_prefer("startsWith", "gdata")
          
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1354,7 +1354,7 @@ fonction_dossier("Level2_RF3without_gears",
       georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, opts$resolution_filter),]
        #dbDisconnect(con)
       # dbConnect(con)
-      # con <- config$software$output$dbi
+      # con <- config$software$input$dbi
              
            }
            # georef_dataset <- georef_dataset[startsWith(georef_dataset$geographic_identifier, opts$resolution_filter),]
