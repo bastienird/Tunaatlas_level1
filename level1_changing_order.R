@@ -244,6 +244,14 @@ dataset$time_end<-substr(as.character(dataset$time_end), 1, 10)
 georef_dataset<-dataset
 class(georef_dataset$value) <- "numeric"
 rm(dataset)
+
+####filtering on species if neeeded
+
+if(!is.null(options_species_filter)){georef_dataset <- georef_dataset %>% filter(species %in% c(options_species_filter))}
+
+####filtering on species if neeeded
+
+
 fonction_dossier("rawdata",
                  georef_dataset,
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
