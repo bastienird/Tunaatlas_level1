@@ -78,9 +78,14 @@ if(!(require(base))){
  if(!(require(lubridate))){ 
  install.packages(lubridate) 
  (require(lubridate))} 
- if(!(require(studycatchesird))){ 
- install.packages(studycatchesird) 
- (require(studycatchesird))} 
+if(!require(sutdycatchesird)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  require(devtools)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
  if(!(require(utils))){ 
  install.packages(utils) 
  (require(utils))} 
@@ -97,8 +102,6 @@ set_flextable_defaults(
   theme_fun = "theme_box"
   )
 div(flextable_html_dependency())
-
-install_github("BastienIRD/sutdycatchesird", dependencies = c("Depends", "Imports"))
 
 pie_chart_2 = function(dimension, unit = c("MT","MTNO","Tons","t"), first, second) {
   r <- deparse(substitute(dimension))

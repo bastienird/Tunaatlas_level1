@@ -61,11 +61,18 @@ set_flextable_defaults(
 if(require("htmltools"))
 div(flextable_html_dependency())
 # install_github("BastienIRD/sutdycatchesird", dependencies = c("Depends", "Imports"))
-library(studycatchesird)
+if(!require(sutdycatchesird)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  require(devtools)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
 ```
 
 ```{r}
-try(nominal_dataset <- readRDS("data/nominalmapped.rds"))
+nominal_dataset <- readRDS("data/nominalmapped.rds")
 
 if(!(is.null(params$species_filter))){nominal <- sum((nominal_dataset %>% filter(species %in% params$species_filter))$value)} else {nominal <- sum(nominal_dataset$value)}
 

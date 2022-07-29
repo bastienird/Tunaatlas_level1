@@ -101,9 +101,14 @@ if(!(require(base))){
  if(!(require(cowplot))){ 
  install.packages(cowplot) 
  (require(cowplot))} 
- if(!(require(studycatchesird))){ 
- install.packages(studycatchesird) 
- (require(studycatchesird))} 
+if(!require(sutdycatchesird)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  require(devtools)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
  if(!(require(tmap))){ 
  install.packages(tmap) 
  (require(tmap))} 

@@ -193,10 +193,16 @@ rfmo_year_species_not_common <- gdata::combine(nominal =anti_join(nominal %>% dp
 ```
 
 ```{r}
-install("./../studycatchesird")
-georef_without_nominal_equivalent <- data %>% inner_join(rfmo_year_species_not_common %>% filter(source=="data"))
+if(!require(sutdycatchesird)){
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  require(devtools)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}georef_without_nominal_equivalent <- data %>% inner_join(rfmo_year_species_not_common %>% filter(source=="data"))
 summary(summary_fish(georef_without_nominal_equivalent))
-library(studycatchesird)
+
 summary_fish(georef_without_nominal_equivalent)
 ```
 
