@@ -245,13 +245,6 @@ georef_dataset<-dataset
 class(georef_dataset$value) <- "numeric"
 rm(dataset)
 
-####filtering on species if neeeded
-
-if(!is.null(options_species_filter)){georef_dataset <- georef_dataset %>% filter(species %in% c(options_species_filter))}
-
-####filtering on species if neeeded
-
-
 fonction_dossier("rawdata",
                  georef_dataset,
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
@@ -522,6 +515,9 @@ if(variable == "catch") {
   iattc_data <- rbind(iattc_data, df)
   georef_dataset <- rbind(georef_dataset %>% filter(source_authority!= "IATTC"), iattc_data)
 }
+
+if(!is.null(options_species_filter)){georef_dataset <- georef_dataset %>% filter(species %in% c(options_species_filter))}
+
 
 fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc and iccat data", "raise_datasets_by_dimension",
                  list(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
