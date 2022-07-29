@@ -36,9 +36,9 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "localhost",
+			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox2"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {
 			"user_readonly": "tunaatlas_u",
@@ -56,9 +56,9 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "localhost",
+			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox2"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {
 		}
@@ -68,7 +68,7 @@
 		"type": "input",
 		"software_type": "googledrive",
 		"parameters": {
-			"email": "bastiengrassetensat@gmail.com",
+			"email": "firmstunaatlas@gmail.com",
 			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
 		},
 		"properties" : {}
@@ -77,7 +77,7 @@
   "actions": [
 	{
 		"id": "load_codelist",
-		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_codelist.R",
+		"script": "~/Documents/Tunaatlas_level1/test.R",
 		"run": true
 	}
   ]

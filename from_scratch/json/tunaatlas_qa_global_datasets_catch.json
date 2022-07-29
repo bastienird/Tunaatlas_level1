@@ -38,7 +38,7 @@
 			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {}
 	},
@@ -52,13 +52,24 @@
 			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas"
+			"dbname": "tunaatlas_sandbox"
 		},
 		"properties" : {}
 	},
 		{
 		"id": "googledrive",
 		"type": "input",
+		"software_type": "googledrive",
+		"parameters": {
+			"email": "firmstunaatlas@gmail.com",
+			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
+		},
+		"properties" : {}
+	}
+	,
+		{
+		"id": "googledrive",
+		"type": "output",
 		"software_type": "googledrive",
 		"parameters": {
 			"email": "bastiengrassetensat@gmail.com",
@@ -71,23 +82,23 @@
   	{
 		"id": "load_dataset",
 		"script": "~/Documents/Tunaatlas_level1/load_dataset_Bastien.R",
-		"run": false,
+		"run": true,
 		"options": {
-			"upload_to_db": false,
-			"create_materialized_view" : false,
-			"add_sql_comments" : false,
+			"upload_to_db": true,
+			"create_materialized_view" : true,
+			"add_sql_comments" : true,
 			"upload_to_googledrive": false
 		}
 	},
 	{
 		"id": "enrich_metadata",
 		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/enrich_metadata.R",
-		"run": false
+		"run": true
 	},
 	{
 		"id": "enrich_for_db_services",
 		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/enrich_for_db_services_B.R",
-		"run": false
+		"run": true
 	},
 	{		"id": "comparison_each_step",
 		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comparison_each_step.R",
@@ -97,7 +108,12 @@
 	{
 		"id": "load_metadata",
 		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_metadata.R",
-		"run": false
+		"run": true
+	}
+	, 
+		{
+		"id": "create-metadata-rmd",
+		"run": true
 	}
 
  ]
