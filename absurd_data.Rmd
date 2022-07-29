@@ -2,6 +2,7 @@
 title: "Data with potential mistakes"
 always_allow_html: true
 output:
+  html_document:
   latex_document:
     toc: true
     number_sections: true

@@ -68,7 +68,7 @@ comparison_each_step <- function(entity, config, options = NULL){
                         # "Explanation", "Fonctions", 
                         "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
       )
-      if((!is.null(options))){ #have ot change for species$filter
+      if((!is.null(options))){ #have not change for species$filter
         tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
         lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
         nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
