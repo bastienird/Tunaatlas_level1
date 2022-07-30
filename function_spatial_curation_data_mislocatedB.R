@@ -1,7 +1,7 @@
 function_spatial_curation_data_mislocatedB = function(entity,config,df,spatial_curation_data_mislocated){
   spatial_curation_intersect_areasB = function(entity, config, df_input, df_spatial_code_list_name, intersection_spatial_code_list_name) 
   {
-    con <- config$software$output$dbi
+    con <- config$software$input$dbi
     
     cat(paste0("Please ignore here-under warning messages 'unrecognized PostgreSQL field type unknown'"))
     inputAreas_forQuery <- paste(unique(df_input$geographic_identifier), 
