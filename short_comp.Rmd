@@ -406,15 +406,7 @@ strates_perdues_first_10[is.na(strates_perdues_first_10)] <- "NA"
 ```
 
 ```{r}
-if (round(sum_valeur_init) == round(sum_valeur_final)){
-  print("There are no differences between the two datasets, this step is not changing the data in any way")
-
-  knitr::knit_exit()}
-```
-
-
-```{r}
-if (nrow(t %>%dplyr::filter(`Loss / Gain` != 'Egal'))==0){
+if (round(sum_valeur_init) == round(sum_valeur_final)&nrow(t %>%dplyr::filter(`Loss / Gain` != 'Egal'))==0){
   print("There are no differences between the two datasets, this step is not changing the data in any way")
 
   knitr::knit_exit()}
