@@ -518,7 +518,7 @@ if(variable == "catch") {
   georef_dataset <- rbind(georef_dataset %>% filter(source_authority!= "IATTC"), iattc_data)
 }
 
-if(!is.null(opts$species_filter)){georef_dataset <- georef_dataset %>% filter(species %in% c(options_species_filter))}
+# if(!is.null(opts$species_filter)){georef_dataset <- georef_dataset %>% filter(species %in% c(options_species_filter))}
 
 
 fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc and iccat data", "raise_datasets_by_dimension",
