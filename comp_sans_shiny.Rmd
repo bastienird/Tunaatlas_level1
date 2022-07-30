@@ -3,7 +3,9 @@ title: "Comparison of two data sets at different levels/options of the tuna atla
 author: "Bastien Grasset"
 date: "09/02/2022"
 output:
-  html_document: default
+  html_document: 
+    toc: true
+    number_sections: true
   latex_document:
     toc: true
     number_sections: true

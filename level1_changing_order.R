@@ -138,15 +138,15 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                                            user = config$software$input$dbi_config$parameters$user,
                                                                            dbname=config$software$input$dbi_config$parameters$dbname,
                                                      password = config$software$input$dbi_config$parameters$password, 
-                                                     con = config$software$input$dbi
+                                                     con = config$software$input$dbi,filter_species = opts$species_filter
 
                                                                            ), output_format = output_format)}
   if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
-                                                                                        password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi
-                                                                          ),output_format = output_format)}#,
+                                                                                        password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi,
+                                                                          filter_species   = opts$species_filter),output_format = output_format)}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   if (output_format =="latex_document"){
   print("Output_created")

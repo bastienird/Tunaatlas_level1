@@ -20,6 +20,8 @@ params:
   plotting: "plot"
   world_coastline: "gshhs_world_coastlines"
   con: con
+  filter_species: !r NULL
+
 
 ---
 
