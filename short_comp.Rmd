@@ -105,7 +105,6 @@ set_flextable_defaults(
   theme_fun = "theme_box"
   )
 # qflextable2 = function(x){x <- autofit(kable(x))}
-install_github("BastienIRD/sutdycatchesird", dependencies = c("Depends", "Imports"))
 if(!require(sutdycatchesird)){
   if(!require(devtools)){
     install.packages("devtools")
