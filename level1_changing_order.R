@@ -800,6 +800,8 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             "function_spatial_curation_data_mislocated",
                             list(options_spatial_curation_data_mislocated))
            create_latex("comp_sans_shiny.Rmd")
+           create_latex("comp_sans_shiny.Rmd", last = TRUE)
+           
            create_latex("short_comp.Rmd")
            # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
            gc()
