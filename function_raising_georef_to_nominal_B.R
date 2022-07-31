@@ -5,7 +5,7 @@ function_raising_georef_to_nominal_B =function(options = options,entity,
          nominal_dataset_df,
          x_raising_dimensions){
   
-  con <- config$software$output$dbi
+  con <- config$software$input$dbi
   # options <- entity$data$actions[[1]]$options
   fact <- options$fact
   raising_do_not_raise_wcfpc_data <- options$raising_do_not_raise_wcfpc_data
