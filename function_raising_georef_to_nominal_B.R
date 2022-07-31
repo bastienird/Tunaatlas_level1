@@ -7,14 +7,14 @@ function_raising_georef_to_nominal_B =function(options = options,entity,
   
   con <- config$software$input$dbi
   # options <- entity$data$actions[[1]]$options
-  fact <- options$fact
-  raising_do_not_raise_wcfpc_data <- options$raising_do_not_raise_wcfpc_data
-  raising_raise_only_for_PS_LL <- options$raising_raise_only_for_PS_LL
-  include_WCPFC <- options$include_WCPFC
-  include_CCSBT <- options$include_CCSBT
-  include_IOTC <- options$include_IOTC
-  include_IATTC <- options$include_IATTC
-  include_ICCAT <- options$include_ICCAT
+  fact <- opts$fact
+  raising_do_not_raise_wcfpc_data <- opts$raising_do_not_raise_wcfpc_data
+  raising_raise_only_for_PS_LL <- opts$raising_raise_only_for_PS_LL
+  include_WCPFC <- opts$include_WCPFC
+  include_CCSBT <- opts$include_CCSBT
+  include_IOTC <- opts$include_IOTC
+  include_IATTC <- opts$include_IATTC
+  include_ICCAT <- opts$include_ICCAT
   
   
   cat("Raising georeferenced dataset to nominal dataset\n")

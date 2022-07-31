@@ -337,7 +337,7 @@ fonction_groupement = function(x, init, final){
     dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>%dplyr::mutate(Loss_pourcent = ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
    dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)/ 10^6) %>%
             dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in millions of tons` = Loss_en_milliers_de_tonne,
-                  `Difference in number of lines` = loss_nb_ligne) %>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0))) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))
+                  `Difference in number of lines` = loss_nb_ligne) %>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0))) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",round(value_sum_1) == round(value_sum_2)~"Egal", TRUE ~ `Loss / Gain`))
 }
 
 ```
@@ -510,9 +510,10 @@ unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority", "spe
 
 
 ```{r paged.print=TRUE}
+if (nrow(unit %>% filter(`Loss / Gain` != "Egal")) != 0){
 t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons`)),groups = c("Dimension","unit","Loss / Gain"))
 
-if (nrow(t3) != 0){qflextable2(t3)}
+qflextable2(t3)}
 
 
 ```

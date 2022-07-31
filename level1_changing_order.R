@@ -177,7 +177,7 @@ source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R"))
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
-# source("~/Documents/Tunaatlas_level1/function_raising_georef_to_nominal_Bastien.R")
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/function_raising_georef_to_nominal_B.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/disagregate_on_resdeg_Bastien.R")
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas/main/get_rfmos_dataset_leve0_bastien.R")
@@ -707,6 +707,8 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                                options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
            create_latex("comp_sans_shiny.Rmd")
            create_latex("short_comp.Rmd")
+           create_latex("comp_sans_shiny.Rmd", last = TRUE)
+           
            
          }
     #dbDisconnect(con)
@@ -729,7 +731,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            config$logger.info(sprintf("STEP 2/5 : Gridded catch dataset before unit conversion has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
            
            config$logger.info("STEP 2/5: BEGIN do_unit_conversion() function to convert units of georef_dataset") 
-           georef_dataset <- do_unit_conversion(entity=entity,
+           georef_dataset <- do_unit_conversion_b(entity=entity,
                                                 config=config,
                                                 fact=fact,
                                                 unit_conversion_csv_conversion_factor_url=opts$unit_conversion_csv_conversion_factor_url,
@@ -945,7 +947,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   config$logger.info(paste0("Total ",fact," before raising is : ",sum(georef_dataset$value),"\n"))
   config$logger.info(paste0("Total ",fact," in nominal data is : ",sum(nominal_catch$value),"\n"))
   
-  georef_dataset<-function_raising_georef_to_nominal(entity=entity,
+  georef_dataset<-function_raising_georef_to_nominal_B(entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df= nominal_catch,
@@ -1059,7 +1061,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   
   class(dataset_to_compute_rf$value) <- "numeric"
   
-  georef_dataset<-function_raising_georef_to_nominal(entity=entity,
+  georef_dataset<-function_raising_georef_to_nominal_B(entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,
@@ -1173,7 +1175,7 @@ if (fact=="catch"){
   
   
 
-georef_dataset<-function_raising_georef_to_nominal(entity=entity,
+georef_dataset<-function_raising_georef_to_nominal_B(entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,
