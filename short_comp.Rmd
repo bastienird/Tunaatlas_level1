@@ -8,8 +8,8 @@ output:
   latex_document:
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220729204045/entities/global_catch_1deg_level0/Markdown/rawdata_modyfing_georeferenced_errors"
-  final: "~/Documents/Tunaatlas_level1/jobs/20220729204045/entities/global_catch_1deg_level0/Markdown/treatment_after_binding"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220731224714/entities/global_catch_1deg_level2/Markdown/overlap_iotc_wcpfc"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220731224714/entities/global_catch_1deg_level2/Markdown/overlap_iattc_wcpfc"
   dbname: "tunaatlas"
   host: "db-tunaatlas.d4science.org"
   port: 5432
@@ -512,7 +512,8 @@ unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority", "spe
 ```{r paged.print=TRUE}
 t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons`)),groups = c("Dimension","unit","Loss / Gain"))
 
-qflextable2(t3)
+if (nrow(t3) != 0){qflextable2(t3)}
+
 
 ```
 
