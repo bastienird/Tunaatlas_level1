@@ -33,7 +33,7 @@ params:
   colnames_to_keep: [ fishingfleet ,           species ,                  
   unit ,                  value ,                 source_authority ]
   columns_to_keep: [  Precision     ,                   unit      ,                     
-  "Captures table 1"         ,                               "Loss / Gain",    
+  "Captures table 1"      ,"Captures table 2"      ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
   con: con
    
@@ -531,7 +531,7 @@ The stratas differences between the first one and the second one are :
 ```{r}
 # qflextable2(head(strates_perdues,10))
 if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>%dplyr::group_by(`Loss / Gain`,Dimension, unit) %>% arrange(`Loss / Gain`,Dimension,unit)%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2), groups = c("Loss / Gain","Dimension","unit"))
+  groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons`)),groups = c("Dimension","unit","Loss / Gain"))
 towrite = ""
 qflextable2(groupe_df)
 } else {towrite =("No strata is gain nor lost")}
