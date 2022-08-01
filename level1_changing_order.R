@@ -732,7 +732,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            config$logger.info(sprintf("STEP 2/5 : Gridded catch dataset before unit conversion has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
            
            config$logger.info("STEP 2/5: BEGIN do_unit_conversion() function to convert units of georef_dataset") 
-           georef_dataset <- do_unit_conversion_b(entity=entity,
+           georef_dataset <- do_unit_conversion_B(entity=entity,
                                                 config=config,
                                                 fact=fact,
                                                 unit_conversion_csv_conversion_factor_url=opts$unit_conversion_csv_conversion_factor_url,
