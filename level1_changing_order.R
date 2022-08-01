@@ -202,7 +202,6 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/funct
 
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
 # function_creation_options()
-library(RPostgreSQL)
   j <- 1
   
   list_options <-assign("list_options", data.frame(matrix(ncol =2 , nrow = 1)), envir= .GlobalEnv)

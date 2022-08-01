@@ -242,7 +242,10 @@ The analyzed data are :
 - ***acces `r last_path(params$final)` for the final data***
 
 
-The filters used are:
+```{r results='asis'}
+if (is.null(c(params$filter_cat_geo, params$filter_gear, params$filter_source_authority, params$filter_fishingfleet, params$filter_time_start, params$filter_time_end, params$filter_species, params$filter_catchtype))){cat("There are no filter on this data")}
+
+```
 
 - on species: `r params$filter_species`
 - on gears: `r params$filter_gear`
@@ -507,7 +510,7 @@ strates_perdues_first_10[is.na(strates_perdues_first_10)] <- "NA"
 
 ```{r}
 if (round(sum_valeur_init) == round(sum_valeur_final)&nrow(t %>%dplyr::filter(`Loss / Gain` != 'Egal'))==0){
-  print("There are no differences between the two datasets, this step is not changing the data in any way")
+  cat("There are no differences between the two datasets, this step is not changing the data in any way")
 
   knitr::knit_exit()}
 ```
