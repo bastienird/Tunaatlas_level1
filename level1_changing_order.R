@@ -128,7 +128,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   last <- rownames(tail(details, 1))
   name_output <- last_path(as.character(last))
   file.copy(paste0(wd2,"/",
-                   x), paste0(wd,"/",name_output,x), overwrite = TRUE)
+                   x), paste0(wd,"/",name_output,"last",x), overwrite = FALSE)
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
   print(config$software$input$dbi)
@@ -1067,7 +1067,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   
   class(dataset_to_compute_rf$value) <- "numeric"
   
-  georef_dataset<-function_raising_georef_to_nominal_B(entity=entity,
+  georef_dataset<-function_raising_georef_to_nominal_B(opts = opts ,entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,
@@ -1181,7 +1181,7 @@ if (fact=="catch"){
   
   
 
-georef_dataset<-function_raising_georef_to_nominal_B(entity=entity,
+georef_dataset<-function_raising_georef_to_nominal_B(opts = opts ,entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,
