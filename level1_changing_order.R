@@ -169,8 +169,8 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   # rm(paste0(name_output,x))
 }
 
-if(exists(opts$output_format)){
-  formals(create_latex)$output_format <- opts$output_format
+if(!is.null(opts$output_format_report)){
+  formals(create_latex)$output_format <- opts$output_format_report
 }
 
 
