@@ -53,9 +53,8 @@ fonction_dossier=function(nom_dossier, nomrds, explication="",fonctions="", opti
     }
     print(options_written)
   } else {options_written = "NONE"}
-  explenation_total <- paste0(explenation_total, explication)
   options_written_total <- assign("options_written_total", paste0(options_written_total, options_written), envir = .GlobalEnv)
-  options_written_total <- assign("options_written_total", paste0(options_written_total, options_written), envir = .GlobalEnv)
+  explenation_total <- assign("explenation_total", paste0(explenation_total, explication), envir = .GlobalEnv)
   saveRDS(nomrds,paste0(nom_dossier,"/rds.rds"))
   write(explication, paste0(nom_dossier,"/explication.txt")) 
   write(explenation_total, paste0(nom_dossier,"/explenation_total.txt")) 
