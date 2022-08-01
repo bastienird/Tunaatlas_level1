@@ -1,4 +1,4 @@
-function_raising_georef_to_nominal_B =function(options = options,entity,
+function_raising_georef_to_nominal_B =function(opts = opts,entity,
          config,
          dataset_to_raise,
          dataset_to_compute_rf,

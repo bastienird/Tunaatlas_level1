@@ -247,6 +247,8 @@ if (is.null(c(params$filter_cat_geo, params$filter_gear, params$filter_source_au
 
 ```
 
+The filter used on this data are:
+
 - on species: `r params$filter_species`
 - on gears: `r params$filter_gear`
 - on rfmos: `r params$filter_source_authority`
@@ -431,9 +433,9 @@ fonction_groupement = function(x, init, final){
 
   x  <-   dplyr::enquo(x)
   groupement_1  <-   init %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines1 = 0,
-    value_sum_1 = sum(value, na.rm=TRUE)) %>%dplyr::mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
+    value_sum_1 = round(sum(value, na.rm=TRUE))) %>%dplyr::mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
   groupement_2  <-   final %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines2 = 0,
-    value_sum_2 = sum(value, na.rm=TRUE)) %>% dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
+    value_sum_2 = round(sum(value, na.rm=TRUE))) %>% dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
 
   fulljoin  <-   full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2)) %>%dplyr::mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%
    dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
@@ -508,7 +510,7 @@ strates_perdues_first_10[is.na(strates_perdues_first_10)] <- "NA"
 
 ```
 
-```{r}
+```{r results='asis'}
 if (round(sum_valeur_init) == round(sum_valeur_final)&nrow(t %>%dplyr::filter(`Loss / Gain` != 'Egal'))==0){
   cat("There are no differences between the two datasets, this step is not changing the data in any way")
 
