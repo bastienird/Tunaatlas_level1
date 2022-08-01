@@ -176,6 +176,7 @@ url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel
 source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/do_unit_conversion_B.R")
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/function_raising_georef_to_nominal_B.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
