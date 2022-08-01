@@ -169,6 +169,12 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   # rm(paste0(name_output,x))
 }
 
+if(exists(opts$output_format)){
+  formals(create_latex)$output_format <- opts$output_format
+}
+
+
+
 # mapping_map_code_lists <- opts$mapping_map_code_lists
 #scripts
 url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation"
