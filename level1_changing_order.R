@@ -123,15 +123,16 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   details = details[with(details, order(as.POSIXct(mtime))), ]
   sub_list_dir_2 = rownames(details)
   t <- tail(details, 2)
-  if (last == TRUE){avant_last = rownames(head(details,1))}
+  if (last == TRUE){avant_last = rownames(head(details,1))
+  file.copy(paste0(wd2,"/",
+                   x), paste0(wd,"/",name_output,"last",x), overwrite = TRUE)}
   avant_last <-  rownames(head(t,1))
   last <- rownames(tail(details, 1))
   name_output <- last_path(as.character(last))
   file.copy(paste0(wd2,"/",
-                   x), paste0(wd,"/",name_output,"last",x), overwrite = FALSE)
+                   x), paste0(wd,"/",name_output,x), overwrite = TRUE)
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
-  print(config$software$input$dbi)
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
                                        params = list(final = last, host = config$software$input$dbi_config$parameters$host, 
                                                                            port = config$software$input$dbi_config$parameters$port, 
@@ -141,12 +142,21 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                      con = config$software$input$dbi,filter_species = opts$species_filter
 
                                                                            ), output_format = output_format)}
-  if(unique==FALSE){rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
+  if(unique==FALSE){
+    if (last == TRUE){
+      rmarkdown::render(paste0(name_output,"last",x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
+                                                            port = config$software$input$dbi_config$parameters$port, 
+                                                            user = config$software$input$dbi_config$parameters$user,
+                                                            dbname=config$software$input$dbi_config$parameters$dbname,
+                                                            password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi,
+                                                            filter_species   = opts$species_filter),output_format = output_format)
+    }
+      else {rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
                                                                                         password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi,
-                                                                          filter_species   = opts$species_filter),output_format = output_format)}#,
+                                                                          filter_species   = opts$species_filter),output_format = output_format)}}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   if (output_format =="latex_document"){
   print("Output_created")
@@ -721,50 +731,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
    # dbConnect(con)
    # con <- config$software$input$dbi
    
-if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
-  # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
-  
-  config$logger.info("---------------------------------------spatial_curation_intersect_areasB--------------------------------------------------------------")
-  config$logger.info(sprintf("LEVEL 1 => STEP 3/5  for file [%s] is executed: Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
-  config$logger.info("-----------------------------------------------------------------------------------------------------")
-  
-  ntons_before_this_step <- round(georef_dataset %>% select(value)  %>% sum())
-  config$logger.info(sprintf("STEP 3/5 : Gridded catch dataset before Reallocation of mislocated data has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
-  
-  # source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated_bastien.R")) #modified for geoflow
-  config$logger.info("STEP 3/5: BEGIN function_spatial_curation_data_mislocated() function")
-  georef_dataset<-function_spatial_curation_data_mislocatedB(entity=entity,
-                                                             config=config,
-                                                             df=georef_dataset,
-                                                             spatial_curation_data_mislocated=opts$spatial_curation_data_mislocated)
-  config$logger.info("STEP 3/5: END function_spatial_curation_data_mislocated() function")
-  
-  #@juldebar: pending => metadata elements below to be managed (commented for now)
-  # metadata$description<-paste0(metadata$description,georef_dataset$description)
-  # metadata$lineage<-c(metadata$lineage,georef_dataset$lineage)
-  
-  georef_dataset<-georef_dataset$dataset
-  ntons_after_mislocated <- round(georef_dataset %>% select(value)  %>% sum())
-  config$logger.info(sprintf("STEP 3/5 : Gridded catch dataset after Reallocation of mislocated data has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_after_mislocated))	
-  config$logger.info(sprintf("STEP 3/5 : Reallocation of mislocated data generated [%s] additionnal tons", ntons_after_mislocated-ntons_before_this_step))
-  config$logger.info("END STEP 3/5")
-  fonction_dossier("Realocating_removing_mislocated_data",
-                   georef_dataset, 
-                   "Reallocation of mislocated data, and just before, taking care of irregular zone given by ctoi",
-                   "function_spatial_curation_data_mislocated",
-                   list(options_spatial_curation_data_mislocated))
-  create_latex("comp_sans_shiny.Rmd")
-  create_latex("comp_sans_shiny.Rmd", last = TRUE)
-  
-  create_latex("short_comp.Rmd")
-  # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
-  gc()
-  
-}else{
-  config$logger.info("-----------------------------------------------------------------------------------------------------")
-  config$logger.info(sprintf("LEVEL 1 => STEP 3/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet):  Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
-  config$logger.info("-----------------------------------------------------------------------------------------------------")
-}
+
 
    
          if(!is.null(opts$unit_conversion_convert)) if (opts$unit_conversion_convert){
@@ -818,7 +785,50 @@ if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
 
 
          
+         if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
+           # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+           
+           config$logger.info("---------------------------------------spatial_curation_intersect_areasB--------------------------------------------------------------")
+           config$logger.info(sprintf("LEVEL 1 => STEP 3/5  for file [%s] is executed: Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
+           config$logger.info("-----------------------------------------------------------------------------------------------------")
+           
+           ntons_before_this_step <- round(georef_dataset %>% select(value)  %>% sum())
+           config$logger.info(sprintf("STEP 3/5 : Gridded catch dataset before Reallocation of mislocated data has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
 
+           # source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated_bastien.R")) #modified for geoflow
+           config$logger.info("STEP 3/5: BEGIN function_spatial_curation_data_mislocated() function")
+           georef_dataset<-function_spatial_curation_data_mislocatedB(entity=entity,
+                                                                     config=config,
+                                                                     df=georef_dataset,
+                                                                     spatial_curation_data_mislocated=opts$spatial_curation_data_mislocated)
+           config$logger.info("STEP 3/5: END function_spatial_curation_data_mislocated() function")
+           
+           #@juldebar: pending => metadata elements below to be managed (commented for now)
+           # metadata$description<-paste0(metadata$description,georef_dataset$description)
+           # metadata$lineage<-c(metadata$lineage,georef_dataset$lineage)
+           
+           georef_dataset<-georef_dataset$dataset
+           ntons_after_mislocated <- round(georef_dataset %>% select(value)  %>% sum())
+           config$logger.info(sprintf("STEP 3/5 : Gridded catch dataset after Reallocation of mislocated data has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_after_mislocated))	
+           config$logger.info(sprintf("STEP 3/5 : Reallocation of mislocated data generated [%s] additionnal tons", ntons_after_mislocated-ntons_before_this_step))
+           config$logger.info("END STEP 3/5")
+           fonction_dossier("Realocating_removing_mislocated_data",
+                            georef_dataset, 
+                            "Reallocation of mislocated data, and just before, taking care of irregular zone given by ctoi",
+                            "function_spatial_curation_data_mislocated",
+                            list(options_spatial_curation_data_mislocated))
+           create_latex("comp_sans_shiny.Rmd")
+           create_latex("comp_sans_shiny.Rmd", last = TRUE)
+           
+           create_latex("short_comp.Rmd")
+           # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+           gc()
+           
+         }else{
+           config$logger.info("-----------------------------------------------------------------------------------------------------")
+           config$logger.info(sprintf("LEVEL 1 => STEP 3/5 not executed  for file [%s] (since not selected in the workflow options, see column 'Data' of geoflow entities spreadsheet):  Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
+           config$logger.info("-----------------------------------------------------------------------------------------------------")
+         }
 
 
    
@@ -1181,7 +1191,7 @@ if (fact=="catch"){
   
   
 
-georef_dataset<-function_raising_georef_to_nominal_B(opts = opts ,entity=entity,
+georef_dataset<-function_raising_georef_to_nominal_B(opts = opts, entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,
