@@ -1105,7 +1105,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   fonction_dossier("Level2_RF2",
                    georef_dataset, 
                    fonctions = "function_raising_georef_to_nominal",
-                   "",options= list(raising_georef_to_nominal ,
+                   "",list(raising_georef_to_nominal ,
                          iattc_ps_raise_flags_to_schooltype ,
                          iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype ,
                          iattc_ps_catch_billfish_shark_raise_to_effort ,
