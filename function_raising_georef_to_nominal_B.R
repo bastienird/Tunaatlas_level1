@@ -1,11 +1,10 @@
-function_raising_georef_to_nominal_B =function(opts,entity,
+function_raising_georef_to_nominal_B =function(con, opts,entity,
          config,
          dataset_to_raise,
          dataset_to_compute_rf,
          nominal_dataset_df,
          x_raising_dimensions){
   
-  con <- config$software$input$dbi
   # options <- entity$data$actions[[1]]$options
   fact <- opts$fact
   raising_do_not_raise_wcfpc_data <- opts$raising_do_not_raise_wcfpc_data

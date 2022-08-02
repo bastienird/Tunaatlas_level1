@@ -1,7 +1,7 @@
-function_spatial_curation_data_mislocatedB = function(entity,config,df,spatial_curation_data_mislocated){
-  spatial_curation_intersect_areasB = function(entity, config, df_input, df_spatial_code_list_name, intersection_spatial_code_list_name) 
+function_spatial_curation_data_mislocatedB = function(con, entity,config,df,spatial_curation_data_mislocated){
+  spatial_curation_intersect_areasB = function(con, entity, config, df_input, df_spatial_code_list_name, intersection_spatial_code_list_name) 
   {
-    con <- config$software$input$dbi
+
     
     cat(paste0("Please ignore here-under warning messages 'unrecognized PostgreSQL field type unknown'"))
     inputAreas_forQuery <- paste(unique(df_input$geographic_identifier), 
@@ -52,7 +52,7 @@ function_spatial_curation_data_mislocatedB = function(entity,config,df,spatial_c
   config$logger.info("Executing rtunaatlas::spatial_curation_intersect_areas")
   #@juldebar => georef_dataset was not set
   georef_dataset <- df
-  areas_in_land<-spatial_curation_intersect_areasB(entity, config, georef_dataset ,"areas_tuna_rfmos_task2","gshhs_world_coastlines")
+  areas_in_land<-spatial_curation_intersect_areasB(con , entity, config, georef_dataset ,"areas_tuna_rfmos_task2","gshhs_world_coastlines")
   
   areas_in_land<-areas_in_land$df_input_areas_intersect_intersection_layer %>%
     group_by(geographic_identifier_source_layer) %>%

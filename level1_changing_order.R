@@ -749,7 +749,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
            config$logger.info(sprintf("STEP 2/5 : Gridded catch dataset before unit conversion has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))	
            
            config$logger.info("STEP 2/5: BEGIN do_unit_conversion() function to convert units of georef_dataset") 
-           georef_dataset <- do_unit_conversion_B(entity=entity,
+           georef_dataset <- do_unit_conversion_B(con = con, entity=entity,
                                                 config=config,
                                                 fact=fact,
                                                 unit_conversion_csv_conversion_factor_url=opts$unit_conversion_csv_conversion_factor_url,
@@ -799,7 +799,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
            # source(file.path(url_scripts_create_own_tuna_atlas, "spatial_curation_data_mislocated_bastien.R")) #modified for geoflow
            config$logger.info("STEP 3/5: BEGIN function_spatial_curation_data_mislocated() function")
-           georef_dataset<-function_spatial_curation_data_mislocatedB(entity=entity,
+           georef_dataset<-function_spatial_curation_data_mislocatedB(con = con, entity=entity,
                                                                      config=config,
                                                                      df=georef_dataset,
                                                                      spatial_curation_data_mislocated=opts$spatial_curation_data_mislocated)
@@ -965,7 +965,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   config$logger.info(paste0("Total ",fact," before raising is : ",sum(georef_dataset$value),"\n"))
   config$logger.info(paste0("Total ",fact," in nominal data is : ",sum(nominal_catch$value),"\n"))
   
-  georef_dataset<-function_raising_georef_to_nominal_B(opts = opts ,entity=entity,
+  georef_dataset<-function_raising_georef_to_nominal_B(con = con, opts = opts ,entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df= nominal_catch,
@@ -1079,7 +1079,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   
   class(dataset_to_compute_rf$value) <- "numeric"
   
-  georef_dataset<-function_raising_georef_to_nominal_B(opts = opts ,entity=entity,
+  georef_dataset<-function_raising_georef_to_nominal_B(con = con, opts = opts ,entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,
@@ -1193,7 +1193,7 @@ if (fact=="catch"){
   
   
 
-georef_dataset<-function_raising_georef_to_nominal_B(opts = opts, entity=entity,
+georef_dataset<-function_raising_georef_to_nominal_B(con = con, opts = opts, entity=entity,
                                                      config=config,
                                                      dataset_to_raise=georef_dataset,
                                                      nominal_dataset_df=nominal_catch,

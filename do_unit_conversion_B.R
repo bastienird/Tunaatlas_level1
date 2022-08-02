@@ -1,7 +1,6 @@
-do_unit_conversion_B = function(entity, config,fact,unit_conversion_csv_conversion_factor_url,unit_conversion_codelist_geoidentifiers_conversion_factors,mapping_map_code_lists = FALSE, georef_dataset){
+do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_conversion_factor_url,unit_conversion_codelist_geoidentifiers_conversion_factors,mapping_map_code_lists = FALSE, georef_dataset){
   
-  con <- config$software$input$dbi
-  
+
   config$logger.info("Reading the conversion factors dataset")
   googledrive_baseurl <- "https://drive.google.com/open?id="
   if(startsWith(unit_conversion_csv_conversion_factor_url, googledrive_baseurl)){
