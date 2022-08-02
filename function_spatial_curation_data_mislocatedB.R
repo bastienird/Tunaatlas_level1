@@ -1,14 +1,14 @@
 function_spatial_curation_data_mislocatedB = function(con, entity,config,df,spatial_curation_data_mislocated){
-  spatial_curation_intersect_areasB = function(con, entity, config, df_input, df_spatial_code_list_name, intersection_spatial_code_list_name) 
+  spatial_curation_intersect_areasB = function(conn, entity, config, df_input, df_spatial_code_list_name, intersection_spatial_code_list_name) 
   {
 
     
     cat(paste0("Please ignore here-under warning messages 'unrecognized PostgreSQL field type unknown'"))
     inputAreas_forQuery <- paste(unique(df_input$geographic_identifier), 
                                  collapse = "','")
-    db_table_name_inputAreas <- dbGetQuery(con, paste0("SELECT identifier from metadata.metadata where identifier='", 
+    db_table_name_inputAreas <- dbGetQuery(conn, paste0("SELECT identifier from metadata.metadata where identifier='", 
                                                        df_spatial_code_list_name, "'"))$table_name
-    db_table_name_intersectionArea <- dbGetQuery(con, paste0("SELECT identifier from metadata.metadata where identifier='", 
+    db_table_name_intersectionArea <- dbGetQuery(conn, paste0("SELECT identifier from metadata.metadata where identifier='", 
                                                              intersection_spatial_code_list_name, "'"))$table_name
     query_data_inland <- paste("WITH \n                           source_layer AS (\n                           SELECT code, label, geom FROM area.", 
                                df_spatial_code_list_name, " WHERE code IN ('", inputAreas_forQuery, 
@@ -17,7 +17,7 @@ function_spatial_curation_data_mislocatedB = function(con, entity,config,df,spat
                                df_spatial_code_list_name, "' as codelist_source_layer,\n                           '", 
                                intersection_spatial_code_list_name, "' as codelist_intersection_layer,\n                           ST_Area(ST_Intersection(source_layer.geom, intersection_layer.geom))/ST_Area(source_layer.geom) as proportion_source_area_intersection\n                           FROM \n                           source_layer,intersection_layer\n                           WHERE\n                           ST_Intersects(source_layer.geom, intersection_layer.geom)", 
                                sep = "")
-    areas_intersected <- dbGetQuery(con, query_data_inland)
+    areas_intersected <- dbGetQuery(conn, query_data_inland)
     areas_intersected$geographic_identifier_source_layer <- gsub(" ", 
                                                                  "", areas_intersected$geographic_identifier_source_layer, 
                                                                  fixed = TRUE)
