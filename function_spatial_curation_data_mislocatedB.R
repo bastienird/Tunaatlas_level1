@@ -45,7 +45,6 @@ function_spatial_curation_data_mislocatedB = function(con, entity,config,df,spat
                                                                                                  0)] <- NA
     return(list(df = df_input, df_input_areas_intersect_intersection_layer = df_input_areas_intersect_intersection_layer))
   }
-  con <- config$software$output$dbi
   config$logger.info("Reallocating data that are in land areas")
   
   #all the data that are inland or do not have any spatial stratification ("UNK/IND",NA) are dealt (either removed - spatial_curation_data_mislocated=="remove" - or reallocated - spatial_curation_data_mislocated=="reallocate" )
