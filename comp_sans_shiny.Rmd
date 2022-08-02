@@ -168,13 +168,13 @@ conn <- params$con
 
 # summary(con
 # dbListTables(con
-out <- try((DBI::dbConnect(conn)), silent = TRUE)
+query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+out <- try((world_sf <- st_read(conn, query = query)), silent = TRUE)
 if(!any(class(out) == "error")){conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                   user = params$user,
                  password = params$password)}
 
-query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-world_sf <- st_read(conn, query = query) 
+world_sf <- st_read(conn, query = query)
 
 shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
