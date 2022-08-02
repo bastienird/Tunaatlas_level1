@@ -34,7 +34,7 @@ params:
   unit ,                  value ,                 source_authority ]
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Captures table 1"      ,"Captures table 2"      ,                               "Loss / Gain",    
-   Difference (in %)          ,      Dimension   ,       Difference in millions of tons ]
+   Difference (in %)          ,      Dimension   ,       Difference in millions of tons/fish ]
   con: con
    
 
@@ -385,6 +385,7 @@ differences_in_optionsfinal$X1 <- gsub("options_","",differences_in_optionsfinal
 differences_in_optionsfinal$X2 <- gsub(" ","",differences_in_optionsfinal$X2)
 differences_in_optionsfinal$X2 <- gsub("options_","",differences_in_optionsfinal$X2)
 
+differences_in_optionsfinal_base <- differences_in_optionsfinal %>% dplyr::distinct()
 
 # differences_in_optionsinit <- differences_in_optionsinit[startsWith(differences_in_optionsinit$X1_X2,"options_")|startsWith(differences_in_optionsinit$X1_X2," options_"),]
 
@@ -419,10 +420,10 @@ qflextable2(differences_between_options2)}
 
 `r towrite`
 
-The options used to create the initial data frame are: 
+The options used to create the final data frame are: 
 
 ```{r}
-s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% mutate(Options = gsub("_","-",Options))%>% mutate(Options = gsub("=","=\n",Options))%>% mutate(Value = gsub("_","-",Value))%>% mutate(Value = gsub("=","=\n",Value))
+s <-  differences_in_optionsfinal_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% mutate(Options = gsub("_","-",Options))%>% mutate(Options = gsub("=","=\n",Options))%>% mutate(Value = gsub("_","-",Value))%>% mutate(Value = gsub("=","=\n",Value))
 qflextable2(s)
 ```
 
@@ -441,7 +442,7 @@ fonction_groupement = function(x, init, final){
    dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
     dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>%dplyr::mutate(Loss_pourcent = ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
    dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)/ 10^6) %>%
-            dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in millions of tons` = Loss_en_milliers_de_tonne,
+            dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in millions of tons/fish` = Loss_en_milliers_de_tonne,
                   `Difference in number of lines` = loss_nb_ligne) %>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0))) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",round(value_sum_1) == round(value_sum_2)~"Egal", TRUE ~ `Loss / Gain`))
 }
 ```
@@ -536,7 +537,7 @@ The stratas differences between the first one and the second one are :
 ```{r}
 # qflextable2(head(strates_perdues,10))
 if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons`)),groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% select(params$columns_to_keep) %>%  group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons/fish`)),groups = c("Dimension","unit","Loss / Gain"))
 towrite = ""
 qflextable2(groupe_df)
 } else {towrite =("No strata is gain nor lost")}
@@ -731,17 +732,17 @@ We will look for each dimension the `r topn` most important differences
 valeur_totale <- sum(init$value, na.rm = TRUE)
 ligne_totale <- nrow(init)
 
-unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group","gear", "Name_En")) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
+unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group","gear", "Name_En")) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons/fish`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
 
-# %>% dplyr::ungroup()%>%dplyr::group_by(test,Dimension) %>%dplyr::mutate_all(sum) %>% dplyr::ungroup() %>%dplyr::mutate(`Difference (in %)` =`Difference in millions of tons`/sum(`Difference in millions of tons`)) %>%dplyr::mutate(Precision = test) %>% dplyr::mutate_if(is.character, as.factor)%>%dplyr::select(-c(test,id)) %>% dplyr::group_by(Dimension) %>%arrange(Dimension,desc(`Difference (in %)`))
+# %>% dplyr::ungroup()%>%dplyr::group_by(test,Dimension) %>%dplyr::mutate_all(sum) %>% dplyr::ungroup() %>%dplyr::mutate(`Difference (in %)` =`Difference in millions of tons/fish`/sum(`Difference in millions of tons/fish`)) %>%dplyr::mutate(Precision = test) %>% dplyr::mutate_if(is.character, as.factor)%>%dplyr::select(-c(test,id)) %>% dplyr::group_by(Dimension) %>%arrange(Dimension,desc(`Difference (in %)`))
 
-# unit_no <- t %>%dplyr::filter(unit == "Number of fish") %>%dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>%dplyr::mutate(Dimension = as.factor(Dimension)) %>% dplyr::mutate(test = ifelse(`Difference (in %)` >10,"Others",as.character(Precision))) %>%dplyr::mutate(Precision = test) %>%   dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>% dplyr::mutate_if(is.character, as.factor)%>%dplyr::select(-test) %>% dplyr::ungroup() %>% dplyr::group_by(Precision,unit, Dimension)%>%dplyr::summarise_all(sum)  %>%dplyr::group_by(unit, Dimension) %>%arrange(desc(`Difference (in %)`), desc(`Difference in millions of tons`)) %>%dplyr::group_by(Dimension)
+# unit_no <- t %>%dplyr::filter(unit == "Number of fish") %>%dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet")) %>%dplyr::mutate(Dimension = as.factor(Dimension)) %>% dplyr::mutate(test = ifelse(`Difference (in %)` >10,"Others",as.character(Precision))) %>%dplyr::mutate(Precision = test) %>%   dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>% dplyr::mutate_if(is.character, as.factor)%>%dplyr::select(-test) %>% dplyr::ungroup() %>% dplyr::group_by(Precision,unit, Dimension)%>%dplyr::summarise_all(sum)  %>%dplyr::group_by(unit, Dimension) %>%arrange(desc(`Difference (in %)`), desc(`Difference in millions of tons/fish`)) %>%dplyr::group_by(Dimension)
 # library(kable)
 ```
 
 
 ```{r paged.print=TRUE}
-t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons`)),groups = c("Dimension","unit","Loss / Gain"))
+t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(params$columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons/fish`)),groups = c("Dimension","unit","Loss / Gain"))
 
 qflextable2(t3)
 
@@ -839,7 +840,7 @@ dplyr::filter(Dimension == "time_start") %>%dplyr::mutate(Time = as.Date(Precisi
 # t %>%
 # dplyr::filter(Dimension %in% "time_end") %>%
 #  ggplot() +
-#  aes(x = Precision, weight = `Difference in millions of tons`) +
+#  aes(x = Precision, weight = `Difference in millions of tons/fish`) +
 #  geom_bar(fill = "#112446") +
 #  theme_minimal()+facet_wrap("unit")
 

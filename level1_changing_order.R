@@ -123,18 +123,20 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   details = details[with(details, order(as.POSIXct(mtime))), ]
   sub_list_dir_2 = rownames(details)
   t <- tail(details, 2)
+  last_file <- rownames(tail(details, 1))
+  name_output <- last_path(as.character(last_file))
+  
   if (last == TRUE){avant_last = rownames(head(details,1))
   file.copy(paste0(wd2,"/",
-                   x), paste0(wd,"/",name_output,"last",x), overwrite = TRUE)}
+                   x), paste0(wd,"/",name_output,"last",x), overwrite = TRUE)} else {
   avant_last <-  rownames(head(t,1))
-  last <- rownames(tail(details, 1))
-  name_output <- last_path(as.character(last))
+
   file.copy(paste0(wd2,"/",
-                   x), paste0(wd,"/",name_output,x), overwrite = TRUE)
+                   x), paste0(wd,"/",name_output,x), overwrite = TRUE)}
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
-                                       params = list(final = last, host = config$software$input$dbi_config$parameters$host, 
+                                       params = list(final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                                            port = config$software$input$dbi_config$parameters$port, 
                                                                            user = config$software$input$dbi_config$parameters$user,
                                                                            dbname=config$software$input$dbi_config$parameters$dbname,
@@ -144,14 +146,14 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                                            ), output_format = output_format)}
   if(unique==FALSE){
     if (last == TRUE){
-      rmarkdown::render(paste0(name_output,"last",x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
+      rmarkdown::render(paste0(name_output,"last",x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                             port = config$software$input$dbi_config$parameters$port, 
                                                             user = config$software$input$dbi_config$parameters$user,
                                                             dbname=config$software$input$dbi_config$parameters$dbname,
                                                             password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi,
                                                             filter_species   = opts$species_filter),output_format = output_format)
     }
-      else {rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last, host = config$software$input$dbi_config$parameters$host, 
+      else {rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
