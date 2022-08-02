@@ -94,9 +94,8 @@ last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
 # step_for_rmd <- 1
-create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document"){
+create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
-  config <- config2
   wd <- getwd()
   # config$logger.info(paste0("working direcotyr begining create_latex : ",wd))
   # y <- last_path(x)
@@ -141,7 +140,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                                            user = config$software$input$dbi_config$parameters$user,
                                                                            dbname=config$software$input$dbi_config$parameters$dbname,
                                                      password = config$software$input$dbi_config$parameters$password, 
-                                                     con = config$software$input$dbi,filter_species = opts$species_filter
+                                                     con = con2,filter_species = opts$species_filter
 
                                                                            ), output_format = output_format)}
   if(unique==FALSE){
@@ -150,14 +149,14 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                             port = config$software$input$dbi_config$parameters$port, 
                                                             user = config$software$input$dbi_config$parameters$user,
                                                             dbname=config$software$input$dbi_config$parameters$dbname,
-                                                            password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi,
+                                                            password = config$software$input$dbi_config$parameters$password, con = con2,
                                                             filter_species   = opts$species_filter),output_format = output_format)
     }
       else {rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
-                                                                                        password = config$software$input$dbi_config$parameters$password, con = config$software$input$dbi,
+                                                                                        password = config$software$input$dbi_config$parameters$password, con = con2,
                                                                           filter_species   = opts$species_filter),output_format = output_format)}}#,
   #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
   if (output_format =="latex_document"){
@@ -544,7 +543,7 @@ fonction_dossier("treatment_after_binding", georef_dataset, "Treatment for iattc
                    options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
                    ) )
 create_latex("comp_sans_shiny.Rmd")
-create_latex("short_comp.Rmd")
+#create_latex("short_comp.Rmd")
 
 
 
@@ -571,7 +570,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
                    "Reading the CSV containing the dimensions to map + the names of the code list mapping datasets. Code list mapping datasets must be available in the database.",
                    "map_codelists", list(options_mapping_map_code_lists))
   create_latex("comp_sans_shiny.Rmd")
-  create_latex("short_comp.Rmd")
+  #create_latex("short_comp.Rmd")
   
   
   
@@ -606,7 +605,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
                             "function_overlapped" , list(options_include_IATTC,
                                                       options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            
 
            }
@@ -633,7 +632,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                    list(options_include_WCPFC,
                      options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep, options_strata_overlap_iotc_wcpfc))
   create_latex("comp_sans_shiny.Rmd")
-  create_latex("short_comp.Rmd")
+  #create_latex("short_comp.Rmd")
   
  }
   
@@ -666,7 +665,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                                options_include_WCPFC ,
                                options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
     
          }
 
@@ -695,7 +694,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             list(options_include_CCSBT,
                               options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
         
            
          }
@@ -724,11 +723,12 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             list( options_include_CCSBT  ,
                                options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            create_latex("comp_sans_shiny.Rmd", last = TRUE)
            
            
          }
+
 if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
   # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
   
@@ -764,7 +764,7 @@ if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
   create_latex("comp_sans_shiny.Rmd")
   create_latex("comp_sans_shiny.Rmd", last = TRUE)
   
-  create_latex("short_comp.Rmd")
+  #create_latex("short_comp.Rmd")
   # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
   gc()
   
@@ -821,7 +821,7 @@ if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
                                options_unit_conversion_convert))
            
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            
 
            
@@ -1001,7 +1001,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
                    ))
   
   create_latex("comp_sans_shiny.Rmd")
-  create_latex("short_comp.Rmd")
+  #create_latex("short_comp.Rmd")
   
   
   
@@ -1115,7 +1115,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
                    ))
   
   create_latex("comp_sans_shiny.Rmd")
-  create_latex("short_comp.Rmd")
+  #create_latex("short_comp.Rmd")
   
 
   
@@ -1292,7 +1292,7 @@ fonction_dossier("Level2_RF3without_gears",
                             list(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            gc()
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            
          } else{
            config$logger.info("-----------------------------------------------------------------------------------------------------")
@@ -1318,7 +1318,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "Apply filters on WCPFC at the end to see what's lost ",
                             "", list(options_filter_WCPFC_at_the_end))
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            
            
          }
@@ -1347,7 +1347,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "spatial_curation_upgrade_resolution", 
                             list(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            
          }
           #dbDisconnect(con)
@@ -1387,7 +1387,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "Grid spatial resolution filter",
                             "", list(options_resolution_filter))
            create_latex("comp_sans_shiny.Rmd")
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            
          }
          
@@ -1408,7 +1408,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "", list(options_gear_filter))
            create_latex("comp_sans_shiny.Rmd")
            create_latex("comp_sans_shiny.Rmd", last = TRUE)
-           create_latex("short_comp.Rmd")
+           #create_latex("short_comp.Rmd")
            
            
          }

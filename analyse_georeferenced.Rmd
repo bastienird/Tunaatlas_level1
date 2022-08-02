@@ -8,8 +8,8 @@ output:
     theme: united
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/nominal/entities/global_nominal_catch_firms_level0/Markdown/mapping/rds.rds"
-  filter_species: "NULL"
+  init: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/Realocating_removing_mislocated_data/rds.rds"
+  filter_species: [FAL]
   filter_source_authority: "NULL"
   filter_gear: "NULL"
   filter_fishingfleet: "NULL"
@@ -32,23 +32,77 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
-library(dplyr)
-library(stringr)
-library(readr)
-library(ggplot2)
-library(shiny)
-library(DBI)
-library(RMySQL)
-library(dbplyr)
-library(RPostgreSQL)
-library(odbc)
-library(sf)
-library(tmap)
-library(leaflet)
-library(tidyr)
-library(DT)
-library(kableExtra)
-library(flextable)
+if(!(require(base))){ 
+ install.packages(base) 
+ (require(base))} 
+ if(!(require(flextable))){ 
+ install.packages(flextable) 
+ (require(flextable))} 
+ if(!(require(remotes))){ 
+ install.packages(remotes) 
+ (require(remotes))} 
+ if(!(require(utils))){ 
+ install.packages(utils) 
+ (require(utils))} 
+ if(!(require(stringr))){ 
+ install.packages(stringr) 
+ (require(stringr))} 
+ if(!(require(knitr))){ 
+ install.packages(knitr) 
+ (require(knitr))} 
+ if(!(require(DBI))){ 
+ install.packages(DBI) 
+ (require(DBI))} 
+ if(!(require(odbc))){ 
+ install.packages(odbc) 
+ (require(odbc))} 
+ if(!(require(sf))){ 
+ install.packages(sf) 
+ (require(sf))} 
+ if(!(require(dplyr))){ 
+ install.packages(dplyr) 
+ (require(dplyr))} 
+ if(!(require(kableExtra))){ 
+ install.packages(kableExtra) 
+ (require(kableExtra))} 
+ if(!(require(readxl))){ 
+ install.packages(readxl) 
+ (require(readxl))} 
+ if(!(require(readr))){ 
+ install.packages(readr) 
+ (require(readr))} 
+ if(!(require(tidyr))){ 
+ install.packages(tidyr) 
+ (require(tidyr))} 
+ if(!(require(ggplot2))){ 
+ install.packages(ggplot2) 
+ (require(ggplot2))} 
+ if(!(require(stats))){ 
+ install.packages(stats) 
+ (require(stats))} 
+ if(!(require(RColorBrewer))){ 
+ install.packages(RColorBrewer) 
+ (require(RColorBrewer))} 
+ if(!(require(cowplot))){ 
+ install.packages(cowplot) 
+ (require(cowplot))} 
+if(!require(sutdycatchesird)){
+  if(!require(remotes)){
+    install.packages("remotes")
+  }
+  require(remotes)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
+ if(!(require(tmap))){ 
+ install.packages(tmap) 
+ (require(tmap))} 
+ if(!(require(RPostgreSQL))){ 
+ install.packages(RPostgreSQL) 
+ (require(RPostgreSQL))} 
+ 
+
+ 
 
 set_flextable_defaults(
   font.size = 10,
@@ -85,7 +139,7 @@ library(readxl)
 species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
 "geographic_identifier",           "species",                      
-              "value",                "source_authority")
+              "value",                "source_authority", "unit")
 
 ```
 
@@ -230,63 +284,7 @@ sum_valeur_init <- sum(init$value, na.rm = TRUE)/10^6
 ```{r}
 library(rlang)
 
-pie_chart_2 = function(x, init= init) {
-  r <- deparse(substitute(x))
-  colnames <- enquo(x)
-  provisoire_i <-init %>%  group_by(!!colnames )%>% summarise(value = sum(value, na.rm = TRUE))  %>% arrange(desc(value)) %>%   mutate(id = row_number())%>%  
-    mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
-    group_by(class) %>%  summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
-    select(  value, class)  %>% mutate(pourcentage = prop.table(value)*100)%>%
-    mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
-  mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
-    distinct()
-  
-  
-  
-ggplot_i <- ggplot(provisoire_i) +
-  aes(
-    x = "",
-    fill = class,
-    colour = class,
-    group = class,
-    weight = pourcentage
-  ) +
-  geom_bar(position = "fill") +
-  scale_fill_hue(direction = 1) +
-  scale_color_hue(direction = 1) +
-  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
-                           aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank())+
-  labs(x = "", y="")
-  
 
-
-title <- ggdraw() + 
-  draw_label(
-    paste0("Distribution in value for the dimension : ",r),
-    fontface = 'bold',
-    x = 0,
-    hjust = 0
-  ) +
-  theme(
-    # add margin on the left of the drawing canvas,
-    # so title is aligned with left edge of first plot
-    plot.margin = margin(0, 0, 0, 7)
-  )
-
-graph <- plot_grid(ggplot_i,labels = c(paste0( titre_1)),
-  label_size = 10)
-
-plot_grid(
-  title, graph,
-  ncol = 1,
-  # rel_heights values control vertical title margins
-  rel_heights = c(0.1, 1))+
-    theme(plot.background = element_rect(color = "black"))
-
-
-}
 
 
 # ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(class)))
@@ -345,43 +343,42 @@ ggplot_capt_par_time("Tons")
 ```
 
 ```{r}
-library(cowplot)
+# library(cowplot)
 fishing_fleet <- pie_chart_2(fishingfleet, init)
 source_authority <- pie_chart_2(source_authority, init)
 species <- pie_chart_2(species, init)
-species_group <- pie_chart_2(species_group, init)
+# species_group <- pie_chart_2(species_group, init)
 # gear <- pie_chart_2(gear, init)
 Name_En <- pie_chart_2(Name_En, init)
 
 ```
 
 ```{r}
-working_directory <- getwd()
-setwd("~/Documents/Tunaatlas_level1")
+
 
 species
-png(filename = "data/nominal_report/pie_chart_species.png")
-print(species)
-dev.off()
+# png(filename = "data/nominal_report/pie_chart_species.png")
+# print(species)
+# dev.off()
 fishing_fleet
-png(filename = "data/nominal_report/pie_chart_fishing_fleet.png")
-print(fishing_fleet)
-dev.off()
+# png(filename = "data/nominal_report/pie_chart_fishing_fleet.png")
+# print(fishing_fleet)
+# dev.off()
 
 source_authority
-png(filename = "data/nominal_report/pie_chart_source_authority.png")
-print(source_authority)
-dev.off()
+# png(filename = "data/nominal_report/pie_chart_source_authority.png")
+# print(source_authority)
+# dev.off()
 
 species_group
-png(filename = "data/nominal_report/pie_chart_species_group.png")
-print(source_authority)
-dev.off()
+# png(filename = "data/nominal_report/pie_chart_species_group.png")
+# print(source_authority)
+# dev.off()
 
 Name_En
-png(filename = "data/nominal_report/pie_chart_source_authority.png")
-print(source_authority)
-dev.off()
+# png(filename = "data/nominal_report/pie_chart_source_authority.png")
+# print(source_authority)
+# dev.off()
 # plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
 ```
 

@@ -10,8 +10,8 @@ output:
     toc: true
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/rawdata_modyfing_georeferenced_errors"
-  final: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/treatment_after_binding"
+  init: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/mapping_codelist"
+  final: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/overlap_iotc_ccsbt"
   dbname: "tunaatlas"
   host: "db-tunaatlas.d4science.org"
   port: 5432
