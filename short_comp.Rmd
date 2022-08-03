@@ -47,52 +47,52 @@ knitr::opts_chunk$set(
 
 ```{r}
 if(!(require(base))){ 
- install.packages(base) 
+ install.packages("base") 
  (require(base))} 
  if(!(require(flextable))){ 
- install.packages(flextable) 
+ install.packages("flextable") 
  (require(flextable))} 
  if(!(require(remotes))){ 
- install.packages(remotes) 
+ install.packages("remotes") 
  (require(remotes))} 
  if(!(require(utils))){ 
- install.packages(utils) 
+ install.packages("utils") 
  (require(utils))} 
  if(!(require(stringr))){ 
- install.packages(stringr) 
+ install.packages("stringr") 
  (require(stringr))} 
  if(!(require(knitr))){ 
- install.packages(knitr) 
+ install.packages("knitr") 
  (require(knitr))} 
  if(!(require(DBI))){ 
- install.packages(DBI) 
+ install.packages("DBI") 
  (require(DBI))} 
  if(!(require(odbc))){ 
- install.packages(odbc) 
+ install.packages("odbc") 
  (require(odbc))} 
  if(!(require(sf))){ 
- install.packages(sf) 
+ install.packages("sf") 
  (require(sf))} 
  if(!(require(dplyr))){ 
- install.packages(dplyr) 
+ install.packages("dplyr") 
  (require(dplyr))} 
  if(!(require(kableExtra))){ 
- install.packages(kableExtra) 
+ install.packages("kableExtra") 
  (require(kableExtra))} 
  if(!(require(readxl))){ 
- install.packages(readxl) 
+ install.packages("readxl") 
  (require(readxl))} 
  if(!(require(readr))){ 
- install.packages(readr) 
+ install.packages("readr") 
  (require(readr))} 
  if(!(require(tidyr))){ 
- install.packages(tidyr) 
+ install.packages("tidyr") 
  (require(tidyr))} 
  if(!(require(tmap))){ 
- install.packages(tmap) 
+ install.packages("tmap") 
  (require(tmap))} 
  if(!(require(ggplot2))){ 
- install.packages(ggplot2) 
+ install.packages("ggplot2") 
  (require(ggplot2))} 
  
 

@@ -1,16 +1,22 @@
-
-getwd()
-setwd("~/Documents/Tunaatlas_level1")
+# 
+# getwd()
+# setwd("~/Documents/Tunaatlas_level1")
 if(!require(remotes)){
   install.packages("remotes")
 require(remotes)
   }
-# if(!require(devtools)){
-#   install.packages("devtools")
-#   require(devtools)
-# }
-# remotes::install_github("eblondel/geoflow")
-library(geoflow)
+if(!require(devtools)){
+  install.packages("devtools")
+  require(devtools)
+}
+if(!require(tinytex)){
+  install.packages("tinytex")
+  require(tinytex)
+}
+if(!require(geoflow)){
+   remotes::install_github("eblondel/geoflow")
+    require(geoflow)}
+
 if(!require(RSQLite)){
   install.packages("RSQLite")
   require(RSQLite)
@@ -40,6 +46,24 @@ if(!require(data.table)){
   install.packages("data.table")
   require(data.table)
 }
+if(!require(plotrix)){
+  install.packages("plotrix")
+  require(plotrix)
+}
+if(!require(rgeos)){
+  install.packages("rgeos")
+  require(rgeos)
+}
+if(!require(rtunaatlas)){
+  install_github("eblondel/rtunaatlas")
+  require(rtunaatlas)
+}
+
+if(!require(rpostgis)){
+  install_github("rpostgis")
+  require(rpostgis)
+}
+executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
 
 
 # install_github("eblondel/geoflow", dependencies = c("Depends", "Imports"))
@@ -197,7 +221,7 @@ jobdir <- initWorkflowJob(config)
 #Pour pouvoir travailler sur une action, il faut donc passer les principales actions une par une, initWorkflow, intWorkflowJob,
  # config$job <- "~/Documents/Tunaatlas_level1/jobs/20220616115652"
 config$job <- jobdir
-config$job <- "~/Documents/Tunaatlas_level1/jobs/20220728154152/entities/global_catch_1deg_level0"
+config$job <- "~/Documents/Tunaatlas_level1/jobs/20220729183319/entities/global_catch_1deg_level0/"
 executeWorkflowJob(config)
 # geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")
 
@@ -210,7 +234,7 @@ contacts <- config$metadata$content$contacts
 
 entity <- config$metadata$content$entities[[1]]
 # entity <- entities[[1]]
-# action <- entity$data$actions[[1]]
+action <- entity$data$actions[[1]]
 # opts <- entity$data$actions[[1]]$opts
 #options <-config$actions[[1]]$options
 
