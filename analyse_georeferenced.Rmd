@@ -135,7 +135,8 @@ kbl <- function(data) {
   knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
     kable_styling(latex_options =c("striped", "scale_down"))
 }
-
+plotting_type <- "plot" 
+if (knitr::is_html_output()){plotting_type <- "plot" }
 ```
 
 
@@ -437,7 +438,6 @@ if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_
 
 world_sf <- sf::st_make_valid(world_sf %>% dplyr::mutate(code_cwp = code))
 world_sf <- world_sf[sf::st_is_valid(world_sf),]
-tmap_mode("plot")
 # tm_shape(st_as_sf(test %>% dplyr::inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
 pakistan <- irregular_iotc %>% dplyr::filter(code_cwp== "3120060")
 world_sf_combined <- rbind(pakistan, world_sf)
@@ -500,8 +500,6 @@ all_the_data <- all_the_data %>% dplyr::select(geographic_identifier, st_area, v
 mislocated_continent <- all_the_data %>% dplyr::filter(str_detect(area_competence, "continent"))
 
 if (nrow(mislocated_continent)==0){knitr::knit_exit()}else{
-tmap_mode("plot")
-
 
 image <- tm_shape(st_as_sf(mislocated_continent %>% dplyr::mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
 
@@ -785,7 +783,7 @@ if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_
 world_sf <- sf::st_make_valid(world_sf %>% dplyr::mutate(code_cwp = code))
 world_sf <- world_sf[sf::st_is_valid(world_sf),]
 
-tmap_mode("plot")
+
 # tm_shape(st_as_sf(test %>% dplyr::inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
 pakistan <- irregular_iotc %>% dplyr::filter(code_cwp== "3120060")
 world_sf_combined <- rbind(pakistan, world_sf)
@@ -852,7 +850,7 @@ try(studycatchesird::pie_chart_2(fishingfleet,mislocated_continent_init,rawdata)
 
 ```
 
-Spain is mislocating the data a lot, as well as EUIRL and BLZ.
+
 
 ```{r}
 # titre_1 <- "Mislocated numbers"
@@ -880,7 +878,6 @@ studycatchesird::pie_chart_2(species,mislocated_continent_init,rawdata)
 
 ```
 
-Albacore is mislocated, as well as BET. 
 
 ```{r}
 
@@ -903,7 +900,6 @@ studycatchesird::pie_chart_2(source_authority,mislocated_continent_init,rawdata)
 
 ```
 
-Problem of conversion factor seems to be coming from WCPFC and IATTC.
 
 ```{r message=FALSE, warning=FALSE}
 source_authority <- c("IATTC", "IOTC","WCPFC","CCSBT","ICCAT")
