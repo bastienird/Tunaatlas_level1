@@ -276,7 +276,7 @@ fonction_dossier("rawdata",
                                                   options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
                                                   options_iccat_ps_include_type_of_school))
 saveRDS(georef_dataset, "data/rawdata.rds")
-create_latex("absurd_data.Rmd", unique = TRUE)
+create_latex("analyse_georeferenced.Rmd", unique = TRUE)
 
 unlink("Markdown")
 
