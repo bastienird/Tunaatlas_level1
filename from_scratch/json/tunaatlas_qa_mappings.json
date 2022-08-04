@@ -45,8 +45,8 @@
 		"software_type": "dbi",
 		"parameters": {
 			"drv": "PostgreSQL",
-			"user": "tunaatlas_inv",
-			"password": "fle087",
+			"user": "tunaatlas_u",
+			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
 			"dbname": "tunaatlas_sandbox"
@@ -70,6 +70,7 @@
 		"id": "load_mapping",
 		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_mapping.R",
 		"run": true
+		
 	}
   ]
 }

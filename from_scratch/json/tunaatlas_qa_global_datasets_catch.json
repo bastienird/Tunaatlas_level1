@@ -38,7 +38,7 @@
 			"password": "21c0551e7ed2911",
 			"host": "db-tunaatlas.d4science.org",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox"
+			"dbname": "tunaatlas"
 		},
 		"properties" : {}
 	},
@@ -50,9 +50,9 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "db-tunaatlas.d4science.org",
+			"host": "localhost",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox"
+			"dbname": "tunaatlas_sandbox2"
 		},
 		"properties" : {}
 	},

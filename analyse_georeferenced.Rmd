@@ -8,7 +8,7 @@ output:
     theme: united
     number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/Realocating_removing_mislocated_data/rds.rds"
+  init: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/rawdata/rds.rds"
   filter_species: [FAL]
   filter_source_authority: "NULL"
   filter_gear: "NULL"
@@ -344,12 +344,12 @@ ggplot_capt_par_time("Tons")
 
 ```{r}
 # library(cowplot)
-fishing_fleet <- pie_chart_2(fishingfleet, init)
-source_authority <- pie_chart_2(source_authority, init)
-species <- pie_chart_2(species, init)
-# species_group <- pie_chart_2(species_group, init)
-# gear <- pie_chart_2(gear, init)
-Name_En <- pie_chart_2(Name_En, init)
+fishing_fleet <- studycatchesird::pie_chart_2(fishingfleet, init)
+source_authority <- studycatchesird::pie_chart_2(source_authority, init)
+species <- studycatchesird::pie_chart_2(species, init)
+species_group <- studycatchesird::pie_chart_2(species_group, init)
+gear <- studycatchesird::pie_chart_2(gear, init)
+Name_En <- studycatchesird::pie_chart_2(Name_En, init)
 
 ```
 

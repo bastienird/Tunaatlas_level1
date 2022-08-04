@@ -1,6 +1,6 @@
 # 
 # getwd()
-# setwd("~/Documents/Tunaatlas_level1")
+setwd("~/Documents/Tunaatlas_level1")
 if(!require(remotes)){
   install.packages("remotes")
 require(remotes)
@@ -63,6 +63,11 @@ if(!require(rpostgis)){
   install_github("rpostgis")
   require(rpostgis)
 }
+if(!require(janitor)){
+  install.packages("janitor")
+  require(janitor)
+}
+
 executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
 
 

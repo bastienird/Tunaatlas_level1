@@ -48,7 +48,7 @@
 		"type": "input",
 		"software_type": "googledrive",
 		"parameters": {
-			"email": "bastiengrassetensat@gmail.com",
+			"email": "firmstunaatlas@gmail.com",
 			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
 		},
 		"properties" : {}
@@ -57,7 +57,7 @@
   "actions": [
 	{
 		"id": "load_dataset",
-		"script": "~/Documents/Tunaatlas_level1/load_dataset_Bastien.R",
+		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_dataset.R",
 		"run": true,
 		"options": {
 			"upload_to_db": true,

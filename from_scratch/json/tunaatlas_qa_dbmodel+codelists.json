@@ -77,8 +77,7 @@
   "actions": [
 	{
 		"id": "load_codelist",
-		"script": "~/Documents/Tunaatlas_level1/test.R",
-		"run": true
-	}
+		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_codelist.R",
+		"run": true}
   ]
 }
