@@ -618,14 +618,14 @@ absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversi
 
 titre_1 <- "Strange conversion factors"
 absurd_conversion_factor_tons <- absurd_conversion_factor  %>%  dplyr::rename(value=MT) %>% dplyr::mutate(unit="MT")
-strange <- pie_chart_2(fishingfleet,first=absurd_conversion_factor_tons,second=rawdata )
+strange <- studycatchesird::pie_chart_2(fishingfleet,first=absurd_conversion_factor_tons,second=rawdata )
 strange
 ```
 
 
 ```{r}
 # titre_1 <- "Original data"
-# original <- pie_chart_2(fishingfleet, mapped_data %>% dplyr::filter(unit %in% c("Tons","MT","MTNO")))
+# original <- studycatchesird::pie_chart_2(fishingfleet, mapped_data %>% dplyr::filter(unit %in% c("Tons","MT","MTNO")))
 # original
 # plot_grid(strange, original)
 ```
@@ -733,7 +733,7 @@ mislocated_continent_init <- rawdata %>% semi_join(mislocated_continent, by = "g
 # 
 # plot_grid(mislocated, original)
 
-pie_chart_2(fishingfleet,mislocated_continent_init,rawdata)
+studycatchesird::pie_chart_2(fishingfleet,mislocated_continent_init,rawdata)
 
 ```
 
@@ -747,7 +747,7 @@ Spain is mislocating the data a lot, as well as EUIRL and BLZ.
 # original <-  pie_chart_1(fishingfleet,mapped_data%>% dplyr::filter(unit %in%c("NOTM","NO")))
 # 
 # plot_grid(mislocated, original)
-pie_chart_2(fishingfleet,mislocated_continent_init,rawdata)
+studycatchesird::pie_chart_2(fishingfleet,mislocated_continent_init,rawdata)
 
 ```
 
@@ -761,7 +761,7 @@ In numbers, it is Brasil, SYC and USA that are mislocating the data.
 # original <-  pie_chart_1(species,mapped_data%>% dplyr::filter(unit %in%c("MTNO","MT")))
 # 
 # plot_grid(mislocated, original)
-pie_chart_2(species,mislocated_continent_init,rawdata)
+studycatchesird::pie_chart_2(species,mislocated_continent_init,rawdata)
 
 ```
 
@@ -784,7 +784,7 @@ a <- gdata::combine(located_on_continent, conversion_factor_above_500_kilos) %>%
 # 
 # original <-  pie_chart_1(source_authority,mapped_data%>% dplyr::filter(unit %in%c("MTNO","MT")))
 # plot_grid(prblm_conv_fact,original)
-pie_chart_2(source_authority,mislocated_continent_init,rawdata)
+studycatchesird::pie_chart_2(source_authority,mislocated_continent_init,rawdata)
 
 ```
 
