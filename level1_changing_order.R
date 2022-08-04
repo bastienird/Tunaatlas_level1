@@ -90,11 +90,10 @@ if(!require(DBI)){
     require(googledrive)
   }
   
-last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
 # step_for_rmd <- 1
-create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con){
+create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con, first = FALSE){
   counting <<- 1
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   wd <- getwd()
@@ -129,7 +128,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   if (last == TRUE){avant_last = rownames(head(details,1))
   file.copy(paste0(wd2,"/",
                    x), paste0(wd,"/",name_output,"last",x), overwrite = TRUE)} else {
-  avant_last <-  rownames(head(t,1))
+  if (first!= TRUE){ avant_last <-  rownames(head(t,1))}
 
   file.copy(paste0(wd2,"/",
                    x), paste0(wd,"/",name_output,x), overwrite = TRUE)}
@@ -276,7 +275,7 @@ fonction_dossier("rawdata",
                                                   options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
                                                   options_iccat_ps_include_type_of_school))
 saveRDS(georef_dataset, "data/rawdata.rds")
-create_latex("analyse_georeferenced.Rmd", unique = TRUE)
+create_latex("analyse_georeferenced.Rmd", unique = TRUE, first = TRUE)
 
 unlink("Markdown")
 
