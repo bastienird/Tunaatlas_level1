@@ -576,7 +576,8 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
                    "map_codelists", list(options_mapping_map_code_lists))
   create_latex("comp_sans_shiny.Rmd")
  create_latex("short_comp.Rmd")
-  
+ saveRDS(georef_dataset, "mapping_codelist/rawdata.rds")
+ 
   
   
 

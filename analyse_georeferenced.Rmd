@@ -247,7 +247,7 @@ dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_le
 }
 
   
-init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) %>% dplyr::select(all_of(colnames_to_keep))  )
+init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) %>% dplyr::select(all_of(colnames_to_keep)))
 
   if (is.null(params$titre_dataset_1)){
     titre_1 <- last_path_reduced(as.character(params$final))
@@ -282,7 +282,6 @@ for (i in Dimensions){
   assign(paste0("test", i), temporaire)
   colnames(temporaire)[1] <- "Precision"
 
-  print(i)
   t <- rbind(t, temporaire)
 }
   
@@ -636,8 +635,7 @@ image
 Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
 
 ```{r}
-rawdata<- init #%>% dplyr::filter(source_authority == params$source_authority)
-rdslevel0 <- rawdata
+rdslevel0 <- readRDS(paste0(as.character(params$final), "/rds.rds"))
 
 strata_nomt <- rdslevel0 %>% dplyr::filter(unit %in% c("NOMT")) #%>% dplyr::select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% dplyr::summarise(value = sum(value)) #%>% dplyr::mutate(unit = "NO", unit_target = "MT")
 # strata_no <- rdslevel0 %>% dplyr::filter(unit == "NO") %>% dplyr::mutate(source= "strata_no")
@@ -675,9 +673,26 @@ absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversi
 
 ```{r}
 
+
+out <- try((rawdata <- readRDS("Markdown/mapping_codelist/rds.rds")), silent = TRUE)
+if(!any(class(out) == "error")){rawdata <- readRDS("Markdown/rawdata/rds.rds")}
+
+  data <- rawdata%>% dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
+cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+    col_types = cols(Identifier = col_skip(), 
+        Abbreviation = col_skip(), Name_Fr = col_skip(), 
+        Name_Es = col_skip(), Name_Ar = col_skip()))
+
+data <- data %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 titre_1 <- "Strange conversion factors"
-absurd_conversion_factor_tons <- absurd_conversion_factor  %>%  dplyr::rename(value=MT) %>% dplyr::mutate(unit="MT")
-strange <- studycatchesird::pie_chart_2(fishingfleet,first=absurd_conversion_factor_tons,second=rawdata )
+titre_2 <- "rawdata"
+absurd_conversion_factor_tons <- absurd_conversion_factor %>% select(-conversion_factor) %>% pivot_longer(cols = c("NO", "MT"),  names_to= "unit")
+
+pie_chart_2<- studycatchesird::pie_chart_2
+formals(pie_chart_2)$titre_1 <- titre_1
+formals(pie_chart_2)$titre_2 <- titre_2
+
+strange <- pie_chart_2(fishingfleet,first=absurd_conversion_factor_tons,second=data )
 strange
 ```
 
@@ -689,20 +704,10 @@ strange
 # plot_grid(strange, original)
 ```
 
-We can see that the repartition of the value in tons is very different in the data where the conversion factor seems too big. 
-
 # Mislocated data
 
 ```{r}
 
-rawdata <- readRDS("data/rawdata.rds")
-  data <- rawdata%>% dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
-cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
-    col_types = cols(Identifier = col_skip(), 
-        Abbreviation = col_skip(), Name_Fr = col_skip(), 
-        Name_Es = col_skip(), Name_Ar = col_skip()))
-
-data <- data %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 
 
 query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
@@ -792,7 +797,7 @@ mislocated_continent_init <- rawdata %>% semi_join(mislocated_continent, by = "g
 # 
 # plot_grid(mislocated, original)
 
-try(studycatchesird::pie_chart_2(fishingfleet,mislocated_continent_init,rawdata))
+try(pie_chart_2(fishingfleet,mislocated_continent_init,rawdata))
 
 ```
 
@@ -806,11 +811,11 @@ try(studycatchesird::pie_chart_2(fishingfleet,mislocated_continent_init,rawdata)
 # original <-  pie_chart_1(fishingfleet,mapped_data%>% dplyr::filter(unit %in%c("NOTM","NO")))
 # 
 # plot_grid(mislocated, original)
-try(studycatchesird::pie_chart_2(fishingfleet,mislocated_continent_init,rawdata))
+try(pie_chart_2(fishingfleet,mislocated_continent_init,rawdata))
 
 ```
 
-In numbers, it is Brasil, SYC and USA that are mislocating the data.
+
 
 ```{r}
 # titre_1 <- "Mislocated tons"
@@ -820,7 +825,7 @@ In numbers, it is Brasil, SYC and USA that are mislocating the data.
 # original <-  pie_chart_1(species,mapped_data%>% dplyr::filter(unit %in%c("MTNO","MT")))
 # 
 # plot_grid(mislocated, original)
-studycatchesird::pie_chart_2(species,mislocated_continent_init,rawdata)
+pie_chart_2(species,mislocated_continent_init,rawdata)
 
 ```
 
@@ -842,7 +847,7 @@ a <- gdata::combine(located_on_continent, conversion_factor_above_500_kilos) %>%
 # 
 # original <-  pie_chart_1(source_authority,mapped_data%>% dplyr::filter(unit %in%c("MTNO","MT")))
 # plot_grid(prblm_conv_fact,original)
-studycatchesird::pie_chart_2(source_authority,mislocated_continent_init,rawdata)
+pie_chart_2(source_authority,mislocated_continent_init,rawdata)
 
 ```
 
