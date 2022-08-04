@@ -146,7 +146,7 @@ if (knitr::is_html_output()){plotting_type <- "plot" }
 
 ```{r}
 
-species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
 "geographic_identifier",           "species",                      
               "value",                "source_authority", "unit")
@@ -180,7 +180,7 @@ last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
 
 fonction_filtre = function(dataframe_tot_filter) {
-  dataframe_tot_filter <- dataframe_tot_filter %>% left_join(species_group%>% dplyr::distinct(), by = c("species"))
+  dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(species_group%>% dplyr::distinct(), by = c("species"))
   if (!is.null(params$filter_species)){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   species %in% params$filter_species)
@@ -237,7 +237,7 @@ fonction_filtre = function(dataframe_tot_filter) {
         Abbreviation = col_skip(), Name_Fr = col_skip(), 
         Name_Es = col_skip(), Name_Ar = col_skip()))
 
-dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
 # dataframe_tot_filter_normal  <- anti_join(dataframe_tot_filter, irregular_iotc,by =c("geographic_identifier"= "code")) #to make the calcul faster
 # dataframe_tot_filter_iotc_shape <-dataframe_tot_filter %>% inner_join(irregular_iotc , by =c("geographic_identifier"= "code")) %>%
 #  dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
@@ -247,7 +247,7 @@ dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, b
 }
 
   
-init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) %>% select(all_of(colnames_to_keep)) %>%  left_join(species_group, by = c("species"))%>% distinct() )
+init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) %>% dplyr::select(all_of(colnames_to_keep))  )
 
   if (is.null(params$titre_dataset_1)){
     titre_1 <- last_path_reduced(as.character(params$final))
@@ -261,7 +261,7 @@ init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) 
 ```{r}
 fonction_groupement = function(x, init){
   x  <-   enquo(x)
-  groupement_1  <-   init %>% group_by(!!x ) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n())
+  groupement_1  <-   init %>% group_by(!!x ) %>% dplyr::summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n())
 }
 ```
 
@@ -315,7 +315,7 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
 ## Catch evolutions
 
 ```{r}
-captures_par_time <- testtime_start %>% mutate(Time = as.Date(time_start))%>% rename(`Captures table 1` = "value_sum_1")%>% pivot_longer(cols = c(`Captures table 1`), names_to = "Origin", values_to ="Captures")
+captures_par_time <- testtime_start %>% mutate(Time = as.Date(time_start))%>% dplyr::rename(`Captures table 1` = "value_sum_1")%>% pivot_longer(cols = c(`Captures table 1`), names_to = "Origin", values_to ="Captures")
 
 
 ggplot(captures_par_time) +
@@ -338,7 +338,7 @@ ggplot(captures_par_time) +
 ## Evolution of the cumulative catches
 
 ```{r}
-captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>% arrange(time_start) %>% group_by(Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% distinct()
+captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>% arrange(time_start) %>% group_by(Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% dplyr::distinct()
 
 ggplot_capt_par_time = function(x){
   
@@ -402,14 +402,7 @@ Name_En
 # How much data is mislocated on continents ?
 
 ```{r}
-conn <- params$con
 
-
-query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-out <- try((world_sf <- st_read(conn, query = query)), silent = TRUE)
-if(!any(class(out) == "error")){conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
-                  user = params$user,
-                 password = params$password)}
 
 data <- init
   data <- data%>% dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
@@ -681,63 +674,6 @@ absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversi
 ```
 
 ```{r}
-# studycatchesird::pie_chart_2 = function(x, init= init) {
-#   r <- deparse(substitute(x))
-#   colnames <- enquo(x)
-#   provisoire_i <-init %>%  dplyr::group_by(!!colnames )%>% dplyr::summarise(value = sum(value, na.rm = TRUE))  %>% arrange(desc(value)) %>%   dplyr::mutate(id = row_number())%>%  
-#     dplyr::mutate(class = as.factor(ifelse(id<4,!!colnames,"Others"))) %>%
-#     dplyr::group_by(class) %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))%>%ungroup()%>% 
-#     dplyr::select(  value, class)  %>% dplyr::mutate(pourcentage = prop.table(value)*100)%>%
-#     dplyr::mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(desc(class))%>%
-#   dplyr::mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
-#     dplyr::distinct()
-#   
-#   
-#   
-# ggplot_i <- ggplot(provisoire_i) +
-#   aes(
-#     x = "",
-#     fill = class,
-#     colour = class,
-#     group = class,
-#     weight = pourcentage
-#   ) +
-#   geom_bar(position = "fill") +
-#   scale_fill_hue(direction = 1) +
-#   scale_color_hue(direction = 1) +
-#   theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (provisoire_i %>% mutate_if(is.numeric, round)), size = 3,
-#                            aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
-#   theme(axis.ticks.x = element_blank(),
-#         axis.text.x = element_blank())+
-#   labs(x = "", y="")
-#   
-# 
-# 
-# title <- ggdraw() + 
-#   draw_label(
-#     paste0("Distribution in value for the dimension : ",r),
-#     fontface = 'bold',
-#     x = 0,
-#     hjust = 0
-#   ) +
-#   theme(
-#     # add margin on the left of the drawing canvas,
-#     # so title is aligned with left edge of first plot
-#     plot.margin = margin(0, 0, 0, 7)
-#   )
-# 
-# graph <- plot_grid(ggplot_i,labels = c(paste0( titre_1)),
-#   label_size = 10)
-# 
-# plot_grid(
-#   title, graph,
-#   ncol = 1,
-#   # rel_heights values control vertical title margins
-#   rel_heights = c(0.1, 1))+
-#     theme(plot.background = element_rect(color = "black"))
-# 
-# 
-# }
 
 titre_1 <- "Strange conversion factors"
 absurd_conversion_factor_tons <- absurd_conversion_factor  %>%  dplyr::rename(value=MT) %>% dplyr::mutate(unit="MT")
