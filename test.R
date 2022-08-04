@@ -1,6 +1,5 @@
-load_codelist <- function(entity, config, options){
-  config$logger.info(paste0("beforeconnection"))
-  
+load_codelist <- function(action, entity, config){
+
   #connection to database
   CON = config$software$output$dbi
   

@@ -266,17 +266,18 @@ georef_dataset<-dataset
 class(georef_dataset$value) <- "numeric"
 rm(dataset)
 
-# fonction_dossier("rawdata",
-#                  georef_dataset,
-#                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
-#                  "get_rfmos_datasets_level0"  , list(options_include_IOTC,options_include_ICCAT,
-#                                                   options_include_IATTC,options_include_WCPFC,
-#                                                   options_include_CCSBT, options_iattc_ps_catch_billfish_shark_raise_to_effort,
-#                                                   options_iattc_ps_raise_flags_to_schooltype,
-#                                                   options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
-#                                                   options_iccat_ps_include_type_of_school))
-
+fonction_dossier("rawdata",
+                 georef_dataset,
+                 "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
+                 "get_rfmos_datasets_level0"  , list(options_include_IOTC,options_include_ICCAT,
+                                                  options_include_IATTC,options_include_WCPFC,
+                                                  options_include_CCSBT, options_iattc_ps_catch_billfish_shark_raise_to_effort,
+                                                  options_iattc_ps_raise_flags_to_schooltype,
+                                                  options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+                                                  options_iccat_ps_include_type_of_school))
 create_latex("absurd_data.Rmd", unique = TRUE)
+unlink("Markdown")
+
 query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
 irregular_iotc <- st_read(con, query = query)
 irregular_iotc <-irregular_iotc  %>% distinct()

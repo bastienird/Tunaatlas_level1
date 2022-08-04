@@ -278,7 +278,9 @@ div(flextable_html_dependency())
 ```{r}
 conn <- params$con
 
-out <- try((DBI::dbConnect(conn)), silent = TRUE)
+
+query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+out <- try((world_sf <- st_read(conn, query = query)), silent = TRUE)
 if(!any(class(out) == "error")){conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
                   user = params$user,
                  password = params$password)}
