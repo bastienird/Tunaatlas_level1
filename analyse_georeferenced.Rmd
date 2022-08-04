@@ -1,30 +1,34 @@
 ---
 title: "Analyse georeferenced"
 author: "Bastien Grasset"
-date: "09/02/2022"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     toc: true
     theme: united
     number_sections: true
+  latex_document:
+    toc: true
+    number_sections: true
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/rawdata/rds.rds"
-  filter_species: [FAL]
-  filter_source_authority: "NULL"
-  filter_gear: "NULL"
-  filter_fishingfleet: "NULL"
-  filter_time_start: "NULL"
-  filter_time_end: "NULL"
-  filter_cat_geo: "NULL"
-  filter_catchtype: "NULL"
-  filter_schooltype: "NULL"
-  titre_dataset_1: "Nominal data after mapping"
-  titre_dataset_2: "Mapcodelist"
+  final: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/rawdata"
+  filter_species: !r NULL
+  filter_source_authority: !r NULL
+  filter_gear: !r NULL
+  filter_fishingfleet: !r NULL  
+  filter_time_start: !r NULL
+  filter_time_end: !r NULL
+  filter_cat_geo: !r NULL
+  filter_catchtype: !r NULL
+  filter_schooltype: !r NULL
+  titre_dataset_1: !r NULL
+  titre_dataset_2: !r NULL
   dbname: "tunaatlas"
   host: "db-tunaatlas.d4science.org"
   port: 5432
   user: "tunaatlas_u"
   password: "21c0551e7ed2911"
+  con: con
 
 ---
 
@@ -141,7 +145,7 @@ if (knitr::is_html_output()){plotting_type <- "plot" }
 
 
 ```{r}
-library(readxl)
+
 species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  select(species_group, species_code) %>% rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
 "geographic_identifier",           "species",                      
@@ -155,7 +159,7 @@ The purpose of this markdown is to describe the nominal dataset created on the g
 # The data
 
 The analyzed data are :
-- ***`r params$init` for the initial data***
+- ***`r params$final` for the initial data***
 
 The filters used are:
 
@@ -170,75 +174,86 @@ The filters used are:
 
 
 ```{r}
-# as.character(params$init)
+# as.character(params$final)
 # as.character(params$final)
 last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
 last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
 
 fonction_filtre = function(dataframe_tot_filter) {
-  if (!(params$filter_species == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  dataframe_tot_filter <- dataframe_tot_filter %>% left_join(species_group%>% dplyr::distinct(), by = c("species"))
+  if (!is.null(params$filter_species)){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   species %in% params$filter_species)
   }
-    if (!(params$filter_gear == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+    if (!is.null(params$filter_gear)){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   gear %in% params$filter_gear)
     }    
-  if (!(params$filter_source_authority == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  if (!is.null(params$filter_source_authority )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   source_authority %in% params$filter_source_authority)
   }  
-  if (!(params$filter_fishingfleet == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  if (!is.null(params$filter_fishingfleet )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   fishingfleet %in% params$filter_fishingfleet)
   }
-    if (!(params$filter_time_start == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+    if (!is.null(params$filter_time_start )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   time_start %in% params$filter_time_start)
     }
-      if (!(params$filter_time_end == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+      if (!is.null(params$filter_time_end )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   time_end %in% params$filter_time_end)
       }
-    if (!(params$filter_schooltype == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+    if (!is.null(params$filter_schooltype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   schooltype %in% params$filter_schooltype)
   }
-    if (!(params$filter_catchtype == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+    if (!is.null(params$filter_catchtype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   catchtype %in% params$filter_catchtype)
     }
   
-  if (!(params$filter_cat_geo == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+  if (!is.null(params$filter_cat_geo )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   cat_geo %in% params$filter_cat_geo)
   }
-    if (!(params$filter_catchtype == "NULL")){
-    dataframe_tot_filter <-  dataframe_tot_filter %>% filter(
+    if (!is.null(params$filter_catchtype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
   cat_geo %in% params$filter_catchtype)
+    }
+    
+        if (!is.null(params$filter_species_group )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+  species_group %in% params$filter_species_group)
+
     }
 
   # dataframe_tot_filter <- dataframe_tot_filter 
-  # dataframe_tot_filter%>% mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish"))
-  cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
+  dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish")) %>%dplyr::mutate(gear = as.character(gear))
+  
+  cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
     col_types = cols(Identifier = col_skip(), 
         Abbreviation = col_skip(), Name_Fr = col_skip(), 
         Name_Es = col_skip(), Name_Ar = col_skip()))
 
 dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
-  
+# dataframe_tot_filter_normal  <- anti_join(dataframe_tot_filter, irregular_iotc,by =c("geographic_identifier"= "code")) #to make the calcul faster
+# dataframe_tot_filter_iotc_shape <-dataframe_tot_filter %>% inner_join(irregular_iotc , by =c("geographic_identifier"= "code")) %>%
+#  dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
+#  dplyr::select(-c(code_cwp))%>%dplyr::group_by(across(setdiff(everything(),"value"))) %>%dplyr::summarise(value =sum(value))
+# 
+# dataframe_tot_filter <- rbind(dataframe_tot_filter_normal ,dataframe_tot_filter_iotc_shape) %>% dplyr::ungroup()
 }
 
   
-init <- fonction_filtre(readRDS(as.character(params$init)) %>% select(all_of(colnames_to_keep)) %>%  left_join(species_group, by = c("species"))%>% distinct() )
+init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) %>% select(all_of(colnames_to_keep)) %>%  left_join(species_group, by = c("species"))%>% distinct() )
 
-
-  if ((params$titre_dataset_1 == "NULL")){
-    titre_1 <- last_path_reduced(as.character(params$init))
+  if (is.null(params$titre_dataset_1)){
+    titre_1 <- last_path_reduced(as.character(params$final))
   } else {
     titre_1 <- params$titre_dataset_1
   }
-
 ```
 
 
@@ -288,11 +303,6 @@ sum_valeur_init <- sum(init$value, na.rm = TRUE)/10^6
 
 
 ```{r}
-library(rlang)
-
-
-
-
 # ggplot(t)+geom_bar(mapping = aes(x = pourcentage, y = as.factor(class)))
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&

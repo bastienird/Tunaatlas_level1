@@ -8,7 +8,7 @@ output:
   latex_document:
     toc: true
     number_sections: true
-date: '2022-05-11'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
   final: "~/Documents/Tunaatlas_level1/jobs/20220723181100/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
   rawdata: "data/rawdata"
