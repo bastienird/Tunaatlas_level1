@@ -770,7 +770,7 @@ if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
   create_latex("comp_sans_shiny.Rmd", last = TRUE)
   
  create_latex("short_comp.Rmd")
- create_latex("absurd_data.Rmd", unique = TRUE)
+ create_latex("analyse_georeferenced.Rmd", unique = TRUE)
  
   # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
   gc()
