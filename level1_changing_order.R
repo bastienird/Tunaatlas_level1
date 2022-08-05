@@ -90,11 +90,11 @@ if(!require(DBI)){
     require(googledrive)
   }
   
-
+  counting <- 1
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
 # step_for_rmd <- 1
 create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con){
-  counting <<- 1
+
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   wd <- getwd()
   # config$logger.info(paste0("working direcotyr begining create_latex : ",wd))
