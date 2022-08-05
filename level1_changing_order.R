@@ -123,7 +123,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   sub_list_dir_2 = rownames(details)
   t <- tail(details, 2)
   last_file <- rownames(tail(details, 1))
-  name_output <- paste0(last_path(as.character(last_file)),counting)
+  name_output <- paste0(last_path(as.character(last_file)), "markdown_number_",counting)
   
   if (last == TRUE){avant_last = rownames(head(details,1))
   file.copy(paste0(wd2,"/",
