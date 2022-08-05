@@ -1,4 +1,5 @@
-comparison_each_step <- function(entity, config, options = NULL){
+comparison_each_step <- function(action, entity, config, options = NULL){
+  opts <- action$options
   
   #create and load metadata table with entities as dataframe
   if(dir.exists("Markdown")){
@@ -6,8 +7,7 @@ comparison_each_step <- function(entity, config, options = NULL){
     # config$logger.info(Msg)
 
   nominal_dataset <- readr::read_csv("data/global_nominal_catch_firms_level0.csv")
-  print(options)
-  
+
   if(!require(readtext)){
     install.packages("readtext")
     require(readtext)
@@ -44,8 +44,8 @@ comparison_each_step <- function(entity, config, options = NULL){
     install.packages("flextable")
     require(flextable)
   }
-  if(!(is.null(options))){nominal <- sum((nominal_dataset %>% 
-                                                          filter(species %in% options$species_filter))$value)
+  if(!(is.null(opts))){nominal <- sum((nominal_dataset %>% 
+                                                          filter(species %in% opts$species_filter))$value)
   } else {nominal <- sum(nominal_dataset$value)}
   
   con_database <- config$software$output$dbi
@@ -68,11 +68,11 @@ comparison_each_step <- function(entity, config, options = NULL){
                         # "Explanation", "Fonctions", 
                         "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
       )
-      if((!is.null(options))){ #have not change for species$filter
+      if((!is.null(opts))){ #have not change for species$filter
         tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
         lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
         nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
-          main <- readRDS(paste0(sub_list_dir_2[1],"/rds.rds")) %>% filter(species%in%options$species_filter)
+          main <- readRDS(paste0(sub_list_dir_2[1],"/rds.rds")) %>% filter(species%in%opts$species_filter)
           tons_init <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
           nofish_init <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
           lines_init <- nrow(main)
@@ -88,8 +88,8 @@ comparison_each_step <- function(entity, config, options = NULL){
         Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
-        if(!is.null(options$species_filter)){
-          main <- readRDS(paste0(i,"/rds.rds")) %>% filter(species%in%options$species_filter)
+        if(!is.null(opts$species_filter)){
+          main <- readRDS(paste0(i,"/rds.rds")) %>% filter(species%in%opts$species_filter)
           sum_t <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
           sum_no <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
           nrow <- nrow(main)

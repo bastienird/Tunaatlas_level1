@@ -621,7 +621,3 @@ entity$addResource("geom_table", options$geom_table)
 config$logger.info("-----------------------------------------------------------------------------------------------------")
 config$logger.info("End: Your tuna atlas dataset has been created!")
 config$logger.info("-----------------------------------------------------------------------------------------------------")
-Toucan
-Au-delà de la limite de 100 mots
-Nous essayons d'augmenter cette limite et de diminuer les délais de chargement. Entre-temps, essayez de surligner jusqu'à 100 mots à la fois pour les traduire.
-Ne pas montrer à nouveau

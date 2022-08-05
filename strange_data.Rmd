@@ -200,7 +200,8 @@ if(!require(sutdycatchesird)){
   require(devtools)
   install_github("BastienIRD/sutdycatchesird")
   require(sutdycatchesird)
-}georef_without_nominal_equivalent <- data %>% inner_join(rfmo_year_species_not_common %>% filter(source=="data"))
+}
+georef_without_nominal_equivalent <- data %>% inner_join(rfmo_year_species_not_common %>% filter(source=="data"))
 summary(summary_fish(georef_without_nominal_equivalent))
 
 summary_fish(georef_without_nominal_equivalent)

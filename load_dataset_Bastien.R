@@ -1,5 +1,5 @@
-load_dataset <- function(entity, config, options){
-  
+load_dataset <- function(action,entity, config, options){
+  opts <- action$options
   
   if(!require(rtunaatlas)){
     remotes::install_github("eblondel/rtunaatlas")
@@ -28,11 +28,11 @@ load_dataset <- function(entity, config, options){
   }
   
   #options
-  upload_to_db <- if(!is.null(options$upload_to_db)) options$upload_to_db else TRUE
-  create_materialized_view <- if(!is.null(options$create_materialized_view)) options$create_materialized_view else TRUE
-  create_indexes <- if(!is.null(options$create_indexes)) options$create_indexes else TRUE
-  add_sql_comments <- if(!is.null(options$add_sql_comments)) options$add_sql_comments else TRUE
-  upload_to_googledrive <- if(!is.null(options$upload_to_googledrive)) options$upload_to_googledrive else TRUE
+  upload_to_db <- if(!is.null(opts$upload_to_db)) opts$upload_to_db else TRUE
+  create_materialized_view <- if(!is.null(opts$create_materialized_view)) opts$create_materialized_view else TRUE
+  create_indexes <- if(!is.null(opts$create_indexes)) opts$create_indexes else TRUE
+  add_sql_comments <- if(!is.null(opts$add_sql_comments)) opts$add_sql_comments else TRUE
+  upload_to_googledrive <- if(!is.null(opts$upload_to_googledrive)) opts$upload_to_googledrive else TRUE
   
   #db
   con = config$software$output$dbi
