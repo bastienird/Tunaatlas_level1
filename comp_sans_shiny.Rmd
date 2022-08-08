@@ -760,8 +760,10 @@ qflextable2(t3)
 
 ## Differences in geographical data
 
-```{r testnaming, out.width="100%"}
+```{r testnaming, eval=FALSE, include=FALSE, out.width="100%"}
 tmap_mode(plotting_type)
+formals(tm_shape)$drop.empty_facets <- FALSE
+
 inner_join <- inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
 
 if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
@@ -790,6 +792,40 @@ image
 
 }
 ```
+
+```{r out.width="100%"}
+tmap_mode(plotting_type)
+formals(tm_shape)$drop.empty_facets <- FALSE
+
+inner_join <- inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
+
+if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
+  if(plotting_type == "plot"){
+image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")))  +
+  tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0)+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+  tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()} else {image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))) +
+  tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0)+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+  tm_layout(legend.outside = TRUE)}
+#   tmap::tmap_save(image,"image2.png")
+# # mapshot(image, file = "image.png")
+# knitr::include_graphics("image2.png")
+image
+} else{
+
+image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
+  tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
+				 id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+  tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
+image
+#   tmap::tmap_save(image,"image3.png")
+# # mapshot(image, file = "image.png")
+# knitr::include_graphics("image3.png")
+
+}
+```
+
 
 Here is represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information. The polygongs with red bord lost all the information, the one with blue borders did not loose information.
 
