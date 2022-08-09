@@ -40,7 +40,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 if(!(require(base))){ 
  install.packages(base) 
  (require(base))} 
@@ -261,7 +261,7 @@ init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) 
 ```{r}
 fonction_groupement = function(x, init){
   x  <-   enquo(x)
-  groupement_1  <-   init %>% group_by(!!x ) %>% dplyr::summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n())
+  groupement_1  <-   init %>% group_by(!!x, unit ) %>% dplyr::summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n())
 }
 ```
 
@@ -330,18 +330,19 @@ ggplot(captures_par_time) +
   scale_color_hue(direction = 1) +
   theme_dark() +
   theme(legend.position = "top") +
+  facet_wrap(vars(unit), nrow = 2L)+
   labs(x = "Time", y = "Captures")+
-  facet_grid(scales = "free_y")
+  facet_grid("unit", scales = "free_y")
 ```
 
 ## Evolution of the cumulative catches
 
 ```{r}
-captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>% arrange(time_start) %>% group_by(Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% dplyr::distinct()
+captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>% arrange(time_start) %>% group_by(unit,Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% dplyr::distinct()
 
 ggplot_capt_par_time = function(x){
-  
-  ggplot(captures_par_time) +
+
+  ggplot(captures_par_time %>%dplyr::filter(unit==x)) +
   aes(
     x = Time,
     y = `Captures cumulées`,
@@ -350,10 +351,17 @@ ggplot_capt_par_time = function(x){
   geom_line(size = 0.5) +
   scale_color_hue(direction = 1) +
   theme_minimal() +
+  facet_wrap(vars(unit)) +
   labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
 }
 
 ggplot_capt_par_time("Tons")
+```
+
+
+```{r}
+ggplot_capt_par_time("Number of fish")
+
 
 ```
 
@@ -675,8 +683,8 @@ absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversi
 
 
 out <- try((rawdata <- readRDS("Markdown/mapping_codelist/rds.rds")), silent = TRUE)
-if(!any(class(out) == "error")){rawdata <- readRDS("Markdown/rawdata/rds.rds")}
-
+if(!any(class(out) == "error")){out <- try(rawdata <- readRDS("Markdown/rawdata/rds.rds"))}
+if(!any(class(out) == "error")){out <- try(rawdata <- readRDS("data/rawdata.rds"))}
   data <- rawdata%>% dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
 cl_cwp_gear_level2 <- read_csv("data/cl_cwp_gear_level2.csv", 
     col_types = cols(Identifier = col_skip(), 
