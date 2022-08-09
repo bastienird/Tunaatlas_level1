@@ -93,7 +93,7 @@ if(!require(DBI)){
   counting <- 1
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny.Rmd")
 # step_for_rmd <- 1
-create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con){
+create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con, data_to_comp = NULL){
 
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   wd <- getwd()
@@ -127,13 +127,14 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   
   if (last == TRUE){avant_last = rownames(head(details,1))
   file.copy(paste0(wd2,"/",
-                   x), paste0(wd,"/",name_output,"last",x), overwrite = TRUE)} else {
+                   x), paste0(wd,"/",name_output,"last",x), overwrite = FALSE)} else {
   avant_last <-  rownames(head(t,1))
 
   file.copy(paste0(wd2,"/",
-                   x), paste0(wd,"/",name_output,x), overwrite = TRUE)}
+                   x), paste0(wd,"/",name_output,x), overwrite = FALSE)}
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
+  if (!is.null(data_to_comp) & data_to_comp %in% lapply(rownames(details),last_path)) {avant_last <- rownames(details[,data_to_comp %in% lapply(rownames(details),last_path)])}
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
                                        params = list(final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                                            port = config$software$input$dbi_config$parameters$port, 
@@ -142,7 +143,8 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                      password = config$software$input$dbi_config$parameters$password, 
                                                      con = con2,filter_species = opts$species_filter
 
-                                                                           ), output_format = output_format)}
+                                       ), output_format = output_format)
+    rm(paste0(name_output,x))}
   if(unique==FALSE){
     if (last == TRUE){
       rmarkdown::render(paste0(name_output,"last",x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
@@ -151,34 +153,25 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                             dbname=config$software$input$dbi_config$parameters$dbname,
                                                             password = config$software$input$dbi_config$parameters$password, con = con2,
                                                             filter_species   = opts$species_filter),output_format = output_format)
+      rm(paste0(name_output,"last",x))
     }
       else {rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
                                                                                         password = config$software$input$dbi_config$parameters$password, con = con2,
-                                                                          filter_species   = opts$species_filter),output_format = output_format)}}#,
-  #output_file = paste0(gsub(".Rmd", "",x), "step",step_for_rmd,".Rmd")
+                                                                          filter_species   = opts$species_filter),output_format = output_format)
+        rm(paste0(name_output,x))
+        }}#,
+  
   if (output_format =="latex_document"){
   print("Output_created")
   if(last==TRUE){tex <- gsub(".Rmd", ".tex", paste0(name_output,"last",x)) } else {  tex <- gsub(".Rmd", ".tex", paste0(name_output,x)) }
   tools::texi2dvi(tex, pdf = TRUE, clean = FALSE, quiet = TRUE,
            texi2dvi = getOption("texi2dvi"))
   }
-  counting <<- counting+1
-  # rm(paste0(name_output,x))
-  # rm(tex)
-  # system(paste0( "cd ", paste0(wd), ";pdflatex ", tex), intern = FALSE,
-  #        ignore.stdout = FALSE, ignore.stderr = FALSE,
-  #        wait = TRUE, input = NULL, show.output.on.console = FALSE,
-  #        minimized = FALSE, invisible = TRUE, timeout = 0)
-  # setwd(wd)
-  
-  # file.rename(paste0(gsub(".Rmd", "", x),".pdf"), paste0(gsub(".Rmd", "", x),name_output,".pdf"))
-  # file.rename("comp_sans_shiny.tex", paste0(gsub(".Rmd", "", x),name_output,".tex"))
-  # unlink("comp_sans_shiny.Rmd")
-  # setwd(wd)
-  # rm(paste0(name_output,x))
+
+
 }
 
 if(!is.null(opts$output_format_report)){
@@ -580,7 +573,11 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   
   
 
-  }
+}
+
+formals(create_latex)$data_to_comp  <- "mapping_codelist"
+
+
    #dbDisconnect(con)
   # con <- config$software$input$dbi
   
