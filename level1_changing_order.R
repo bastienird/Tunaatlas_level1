@@ -134,7 +134,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                    x), paste0(wd,"/",name_output,x), overwrite = FALSE)}
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
-  if (!is.null(data_to_comp) & data_to_comp %in% lapply(rownames(details),last_path)) {avant_last <- rownames(details[,data_to_comp %in% lapply(rownames(details),last_path)])}
+  if (!is.null(data_to_comp) & data_to_comp %in% lapply(rownames(details),last_path) & last == TRUE) {avant_last <- rownames(details[,data_to_comp %in% lapply(rownames(details),last_path)])}
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
                                        params = list(final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                                            port = config$software$input$dbi_config$parameters$port, 
