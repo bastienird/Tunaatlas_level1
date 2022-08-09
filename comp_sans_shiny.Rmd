@@ -6,9 +6,12 @@ output:
   html_document: 
     toc: true
     number_sections: true
+    keep_md: true
   latex_document:
     toc: true
     number_sections: true
+    keep_md: true
+
 params: 
   init: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/mapping_codelist"
   final: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/overlap_iotc_ccsbt"
@@ -36,6 +39,7 @@ params:
   "Captures table 1"      ,"Captures table 2"      ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons/fish ]
   con: con
+  
    
 
 ---
@@ -134,13 +138,13 @@ set_flextable_defaults(
   theme_fun = "theme_box"
   )
 # qflextable2 = function(x){x <- autofit(kable(x))}
-last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 plotting_type <- "plot" 
 if (knitr::is_html_output()){plotting_type <- "view" }
 ```
 
 
-```{r}
+```{r cache=TRUE}
 
 fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
@@ -156,18 +160,8 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 ```
 
 
-```{r}
+```{r cache=TRUE}
 conn <- params$con
-# drv <- RSQLite::dbDriver("PostgreSQL")
-# conn<- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
-#                  user = params$user,
-#                  password = params$password)
-# 
-# dbExistsTable(conn,"iattc_after_treatment")
-# dbExistsTable(conn,"/../area.area_wkt")
-
-# summary(con
-# dbListTables(con
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 out <- try((world_sf <- st_read(conn, query = query)), silent = TRUE)
 if(!any(class(out) == "error")){conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
@@ -219,7 +213,7 @@ qflextable2 =function(x){
 ```
 
 
-```{r}
+```{r cache=TRUE}
 species_group <-   read_excel(file.path("data", "SPECIES_LIST_RFMO_WITH_ERRORS.xlsx")) %>% janitor::clean_names() %>% dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
 "geographic_identifier","schooltype",           "species",              "catchtype",           
@@ -242,7 +236,7 @@ The analyzed data are :
 - ***acces `r last_path(params$final)` for the final data***
 
 
-```{r results='asis'}
+```{r results='asis', cache=TRUE}
 if (is.null(c(params$filter_cat_geo, params$filter_gear, params$filter_source_authority, params$filter_fishingfleet, params$filter_time_start, params$filter_time_end, params$filter_species, params$filter_catchtype))){cat("There are no filter on this data")}
 
 ```
@@ -259,8 +253,8 @@ The filter used on this data are:
 - on catch types: `r params$filter_catchtype`
 
 
-```{r}
-last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+```{r cache=TRUE}
+last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
 
 fonction_filtre = function(dataframe_tot_filter) {
@@ -329,8 +323,10 @@ dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, b
 # 
 # dataframe_tot_filter <- rbind(dataframe_tot_filter_normal ,dataframe_tot_filter_iotc_shape) %>% dplyr::ungroup()
 }
+```
 
-  
+
+```{r}
 init <- fonction_filtre(readRDS(paste0(as.character(params$init),"/rds.rds")) %>%dplyr::select(all_of(colnames_to_keep)))%>%  left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end)) %>%dplyr::mutate(cat_geo = as.character(cat_geo))
 
 final <- fonction_filtre(readRDS(paste0(as.character(params$final),"/rds.rds"))%>%dplyr::select(all_of(colnames_to_keep))) %>% 
@@ -428,11 +424,9 @@ qflextable2(s)
 ```
 
 
-```{r}
+```{r cache=TRUE}
 fonction_groupement = function(x, init, final){
-  require(dplyr)
-
-  x  <-   dplyr::enquo(x)
+    x  <-   dplyr::enquo(x)
   groupement_1  <-   init %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines1 = 0,
     value_sum_1 = round(sum(value, na.rm=TRUE))) %>%dplyr::mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
   groupement_2  <-   final %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines2 = 0,
@@ -449,7 +443,7 @@ fonction_groupement = function(x, init, final){
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE, cache=TRUE}
 carte_init <- fonction_groupement(geographic_identifier,init, final)
 # gear_init <- fonction_groupement(gear,init, final)
 
@@ -457,8 +451,10 @@ carte_init <- fonction_groupement(geographic_identifier,init, final)
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"& colnames(init)!= "st_area"]
   # t <- init[0,]
   t <- carte_init[0,]
+```
 
 
+```{r message=FALSE, warning=FALSE, include=FALSE}
 for (i in Dimensions){
   temporaire <- fonction_groupement(.data[[i]],init, final)
   assign(paste0("test", i), temporaire)
