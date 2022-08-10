@@ -81,7 +81,7 @@
   "actions": [ 
   	{
 		"id": "load_dataset",
-		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/load_dataset_Bastien.R",
+		"script": "https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/tunaatlas_actions/load_dataset.R",
 		"run": true,
 		"options": {
 			"upload_to_db": true,
@@ -97,7 +97,7 @@
 	},
 	{
 		"id": "enrich_for_db_services",
-		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/enrich_for_db_services_B.R",
+		"script": "https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/tunaatlas_actions/enrich_db_for_services.R",
 		"run": true
 	},
 	{		"id": "comparison_each_step",
