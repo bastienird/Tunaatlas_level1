@@ -1,0 +1,84 @@
+{
+  "profile": {
+	"id": "tunaatlas-qa",
+	"mode": "entity",
+	"project": "FIRMS Tuna Atlas",
+	"organization": "FIRMS Tuna Atlas",
+	"logos": [
+		"http://firms.fao.org/figis/website/assets/images/templates/firms/firms_banner.gif",
+		"http://www.fao.org/fileadmin/templates/family-farming-decade/images/FAO-IFAD-Logos/FAO-Logo-EN.svg",
+		"http://www.umr-marbec.fr/images/logo-ird-en.png"
+	],
+	"options": {
+		"line_separator": "_\n"
+	}
+  },
+  "metadata": {
+    "entities": [
+		{
+		  "handler": "gsheet",
+		  "source": "https://docs.google.com/spreadsheets/d/12zi49c5wd9Nc7N1anv3lCM4f66L-5x3-Xsh6ZGGc-ns/edit?usp=sharing"
+		}
+	],
+    "contacts" : [
+		{
+		  "handler": "gsheet",
+		  "source": "https://docs.google.com/spreadsheets/d/1DtGR8cHAkro12DOFZn40cehfU9LoI9l7wVUCHfHH-xY/edit?usp=sharing"
+		}
+	]
+  },
+  "software": [
+	{
+		"id": "tunaatlas-db-write",
+		"type": "output",
+		"software_type": "dbi",
+		"parameters": {
+			"drv": "PostgreSQL",
+			"user": "tunaatlas_u",
+			"password": "21c0551e7ed2911",
+			"host": "db-tunaatlas.d4science.org",
+			"port": "5432",
+			"dbname": "tunaatlas_sandbox"
+		},
+		"properties" : {
+			"user_readonly": "tunaatlas_inv",
+			"onstart_r": {
+				"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/deploy_database_model.R",
+				"fun": "deploy_database_model"
+			}
+		}
+	},
+	{
+		"id": "tunaatlas-db-read",
+		"type": "input",
+		"software_type": "dbi",
+		"parameters": {
+			"drv": "PostgreSQL",
+			"user": "tunaatlas_inv",
+			"password": "fle087",
+			"host": "db-tunaatlas.d4science.org",
+			"port": "5432",
+			"dbname": "tunaatlas_sandbox"
+		},
+		"properties" : {
+		}
+	},
+	{
+		"id": "googledrive",
+		"type": "input",
+		"software_type": "googledrive",
+		"parameters": {
+			"email": "firmstunaatlas@gmail.com",
+			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
+		},
+		"properties" : {}
+	}
+  ],
+  "actions": [
+	{
+		"id": "load_codelist",
+		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_codelist.R",
+		"run": true
+	}
+  ]
+}
