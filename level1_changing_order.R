@@ -174,7 +174,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
            texi2dvi = getOption("texi2dvi"))
   }
 
-
+  counting <- counting +1
 }
 
 if(!is.null(opts$output_format_report)){
