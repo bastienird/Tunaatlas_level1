@@ -127,16 +127,18 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
   
   if (last == TRUE){avant_last = rownames(head(details,1))
   file.copy(paste0(wd2,"/",
-                   x), paste0(wd,"/",name_output,"last",x), overwrite = FALSE)} else {
+                   x), paste0(wd,"/",name_output,"last",x), overwrite = FALSE)
+  } else {
   avant_last <-  rownames(head(t,1))
 
   file.copy(paste0(wd2,"/",
                    x), paste0(wd,"/",name_output,x), overwrite = FALSE)}
   # setwd(paste0(wd,"/",output_file))
   # conection_db <- postgresqlConnectionInfo(con)
-  if (!is.null(data_to_comp)) {
-    if(data_to_comp %in% lapply(rownames(details),last_path) & last == TRUE) {
-      avant_last <- rownames(details[,data_to_comp %in% lapply(rownames(details),last_path)])}
+  if (!is.null(data_to_comp) & last == TRUE) {
+    if(data_to_comp %in% lapply(rownames(details),last_path) ) {
+      avant_last <- rownames(details[data_to_comp == lapply(rownames(details),last_path),])
+      }
     }
   if(unique == TRUE){rmarkdown::render(paste0(name_output,x),
                                        params = list(final = last_file, host = config$software$input$dbi_config$parameters$host, 
@@ -150,6 +152,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
     }
   if(unique==FALSE){
     if (last == TRUE){
+      print(paste0("params init is ", avant_last, " : params final is ", last_file))
       rmarkdown::render(paste0(name_output,"last",x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                             port = config$software$input$dbi_config$parameters$port, 
                                                             user = config$software$input$dbi_config$parameters$user,
@@ -158,7 +161,9 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                             filter_species   = opts$species_filter),output_format = output_format)
       
     }
-      else {rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
+      else {
+        print(paste0("params init is ", avant_last, " : params final is ", last_file))
+        rmarkdown::render(paste0(name_output,x),params = list(init = avant_last, final = last_file, host = config$software$input$dbi_config$parameters$host, 
                                                                                         port = config$software$input$dbi_config$parameters$port, 
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
@@ -174,7 +179,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
            texi2dvi = getOption("texi2dvi"))
   }
 
-  counting <- counting +1
+  counting <<- counting +1
 }
 
 if(!is.null(opts$output_format_report)){
@@ -299,6 +304,8 @@ fonction_dossier("rawdata_modyfing_georeferenced_errors",
                  georef_dataset,
                  "Retrieve georeferenced catch or effort (+ processings for ICCAT and IATTC) AND NOMINAL CATCH if asked",
                  "get_rfmos_datasets_level0"  )
+create_latex("comp_sans_shiny.Rmd", last = TRUE)
+
 #-----------------------------------------------------------------
 
 variable <- opts$fact
@@ -580,7 +587,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
 
 }
 
-formals(create_latex)$data_to_comp  <- "mapping_codelist"
+# formals(create_latex)$data_to_comp  <- "mapping_codelist"
 
 
    #dbDisconnect(con)
