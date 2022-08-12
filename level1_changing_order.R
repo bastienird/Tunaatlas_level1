@@ -587,7 +587,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
 
 }
 
-# formals(create_latex)$data_to_comp  <- "mapping_codelist"
+formals(create_latex)$data_to_comp  <- "mapping_codelist"
 
 
    #dbDisconnect(con)
