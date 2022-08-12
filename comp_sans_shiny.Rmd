@@ -144,7 +144,7 @@ if (knitr::is_html_output()){plotting_type <- "view" }
 ```
 
 
-```{r cache=TRUE}
+```{r cache=FALSE}
 
 fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
@@ -160,7 +160,7 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 ```
 
 
-```{r cache=TRUE}
+```{r cache=FALSE}
 conn <- params$con
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 out <- try((world_sf <- st_read(conn, query = query)), silent = TRUE)
@@ -213,7 +213,7 @@ qflextable2 =function(x){
 ```
 
 
-```{r cache=TRUE}
+```{r cache=FALSE}
 species_group <-   read_excel(file.path("data", "SPECIES_LIST_RFMO_WITH_ERRORS.xlsx")) %>% janitor::clean_names() %>% dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
 "geographic_identifier","schooltype",           "species",              "catchtype",           
@@ -236,7 +236,7 @@ The analyzed data are :
 - ***acces `r last_path(params$final)` for the final data***
 
 
-```{r results='asis', cache=TRUE}
+```{r results='asis', cache=FALSE}
 if (is.null(c(params$filter_cat_geo, params$filter_gear, params$filter_source_authority, params$filter_fishingfleet, params$filter_time_start, params$filter_time_end, params$filter_species, params$filter_catchtype))){cat("There are no filter on this data")}
 
 ```
@@ -253,7 +253,7 @@ The filter used on this data are:
 - on catch types: `r params$filter_catchtype`
 
 
-```{r cache=TRUE}
+```{r cache=FALSE}
 last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
 
@@ -316,12 +316,7 @@ fonction_filtre = function(dataframe_tot_filter) {
         Name_Es = col_skip(), Name_Ar = col_skip()))
 
 dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
-# dataframe_tot_filter_normal  <- anti_join(dataframe_tot_filter, irregular_iotc,by =c("geographic_identifier"= "code")) #to make the calcul faster
-# dataframe_tot_filter_iotc_shape <-dataframe_tot_filter %>% inner_join(irregular_iotc , by =c("geographic_identifier"= "code")) %>%
-#  dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
-#  dplyr::select(-c(code_cwp))%>%dplyr::group_by(across(setdiff(everything(),"value"))) %>%dplyr::summarise(value =sum(value))
-# 
-# dataframe_tot_filter <- rbind(dataframe_tot_filter_normal ,dataframe_tot_filter_iotc_shape) %>% dplyr::ungroup()
+
 }
 ```
 
@@ -424,7 +419,7 @@ qflextable2(s)
 ```
 
 
-```{r cache=TRUE}
+```{r cache=FALSE}
 fonction_groupement = function(x, init, final){
     x  <-   dplyr::enquo(x)
   groupement_1  <-   init %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines1 = 0,
@@ -443,7 +438,7 @@ fonction_groupement = function(x, init, final){
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE, cache=TRUE}
+```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 carte_init <- fonction_groupement(geographic_identifier,init, final)
 # gear_init <- fonction_groupement(gear,init, final)
 
