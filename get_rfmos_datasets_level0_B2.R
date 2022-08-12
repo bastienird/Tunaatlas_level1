@@ -77,7 +77,7 @@ get_rfmos_datasets_level0_B2 = function(rfmo, entity, config, options){
                                                                regexpr("iccat", names(dataset_files)) > 0]
                         iccat_data <- do.call("rbind", lapply(dataset_files_iccat, readr::read_csv, guess_max = 0))
                         iccat_data <- as.data.frame(iccat_data)
-                        iccat_data_before_treatment <<- iccat_data
+                        # iccat_data_before_treatment <<- iccat_data
                         
                         class(iccat_data$value) <- "numeric"
                         
@@ -86,7 +86,7 @@ get_rfmos_datasets_level0_B2 = function(rfmo, entity, config, options){
                         config$logger.warn(sprintf("Option include_%s = FALSE. Ignoring data...", rfmo))
                       }
                       iccat_data
-                      iccat_data_after_treatment <<- iccat_data
+                      # iccat_data_after_treatment <<- iccat_data
                       
                       
                     },
@@ -107,7 +107,7 @@ get_rfmos_datasets_level0_B2 = function(rfmo, entity, config, options){
                         # Deal with special case of IATTC PS
                         iattc_data <- unique(iattc_data)
                         
-                        iattc_data_before_treatment <<- iattc_data
+                        # iattc_data_before_treatment <<- iattc_data
                         
                         
                         ## IATTC PS catch-and-effort are stratified as following:
@@ -126,7 +126,7 @@ get_rfmos_datasets_level0_B2 = function(rfmo, entity, config, options){
                         config$logger.warn(sprintf("Option include_%s = FALSE. Ignoring data...", rfmo))
                       }
                       iattc_data
-                      iattc_data_after_treatment <<- iattc_data
+                      # iattc_data_after_treatment <<- iattc_data
                       
                     }
   )
