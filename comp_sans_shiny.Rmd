@@ -309,7 +309,8 @@ fonction_filtre = function(dataframe_tot_filter) {
         Abbreviation = col_skip(), Name_Fr = col_skip(), 
         Name_Es = col_skip(), Name_Ar = col_skip()))
 
-dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, by = c("gear" = "Code")) %>% rename(Gear = Name_En)
+dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% rename(Gear = Name_En)
 
 }
 ```
@@ -656,7 +657,8 @@ formals(pie_chart_2_default)$titre_1 <- titre_1
 formals(pie_chart_2_default)$titre_2 <- titre_2
 formals(pie_chart_2_default)$first <- init
 formals(pie_chart_2_default)$second <- final
-list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group","Gear")
+if ("Gear"%in% colnames(dataframe_tot_filter)){
+list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group","Gear")} else {list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group", "Name_En")}
 
 
 
