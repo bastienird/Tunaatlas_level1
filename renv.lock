@@ -72,6 +72,16 @@
       "Hash": "45f0398006e83a5b10b72a90663d8d8c",
       "Requirements": []
     },
+    "RCurl": {
+      "Package": "RCurl",
+      "Version": "1.98-1.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "19448e3b7f646a99d42660dc025e8f8c",
+      "Requirements": [
+        "bitops"
+      ]
+    },
     "RPostgreSQL": {
       "Package": "RPostgreSQL",
       "Version": "0.7-3",
@@ -123,6 +133,14 @@
       "Hash": "e9c08b94391e9f3f97355841229124f2",
       "Requirements": []
     },
+    "Rttf2pt1": {
+      "Package": "Rttf2pt1",
+      "Version": "1.3.10",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8952819f94cd9fce521f9b1cb558f8a4",
+      "Requirements": []
+    },
     "XML": {
       "Package": "XML",
       "Version": "3.99-0.10",
@@ -138,6 +156,16 @@
       "Repository": "CRAN",
       "Hash": "4f57884290cc75ab22f4af9e9d4ca862",
       "Requirements": []
+    },
+    "antiword": {
+      "Package": "antiword",
+      "Version": "1.3.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d99c267c57e790c428cb595755e4676e",
+      "Requirements": [
+        "sys"
+      ]
     },
     "askpass": {
       "Package": "askpass",
@@ -182,6 +210,14 @@
       "Requirements": [
         "bit"
       ]
+    },
+    "bitops": {
+      "Package": "bitops",
+      "Version": "1.0-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b7d8d8ee39869c18d8846a184dd8a1af",
+      "Requirements": []
     },
     "blob": {
       "Package": "blob",
@@ -520,6 +556,25 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "699a7a93d08c962d9f8950b2d7a227f1",
+      "Requirements": []
+    },
+    "extrafont": {
+      "Package": "extrafont",
+      "Version": "0.18",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "07a8a50195fc77e8690fd8bc4e87e6a0",
+      "Requirements": [
+        "Rttf2pt1",
+        "extrafontdb"
+      ]
+    },
+    "extrafontdb": {
+      "Package": "extrafontdb",
+      "Version": "1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a861555ddec7451c653b40e713166c6f",
       "Requirements": []
     },
     "fansi": {
@@ -892,6 +947,23 @@
         "pkgconfig",
         "rlang",
         "vctrs"
+      ]
+    },
+    "hrbrthemes": {
+      "Package": "hrbrthemes",
+      "Version": "0.8.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0d1257948f016840ad90320ed19c8c7d",
+      "Requirements": [
+        "extrafont",
+        "gdtools",
+        "ggplot2",
+        "htmltools",
+        "knitr",
+        "magrittr",
+        "rmarkdown",
+        "scales"
       ]
     },
     "htmltools": {
@@ -1271,6 +1343,18 @@
         "colorspace"
       ]
     },
+    "ndjson": {
+      "Package": "ndjson",
+      "Version": "0.8.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "82d96cd5f6c9188a36dd048f82b1fdf3",
+      "Requirements": [
+        "Rcpp",
+        "data.table",
+        "tibble"
+      ]
+    },
     "nlme": {
       "Package": "nlme",
       "Version": "3.1-157",
@@ -1335,6 +1419,28 @@
         "openssl",
         "sf",
         "terra"
+      ]
+    },
+    "patchwork": {
+      "Package": "patchwork",
+      "Version": "1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c446b30cb33ec125ff02588b60660ccb",
+      "Requirements": [
+        "ggplot2",
+        "gtable"
+      ]
+    },
+    "pdftools": {
+      "Package": "pdftools",
+      "Version": "3.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "35c3941403f65722a49fbebd38f41ef1",
+      "Requirements": [
+        "Rcpp",
+        "qpdf"
       ]
     },
     "pillar": {
@@ -1550,6 +1656,18 @@
         "rlang"
       ]
     },
+    "qpdf": {
+      "Package": "qpdf",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ce50e88dc60e80fb30d5fee25ab97164",
+      "Requirements": [
+        "Rcpp",
+        "askpass",
+        "curl"
+      ]
+    },
     "ragg": {
       "Package": "ragg",
       "Version": "1.2.2",
@@ -1610,6 +1728,19 @@
         "xopen"
       ]
     },
+    "readODS": {
+      "Package": "readODS",
+      "Version": "1.7.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "371b78cba5ce7ff57c4a225bc0f9260d",
+      "Requirements": [
+        "cellranger",
+        "readr",
+        "stringi",
+        "xml2"
+      ]
+    },
     "readr": {
       "Package": "readr",
       "Version": "2.1.2",
@@ -1628,6 +1759,28 @@
         "tibble",
         "tzdb",
         "vroom"
+      ]
+    },
+    "readtext": {
+      "Package": "readtext",
+      "Version": "0.81",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "86936c0269527e6e92a8c28ac546c57c",
+      "Requirements": [
+        "antiword",
+        "data.table",
+        "digest",
+        "httr",
+        "jsonlite",
+        "pdftools",
+        "readODS",
+        "readxl",
+        "streamR",
+        "stringi",
+        "striprtf",
+        "tibble",
+        "xml2"
       ]
     },
     "readxl": {
@@ -1698,6 +1851,14 @@
       "Requirements": [
         "sp"
       ]
+    },
+    "rjson": {
+      "Package": "rjson",
+      "Version": "0.2.21",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f9da75e6444e95a1baf8ca24909d63b9",
+      "Requirements": []
     },
     "rlang": {
       "Package": "rlang",
@@ -1997,6 +2158,18 @@
         "units"
       ]
     },
+    "streamR": {
+      "Package": "streamR",
+      "Version": "0.4.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5956a234de8d4d49744dc51e8b39534c",
+      "Requirements": [
+        "RCurl",
+        "ndjson",
+        "rjson"
+      ]
+    },
     "stringi": {
       "Package": "stringi",
       "Version": "1.7.8",
@@ -2017,6 +2190,18 @@
         "stringi"
       ]
     },
+    "striprtf": {
+      "Package": "striprtf",
+      "Version": "0.5.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "737c6d8ca88c95cba31199f4e4f2265c",
+      "Requirements": [
+        "Rcpp",
+        "magrittr",
+        "stringr"
+      ]
+    },
     "studycatchesird": {
       "Package": "studycatchesird",
       "Version": "0.0.0.9000",
@@ -2026,8 +2211,8 @@
       "RemoteRepo": "sutdycatchesird",
       "RemoteUsername": "BastienIRD",
       "RemoteRef": "HEAD",
-      "RemoteSha": "67293c8177901cfbbf5793a97c34ab17f57ad9b6",
-      "Hash": "ca9f6f48b67190e2d2b733f2a69c6ec3",
+      "RemoteSha": "1462397473d4815eb85e2c0923339035a828bfbe",
+      "Hash": "fb6520bdca0b8bbaffd19e1791dea3cc",
       "Requirements": [
         "RColorBrewer",
         "cowplot",
