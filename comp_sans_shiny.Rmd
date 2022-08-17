@@ -657,7 +657,7 @@ formals(pie_chart_2_default)$titre_1 <- titre_1
 formals(pie_chart_2_default)$titre_2 <- titre_2
 formals(pie_chart_2_default)$first <- init
 formals(pie_chart_2_default)$second <- final
-if ("Gear"%in% colnames(dataframe_tot_filter)){
+if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
 list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group","Gear")} else {list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group", "Name_En")}
 
 
