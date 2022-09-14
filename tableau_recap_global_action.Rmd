@@ -2,14 +2,28 @@
 title: "Summary of the treatment for a specific entity of the global tuna atlas"
 eval.expr: TRUE
 output:
-  bookdown::html_document2:
-    toc: true
-    toc_depth: 3
-    number_sections: true
   bookdown::pdf_document2:
     toc: true
     toc_depth: 3
     number_sections: true
+    always_allow_html: true
+    fig_caption: true
+    tab_caption: true
+    lof: true
+    lot: true   
+    alternative-title-page: front-and-back-matter/alt-title-page-example.tex
+    header-includes:
+    - \usepackage{booktabs}
+    - \usepackage[T1]{fontenc}
+  bookdown::html_document2:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    global_numbering: true
+    toc_float: true
+    toc_collapsed: true
+    fig_caption: yes
+    tab_caption: yes
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
   action: action
@@ -25,18 +39,25 @@ params:
   filter_catchtype: !r NULL
   filter_schooltype: !r NULL
   filter_species_group: !r NULL
-  fact: "effort"
-  
+  fact: "catch"
 ---
-  
+
+```{r include=FALSE, results='asis'}
+cat('\n \newpage')
+
+```
+
+
 This document is aimed to recap the impact on the data of the different treatment of the Global Tuna Atlas. 
 
 ```{r include=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE
+	warning = FALSE, fig.align = 'center'
 )
+
+options(knitr.duplicate.label = "allow")#for duplicate chunk names
 ```
 
 ```{r}
@@ -45,15 +66,128 @@ con <- config$software$output$dbi
 ```
 
 ```{r}
-for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
-knitr::opts_chunk$set(
-	echo = FALSE,
-	message = FALSE,
-	warning = FALSE
-)
+knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
 
+if(!(require(base))){ 
+  install.packages("base") 
+  (require(base))} 
+if(!(require(flextable))){ 
+  install.packages("flextable") 
+  (require(flextable))} 
+if(!(require(remotes))){ 
+  install.packages("remotes") 
+  (require(remotes))} 
+if(!(require(utils))){ 
+  install.packages("utils") 
+  (require(utils))} 
+if(!(require(stringr))){ 
+  install.packages("stringr") 
+  (require(stringr))} 
+if(!(require(knitr))){ 
+  install.packages("knitr") 
+  (require(knitr))} 
+if(!(require(DBI))){ 
+  install.packages("DBI") 
+  (require(DBI))} 
+if(!(require(odbc))){ 
+  install.packages("odbc") 
+  (require(odbc))} 
+if(!(require(sf))){ 
+  install.packages("sf") 
+  (require(sf))} 
+if(!(require(dplyr))){ 
+  install.packages("dplyr") 
+  (require(dplyr))} 
+if(!(require(kableExtra))){ 
+  install.packages("kableExtra") 
+  (require(kableExtra))} 
+if(!(require(readxl))){ 
+  install.packages("readxl") 
+  (require(readxl))} 
+if(!(require(readr))){ 
+  install.packages("readr") 
+  (require(readr))} 
+if(!(require(tidyr))){ 
+  install.packages("tidyr") 
+  (require(tidyr))} 
+if(!(require(ggplot2))){ 
+  install.packages("ggplot2") 
+  (require(ggplot2))} 
+if(!(require(stats))){ 
+  install.packages("stats") 
+  (require(stats))} 
+if(!(require(RColorBrewer))){ 
+  install.packages("RColorBrewer") 
+  (require(RColorBrewer))} 
+if(!(require(cowplot))){ 
+  install.packages("cowplot") 
+  (require(cowplot))} 
+if(!require(sutdycatchesird)){
+  if(!require(remotes)){
+    install.packages("remotes")
+  }
+  require(remotes)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
+if(!(require(tmap))){ 
+  install.packages("tmap") 
+  (require(tmap))} 
+if(!(require(RPostgreSQL))){ 
+  install.packages("RPostgreSQL") 
+  (require(RPostgreSQL))} 
+if(!(require(officer))){ 
+  install.packages("officer") 
+  (require(officer))} 
+if(!(require(readtext))){ 
+  install.packages("readtext") 
+  (require(readtext))} 
+```
+
+
+```{r}
+for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
 
 ```
+
+
+```{r}
+# knitr::opts_chunk$set(tab.cap.pre = "Table ", tab.cap.sep = ": ")
+
+#set the table caption styling
+# autonum <- officer::run_autonum(seq_id = "tab", bkm = "TC1", bkm_all = TRUE) # number the table, bkm (bookmark) is important as the cross-referencing is done using the bookmark
+set_flextable_defaults(
+  font.size = 10,
+  font.color = "black",
+  digits = 2,
+  theme_fun = "theme_box"
+)
+qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colour = FALSE){
+  if("Captures table 1" %in% colnames(x)){
+    y <-x %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`)) } 
+
+  else {y <- x}
+  y <- y %>% mutate_if(is.factor, as.character) %>% mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
+  mutate_if(is.character,~str_replace_all( ., "_", "-" )) %>% mutate_if(is.numeric, function(.){round(.,2)})
+  flextable <- flextable(y)
+  if(colour){
+  flextable <- flextable %>% 
+          color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
+          color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
+          color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
+          color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)
+  } 
+  if(!is.null(captionn)){flextable_captionned <- set_caption(flextable, caption = captionn,
+  style = "Table Caption")} else {flextable_captionned <- flextable}
+  ft_out <- flextable_captionned %>% autofit()
+  ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
+
+  return(ft_out)
+
+}
+
+```
+
 
 
 ```{r include=FALSE, results='asis'}
@@ -77,43 +211,8 @@ if(dir.exists("Markdown")){
 
   nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))
 
-  if(!require(readtext)){
-    install.packages("readtext")
-    require(readtext)
+
   }
-  if(!require(dplyr)){
-    install.packages("dplyr")
-    require(dplyr)
-  }
-  if(!require(ggplot2)){
-    install.packages("ggplot2")
-    require(ggplot2)
-  }
-  if(!require(patchwork)){
-    install.packages("patchwork")
-    require(patchwork)
-  }
-  if(!require(hrbrthemes)){
-    install.packages("hrbrthemes")
-    require(hrbrthemes)
-  }
-  if(!require(stringr)){
-    install.packages("stringr")
-    require(stringr)
-  }
-  if(!require(readr)){
-    install.packages("readr")
-    require(readr)
-  }
-  if(!require(cowplot)){
-    install.packages("cowplot")
-    require(cowplot)
-  }
-  if(!require(flextable)){
-    install.packages("flextable")
-    require(flextable)
-  }
-}
 ```
 
 
@@ -144,10 +243,10 @@ sub_list_dir_2 = rownames(details)
 ```
 
 
-```{r include=FALSE, results='asis'}
-df <- data.frame(matrix(ncol =10, nrow = 1))
+```{r include=FALSE}
+df <- data.frame(matrix(ncol =12, nrow = 1))
       colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir_2),"/")[[1]],n=1)),
-                        # "Explanation", "Fonctions", 
+                        "Explanation", "Fonctions", 
                         "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
       )
       if((!is.null(opts))){ #have not change for species$filter
@@ -183,7 +282,7 @@ df <- data.frame(matrix(ncol =10, nrow = 1))
         percentage_of_nominal <- (sum_t*100)/nominal
         sums <- as.data.frame(data.frame(sum_t, sum_no, nrow))
         data_i <- cbind(step,
-                        # Explanation, Fonctions, 
+                        Explanation, Fonctions, 
                         Options,
                         sums, loss_percent,loss_tons,loss_percent_no, loss_percent_lines, percentage_of_nominal)
         names(data_i) <- colnames(df)
@@ -194,38 +293,12 @@ df <- data.frame(matrix(ncol =10, nrow = 1))
         
       }
       df = df[-1,]
-      write_csv(df, paste0(getwd(),"/table.csv"))
       df[df == -Inf] <- 0
       df <- df %>%  rename(Step = rawdata)
 
 
-      FitFlextableToPage <- function(ft, pgwidth = 6,options_format ="notRmd"){
-        set_flextable_defaults(
-          font.size = 10,
-          font.color = "black",
-          table.layout = "autofit",
-          digits = 2,
-          theme_fun = "theme_box"
-        )
-        table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
-        
-        table %>% 
-          color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
-          color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>% 
-          colformat_num(col_keys = c("`Difference (in % of fish)`"), digits = 2) %>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
-          color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>% 
-          colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2) %>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
-          color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)%>% 
-          colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2)
-        if(options_format == "Rmd"){table%>% flextable_to_rmd()}else{table}
-        
-      }
 
-      # save_as_image(FitFlextableToPage(df), path = paste0(getwd(),"/table.png"), webshot = "webshot")
-      # assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), df, envir = .GlobalEnv)
-      # list <- append(list,tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1))
-      
-      
+     
 
       reduced <- df %>% select(Step, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
@@ -236,7 +309,7 @@ temperatureColor <- "#69b3a2"
       
 priceColor <- rgb(0.2, 0.6, 0.9, 1)
 
-print(ggplot(reduced,aes(x = Step,group = 1))+ 
+second_graf <- ggplot(reduced,aes(x = Step,group = 1))+ 
         geom_line( aes(y=`Sum in tons` ,group = 1), size=0.5, color=priceColor)+geom_point( aes(y=`Sum in tons` ,group = 1)) +
         geom_line( aes(y=`Sum in number of fish`/ coeff,group = 1), size=0.5, color=temperatureColor)+geom_point( aes(y=`Sum in number of fish`/ coeff))  +
         scale_y_continuous(
@@ -256,59 +329,138 @@ print(ggplot(reduced,aes(x = Step,group = 1))+
         ) +
         
         ggtitle("Evolution of the repartition of captures depending on units and Steps")+
-        theme(axis.text.x = element_text(angle = 90)))
-      # ggsave(paste0(getwd(),"/myplot.png"))
+        theme(axis.text.x = element_text(angle = 90))
+
+no_fish_plot <- ggplot(reduced,aes(x = Step,group = 1)) +geom_line( aes(y=`Sum in number of fish`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
       
-      no_fish <- ggplot(reduced,aes(x = Step,group = 1)) +geom_line( aes(y=`Sum in number of fish`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
-      
-tons <- ggplot(reduced,aes(x = Step,group = 1)) +
+tons_plot <- ggplot(reduced,aes(x = Step,group = 1)) +
 geom_line( aes(y=`Sum in tons`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
-   
-print(cowplot::plot_grid(tons, no_fish))
-      # ggsave(paste0(getwd(),"/myplot2.png"))
+```
+
+
+```{r echo=FALSE, results='asis'}
+qflextable2(reduced, colour = FALSE, captionn ="Evolution of Sum in tons and Sum in number of fish and lines along the steps")
+```
+
+
+```{r echo=FALSE, results='asis'}
+
+qflextable2(df %>% select(-c("Sum in tons", "Sum in number of fish", "Number of lines", "Difference in tons","Options")), colour = TRUE, captionn ="Review of all the impact and purpose of every the treatment done")
 
 ```
 
-```{r echo = FALSE, results='asis', eval=FALSE}
-parameter_working_directory <- getwd()
-res <- knitr::knit_child("tableau_recap_entity_child.Rmd", envir = globalenv(), quiet = TRUE)
-cat(res, sep = '\n')
+
+
+
+
+
+```{r echo=FALSE, fig.cap='Evolution of captures in tons and number of fish during the process',results='asis'}
+
+
+
+cowplot::plot_grid(tons_plot, no_fish_plot)
+
+
 
 ```
 
-# Analyse of final data
 
-```{r echo = FALSE, results='asis'}
+
+```{r eval=FALSE, include=FALSE, results='asis'}
+res3 <- knitr::knit_child("tableau_recap_entity_child.Rmd", envir = globalenv(), quiet = TRUE)
+cat(res3, sep = '\n')
+
+```
+
+
+
+```{r}
+
+
+last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
+
+```
+
+
+# Analyse of the final data
+
+```{r echo=FALSE, results='asis'}
 parameter_init <- sub_list_dir_2[1]
 parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
 child <- TRUE
-knitr::knit_exit(paste0(parameter_fact))
-res <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = globalenv(), quiet = TRUE)
-cat(res, sep = '\n')
+res2 <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = environment(), quiet = TRUE)
+```
+
+
+
+
+```{r echo=FALSE, results='asis'}
+
+cat(' \newpage')
 
 ```
 
-# Summary of different treatment on the data.
+
+```{r echo=FALSE, results='asis'}
+
+cat(res2, sep = '\n \newpage')
+
+
+```
+
+# Summary of the treatment done on the data (comparison between the first to the last)
 
 ```{r echo=FALSE, results='asis'}
 child <- TRUE
 res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
-cat(res, sep = '\n')
+
+```
+
+```{r echo=FALSE, results='asis'}
+
+
+cat(' \newpage')
+
+cat(res, sep = '\n \newpage')
+
+cat(' \newpage')
+
+
 ```
 
 
-# Comparison between rawdata and final data.
+# Analyse of all the steps of treatment of the data
 
-# Analyse of different steps
+For each treatment on the data, we provide a report on what exactly has been created, disappeared or has been transformed.
+
+```{r echo=FALSE, results='asis'}
+cat("## Step 1")
+```
+
+```{r eval  =FALSE}
+for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {  
+  print(paste0("compteur = ",counteur_child_tableau_recap))
+  parameter_init <- sub_list_dir_2[counteur_child_tableau_recap]
+  print(paste0("param init = ",parameter_init))
+  parameter_final <- sub_list_dir_2[counteur_child_tableau_recap+1]
+  print(parameter_final)
+  print("new")
+
+
+  }
+```
+
 
 ```{r echo = FALSE, results='asis'}
-
-for (counteur_child_tableau_recap in 1:1){
-  first <- sub_list_dir_2[counteur_child_tableau_recap]
-  second <- sub_list_dir_2[counteur_child_tableau_recap+1]
+step <- 1
+for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {  
+  parameter_init <- sub_list_dir_2[counteur_child_tableau_recap]
+  parameter_final <- sub_list_dir_2[counteur_child_tableau_recap+1]
+  parameter_short <- TRUE
   res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
   cat(res, sep = '\n \newpage')
-  counteur_child_tableau_recap <- counteur_child_tableau_recap+1
+  cat(paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)))
+  step <- step+1
 }
 
 

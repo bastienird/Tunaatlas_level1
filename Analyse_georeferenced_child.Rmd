@@ -1,0 +1,1068 @@
+---
+title: 'Comparison of two data sets at different levels/options of the tuna atlas'
+author: "IRD"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  bookdown::html_document2:
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+  bookdown::pdf_document2:
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+params: 
+  final: "~/Documents/Tunaatlas_level1/jobs/level0_FAL/entities/global_catch_1deg_level0/Markdown/rawdata"
+  filter_species: !r NULL
+  filter_source_authority: !r NULL
+  filter_gear: !r NULL
+  filter_fishingfleet: !r NULL  
+  filter_time_start: !r NULL
+  filter_time_end: !r NULL
+  filter_cat_geo: !r NULL
+  filter_catchtype: !r NULL
+  filter_schooltype: !r NULL
+  filter_species_group: !r NULL
+  titre_dataset_1: !r NULL
+  titre_dataset_2: !r NULL
+  dbname: "tunaatlas"
+  host: "db-tunaatlas.d4science.org"
+  port: 5432
+  user: "tunaatlas_u"
+  password: "21c0551e7ed2911"
+  con: con
+  colnames_to_keep: [ fishingfleet ,           species ,                  
+  unit ,                  value ,                 source_authority , gear,geographic_identifier]
+  fact: "catch"
+---
+
+```{r include=FALSE}
+if(!exists("child")){child = FALSE} else{child = child}
+```
+
+```{r eval=child, include=FALSE}
+
+parameter_short <- FALSE
+parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,                     
+  "Captures table 1"      ,"Captures table 2"      ,                               "Loss / Gain",    
+   "Difference (in %)"        ,      "Dimension"   ,       "Difference in millions of tons/fish") 
+child_header = "#"
+cat2 <- function(x){cat(paste0(child_header, x, " \n"))}
+title <- paste0('Analyse of the data : ',gsub('georef_dataset','',tail(stringr::str_split(parameter_final,'/')[[1]],n=1)))
+
+```
+
+
+
+
+```{r eval=!child, include=FALSE}
+cat2 <- cat
+for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE, fig.align = 'center'
+)
+title <- 'Comparison of two data sets at different levels/options of the tuna atlas'
+
+```
+
+```{r}
+if(parameter_fact=="catch"){parameter_colnames_to_keep <-   c("fishingfleet" ,           "species" ,                  
+  "unit" ,                  "value" ,                 "source_authority" , "gear","geographic_identifier","time_start","time_end")} else {parameter_colnames_to_keep <- c("fishingfleet" ,  
+  "unit" ,                  "value" ,                 "source_authority")}
+```
+
+
+```{r results='asis', eval=!child}
+cat(paste0("# ", title))
+```
+
+
+
+
+
+<!-- ```{r eval=FALSE, include=FALSE} -->
+<!-- knitr::knit_child(text = c("```{css}' -->
+<!-- 'd-title {' -->
+<!--    ' display: none;' -->
+<!--  ' }' -->
+<!-- '```'")) -->
+<!-- ``` -->
+
+
+```{r message=FALSE}
+
+knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
+
+if(!(require(base))){ 
+  install.packages(base) 
+  (require(base))} 
+if(!(require(flextable))){ 
+  install.packages(flextable) 
+  (require(flextable))} 
+if(!(require(remotes))){ 
+  install.packages(remotes) 
+  (require(remotes))} 
+if(!(require(utils))){ 
+  install.packages(utils) 
+  (require(utils))} 
+if(!(require(stringr))){ 
+  install.packages(stringr) 
+  (require(stringr))} 
+if(!(require(knitr))){ 
+  install.packages(knitr) 
+  (require(knitr))} 
+if(!(require(DBI))){ 
+  install.packages(DBI) 
+  (require(DBI))} 
+if(!(require(odbc))){ 
+  install.packages(odbc) 
+  (require(odbc))} 
+if(!(require(sf))){ 
+  install.packages(sf) 
+  (require(sf))} 
+if(!(require(dplyr))){ 
+  install.packages(dplyr) 
+  (require(dplyr))} 
+if(!(require(kableExtra))){ 
+  install.packages(kableExtra) 
+  (require(kableExtra))} 
+if(!(require(readxl))){ 
+  install.packages(readxl) 
+  (require(readxl))} 
+if(!(require(readr))){ 
+  install.packages(readr) 
+  (require(readr))} 
+if(!(require(tidyr))){ 
+  install.packages(tidyr) 
+  (require(tidyr))} 
+if(!(require(ggplot2))){ 
+  install.packages(ggplot2) 
+  (require(ggplot2))} 
+if(!(require(stats))){ 
+  install.packages(stats) 
+  (require(stats))} 
+if(!(require(RColorBrewer))){ 
+  install.packages(RColorBrewer) 
+  (require(RColorBrewer))} 
+if(!(require(cowplot))){ 
+  install.packages(cowplot) 
+  (require(cowplot))} 
+if(!require(sutdycatchesird)){
+  if(!require(remotes)){
+    install.packages("remotes")
+  }
+  require(remotes)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
+if(!(require(tmap))){ 
+  install.packages(tmap) 
+  (require(tmap))} 
+if(!(require(RPostgreSQL))){ 
+  install.packages(RPostgreSQL) 
+  (require(RPostgreSQL))} 
+
+  set_flextable_defaults(
+  font.size = 10,
+  font.color = "black",
+  digits = 2,
+  theme_fun = "theme_box"
+)
+
+
+```
+
+
+```{r}
+query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
+
+
+kbl <- function(data) {
+  knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
+    kable_styling(latex_options =c("striped", "scale_down"))
+}
+plotting_type <- "plot" 
+if (knitr::is_html_output()){plotting_type <- "plot" }
+```
+
+```{r results='asis'}
+
+if(child){
+cat2(paste0("# ", title))}
+```
+
+```{r cache=FALSE}
+
+fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
+  
+  if(!exists("df_robinson")){
+    df_robinson <- df}
+  return(df_robinson)
+  
+}
+
+
+
+
+```
+
+```{r cache=FALSE}
+out <- try((con <- config$software$output$dbi), silent = TRUE)
+if("try-error" %in% class(out)){con <- parameter_con}
+
+query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
+if("try-error" %in% class(out)){con <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port,
+                                                       user = parameter_user,
+                                                       password = parameter_password)}
+
+world_sf <- st_read(con, query = query)
+
+shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
+shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
+options(scipen=999)
+
+kbl <- function(data) {
+  knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
+    kable_styling(latex_options =c("striped", "scale_down"))
+}
+
+query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+continent <- fSpatPlan_Convert2PacificRobinson(st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
+
+query <- "SELECT  code,code_cwp from area.irregular_areas_task2_iotc"
+irregular_iotc <- dbGetQuery(con, paste0(query))
+irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
+irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
+irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
+irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
+if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
+FitFlextableToPage <- function(ft, pgwidth = 6){
+  
+  ft_out <- ft %>% autofit()
+  
+  ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
+  return(ft_out)
+}
+kable2 =function(x){as_image(kable(x))}
+if(!child){autonum <- officer::run_autonum(seq_id = "tab", bkm = "TC1", bkm_all = TRUE) # number the table, bkm (bookmark) is important as the cross-referencing is done using the bookmark
+}
+if(!child){qflextable2 =function(x, captionn = "Title", autonumm = autonum){
+  # if("value_sum_1"%in%colnames(x)){x <- x %>%  dplyr::rename("Tons in table 1" = "value_sum_1") %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`))}
+  # y <- (x)
+  #  save_as_image(FitFlextableToPage(qflextable(x)), paste0(getwd(),"/",deparse(substitute(x)),".png"))
+  # knitr::include_graphics(paste0(getwd(),"/",deparse(substitute(x)),".png"))
+  if("Captures table 1" %in% colnames(x)){
+    y <-x %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`)) } 
+  else {y <- x}
+  flextable <- flextable(y)
+  flextable_captionned <- set_caption(flextable, caption = captionn,  autonum = autonumm)
+  FitFlextableToPage(flextable_captionned)
+
+}
+}
+
+
+```
+
+
+```{r}
+
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
+ cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
+                                 col_types = cols(Identifier = col_skip(), 
+                                                  Abbreviation = col_skip(), Name_Fr = col_skip(), 
+                                                  Name_Es = col_skip(), Name_Ar = col_skip()))
+
+```
+
+
+The purpose of this markdown is to describe a dataset at given moment of the worflow
+
+
+```{r}
+last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
+```
+
+
+The analyzed data is :
+  - ***`r last_path_reduced(parameter_final)`***
+
+
+```{r results='asis', cache=FALSE, eval=!child}
+params_unlock <- params
+for (i in length(params_unlock)){names(params_unlock[i]) <- substitute(i)}
+list_param <- list(params_unlock$filter_cat_geo, params_unlock$filter_gear, params_unlock$filter_source_authority, params_unlock$filter_fishingfleet, params_unlock$filter_time_start, params_unlock$filter_time_end, params_unlock$filter_species, params_unlock$filter_catchtype)
+isNullList <- function(x) all(!lengths(x))
+if (isNullList(list_param)){cat("There are no filter on this data")} else {
+  
+  cat (paste0("REMINDER \n The filter used on this data are:  \n "))
+  for (i in 1:length(params_unlock)){
+    if (params_unlock[i] %in% list_param & !is.null(params_unlock[[i]])){
+      cat(paste0("***- On ", names((params_unlock)[i]), " : ", paste((params_unlock)[[i]], collapse = " ; "),"*** \n "))} else {""}
+  }
+}
+
+```
+
+
+```{r}
+
+
+
+fonction_filtre = function(dataframe_tot_filter) {
+  if(parameter_fact == "catch"){dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(species_group%>% dplyr::distinct(), by = c("species"))
+    dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+  if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% dplyr::rename(Gear = Name_En)%>%dplyr::mutate(gear = as.character(gear))
+  }}
+  if (!is.null(parameter_filter_species)){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      species %in% parameter_filter_species)
+  }
+  if (!is.null(parameter_filter_gear)){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      gear %in% parameter_filter_gear)
+  }    
+  if (!is.null(parameter_filter_source_authority )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      source_authority %in% parameter_filter_source_authority)
+  }  
+  if (!is.null(parameter_filter_fishingfleet )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      fishingfleet %in% parameter_filter_fishingfleet)
+  }
+  if (!is.null(parameter_filter_time_start )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      time_start %in% parameter_filter_time_start)
+  }
+  if (!is.null(parameter_filter_time_end )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      time_end %in% parameter_filter_time_end)
+  }
+  if (!is.null(parameter_filter_schooltype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      schooltype %in% parameter_filter_schooltype)
+  }
+  if (!is.null(parameter_filter_catchtype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      catchtype %in% parameter_filter_catchtype)
+  }
+  
+  if (!is.null(parameter_filter_cat_geo )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      cat_geo %in% parameter_filter_cat_geo)
+  }
+  if (!is.null(parameter_filter_catchtype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      catchtype %in% parameter_filter_catchtype)
+  }
+  
+  if (!is.null(parameter_filter_species_group )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      species_group %in% parameter_filter_species_group)
+    
+  }
+  dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish")) 
+  
+  
+ 
+  
+
+
+}
+
+
+init <- fonction_filtre(readRDS(paste0(as.character(parameter_final), "/rds.rds")) %>% dplyr::select(all_of(parameter_colnames_to_keep)))%>%  left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end)) %>%dplyr::mutate(cat_geo = as.character(cat_geo))
+
+if(!exists("parameter_titre_dataset_1")){parameter_titre_dataset_1 <- NULL}
+
+
+if (is.null(parameter_titre_dataset_1)){
+  titre_1 <- last_path_reduced(as.character(parameter_final))
+} else {
+  titre_1 <- parameter_titre_dataset_1
+}
+titre_1 <- gsub("_","-",titre_1)
+
+
+```
+
+
+
+```{r}
+fonction_groupement = function(x, init){
+  x  <-   enquo(x)
+  groupement_1  <-   init %>% group_by(!!x, unit ) %>% dplyr::summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n())
+}
+```
+
+
+
+```{r}
+carte_init <- fonction_groupement(geographic_identifier,init)
+
+
+Dimensions <- colnames(init)[parameter_colnames_to_keep]
+Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"& colnames(init)!= "st_area"]
+# t <- init[0,] 
+t <- carte_init[0,]
+colnames(t )[1] <- "Precision"
+
+
+for (i in Dimensions){
+  temporaire <- fonction_groupement(.data[[i]],init)
+  assign(paste0("test", i), temporaire)
+  colnames(temporaire)[1] <- "Precision"
+  
+  t <- rbind(t, temporaire)
+}
+
+init_t <- init
+
+somme_init_t <- sum(init_t$value, na.rm = TRUE)
+
+
+
+
+nb_ligne_init_millions <- nrow(init)/10^6
+
+sum_valeur_init <- sum(init$value, na.rm = TRUE)/10^6
+
+
+```
+
+
+```{r}
+
+# Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"&
+#                                colnames(init)!= "time_start"&
+#                                colnames(init)!= "time_end"&
+#                                colnames(init)!= "geographic_identifier"]
+
+```
+
+```{r results='asis'}
+cat2("## Temporal catches")
+```
+
+
+```{r results='asis'}
+cat2("### Catch evolutions")
+```
+
+
+
+```{r}
+captures_par_time <- testtime_start %>% mutate(Time = as.Date(time_start))%>% dplyr::rename(`Captures table 1` = "value_sum_1")%>% pivot_longer(cols = c(`Captures table 1`), names_to = "Origin", values_to ="Captures")%>%dplyr::mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 ))
+```
+
+
+```{r , fig.cap=paste0("Catch evolutions for ", `titre_1`," dataset ")}
+ggplot(captures_par_time) +
+  aes(
+    x = Time,
+    y = Captures,
+    fill = Origin,
+    colour = Origin,
+    group = Origin
+  ) +
+  geom_line(size = 0.5) +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_dark() +
+  theme(legend.position = "top") +
+  facet_wrap(vars(unit), nrow = 2L)+
+  labs(x = "Time", y = "Captures")+
+  facet_grid("unit", scales = "free_y")
+
+
+```
+
+
+
+
+
+```{r}
+captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>% arrange(time_start) %>% group_by(unit,Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% dplyr::distinct()
+```
+
+
+```{r}
+ggplot_capt_par_time = function(x){
+  
+  ggplot(captures_par_time %>%dplyr::filter(unit==x)) +
+    aes(
+      x = Time,
+      y = `Captures cumulées`,
+      colour = Origin
+    ) +
+    geom_line(size = 0.5) +
+    scale_color_hue(direction = 1) +
+    theme_minimal() +
+    facet_wrap(vars(unit)) +
+    labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
+}
+```
+
+
+```{r, fig.cap=paste0("Cumulated catch evolution in tons for ", `titre_1`, "dataset ") }
+
+
+ggplot_capt_par_time("Tons")
+
+
+```
+
+```{r}
+if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0){is_there_no <- TRUE} else{is_there_no <- FALSE}
+```
+
+
+```{r , eval=is_there_no,  fig.cap=paste0("Cumulated catch evolution in number of fish for ", titre_1," dataset") }
+
+
+ggplot_capt_par_time("Number of fish")
+
+
+```
+
+```{r results='asis'}
+cat2("## Geographical catches")
+```
+
+```{r results='asis', eval=FALSE}
+pie_chart_2_default <- studycatchesird::pie_chart_2
+formals(pie_chart_2_default)$titre_1 <- titre_1
+formals(pie_chart_2_default)$first <- init
+if ("Gear"%in% colnames(init)){
+  list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group","Gear")} else {list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group", "Name_En")}
+
+
+
+pie_charts_multiple <- lapply(list_pie_chart,FUN = pie_chart_2_default)
+for (i in 1:length(pie_charts_multiple)){
+  plot(pie_charts_multiple[[i]])
+  cat(" \n \n ")
+}
+```
+
+
+```{r}
+
+if ("Gear"%in% colnames(init) & "Gear"%in% colnames(init) ){
+  list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group","Gear")} else {list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group", "Name_En")}
+```
+
+
+```{r results='asis'}
+resume_knit_child = function(dimension, first, second = NULL, titre_1, titre_2){
+  if (deparse(substitute(dimension)) == "X[[i]]"){ #for sapply function bug
+  assign("r", dimension, envir = globalenv())
+  }else {  assign("r", substitute(dimension), envir = globalenv())}
+  knitr::knit_child(text = c(
+    '',
+    '```{r}', 
+    'dimension_title <- gsub("_","..",r)',
+    '```',
+    '',
+    '```{r results = "asis" ,fig.cap = paste0("Distribution in value for the dimension : ",(dimension_title))}',
+    'eval(parse(text=paste0("studycatchesird::pie_chart_2(",dimension,", first, title_yes_no = FALSE)")))',
+    '',
+    '```',
+    '', 
+    ''
+
+
+
+
+  ), envir = environment(), quiet= TRUE)
+}
+```
+
+
+```{r}
+formals(resume_knit_child)$first <- init
+formals(resume_knit_child)$titre_1 <- titre_1
+```
+
+
+```{r results='asis'}
+pie_charts_multiple <- lapply(list_pie_chart,FUN = resume_knit_child)
+
+cat(unlist(pie_charts_multiple), sep = " \n \n ")
+
+
+```
+
+
+```{r eval=FALSE}
+
+fishing_fleet <- studycatchesird::pie_chart_2(fishingfleet, init)
+source_authority <- studycatchesird::pie_chart_2(source_authority, init)
+
+Name_En <- studycatchesird::pie_chart_2(Gear, init)
+gear <- studycatchesird::pie_chart_2(gear, init)
+
+species <- studycatchesird::pie_chart_2(species, init)
+species_group <- studycatchesird::pie_chart_2(species_group, init)
+
+```
+
+```{r eval=FALSE}
+
+
+
+species
+species_group
+# png(filename = "data/nominal_report/pie_chart_species.png")
+# print(species)
+# dev.off()
+fishing_fleet
+# png(filename = "data/nominal_report/pie_chart_fishing_fleet.png")
+# print(fishing_fleet)
+# dev.off()
+
+source_authority
+# png(filename = "data/nominal_report/pie_chart_source_authority.png")
+# print(source_authority)
+# dev.off()
+
+
+# png(filename = "data/nominal_report/pie_chart_species_group.png")
+# print(source_authority)
+# dev.off()
+
+Name_En
+# png(filename = "data/nominal_report/pie_chart_source_authority.png")
+# print(source_authority)
+# dev.off()
+# plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
+```
+
+
+```{r}
+# out <- try((con <- config$software$output$dbi), silent = TRUE)
+# if("try-error" %in% class(out)){con <- parameter_con}
+# 
+# query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+# out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
+# if("try-error" %in% class(out)) {con <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port,
+#                                                        user = parameter_user,
+#                                                        password = parameter_password)}
+
+data <- init
+# data <- data%>% dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("no", "NOMT", "Number of fish", "NO")~"Number of fish"))
+# cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
+#                                col_types = cols(Identifier = col_skip(), 
+#                                                 Abbreviation = col_skip(), Name_Fr = col_skip(), 
+#                                                 Name_Es = col_skip(), Name_Ar = col_skip()))
+# 
+# data <- data %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+
+
+
+
+query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
+world_sf <- st_make_valid(st_read(con, query = query))%>% dplyr::filter(!st_is_empty(.))
+
+query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
+competence_area <- st_make_valid(st_read(con, query = query_area)) %>% dplyr::filter(!st_is_empty(.))
+IOTC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "IOTC"))
+IATTC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "IATTC"))
+WCPFC_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "WCPFC"))
+ICCAT_shape <- sf::st_make_valid(competence_area %>% dplyr::filter(code == "ICCAT"))
+query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+continent <- sf::st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
+irregular_iotc <- sf::st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
+# test <- data %>% dplyr::inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier = code_cwp)
+irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
+irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
+irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
+if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
+
+world_sf <- sf::st_make_valid(world_sf %>% dplyr::mutate(code_cwp = code))
+world_sf <- world_sf[sf::st_is_valid(world_sf),]
+# tm_shape(st_as_sf(test %>% dplyr::inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
+pakistan <- irregular_iotc %>% dplyr::filter(code_cwp== "3120060")
+world_sf_combined <- rbind(pakistan, world_sf)
+# world_sf_combined <- gdata::combine(world_sf, irregular_iotc) %>% dplyr::distinct()
+# t <- rbind(world_sf_combined[duplicated(world_sf_combined$code_cwp),],world_sf_combined[duplicated(world_sf_combined$code_cwp, fromLast = TRUE),] )
+
+data <- dplyr::left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) #%>% dplyr::select(-c(code_cwp, st_area))
+
+# testtt <- setdiff(irregular_iotc$code_cwp, world_sf$code_cwp)
+# 
+# test <- t %>% dplyr::group_by(code, source) %>% slice(1)
+# tm_shape(st_as_sf(t))+tm_polygons()+tm_fill(col = "source")
+# 
+
+IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iotc = "iotc")
+
+IATTC <- world_sf[IATTC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iattc = "iattc")
+
+WCPFC <- world_sf[WCPFC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(wcpfc = "wcpfc")
+
+ICCAT <- world_sf[ICCAT_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iccat = "iccat")
+
+
+
+full_join <- dplyr::full_join(dplyr::full_join(dplyr::full_join(dplyr::full_join(world_sf, IOTC), IATTC), WCPFC), ICCAT) %>% st_set_geometry(NULL) 
+
+
+full_join[is.na(full_join)] <-  FALSE
+
+full_join <- full_join %>% dplyr::mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat))))
+world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
+world_sf$continent <- str_replace(world_sf$continent, "TRUE","continent")
+
+world_sf <- dplyr::left_join(world_sf, full_join)
+
+world_sf_with_competence_area <- world_sf %>% dplyr::mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
+
+
+inner_join <- data %>% dplyr::inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
+query2 <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
+world_sf2 <- st_make_valid(st_read(con, query = query2))%>% dplyr::filter(!st_is_empty(.))%>%dplyr::rename(geographic_identifier=code)
+
+
+all_the_data <- inner_join  %>% ungroup() %>% dplyr::group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% dplyr::summarise(value= sum(value, na.rm = TRUE))%>% dplyr::distinct() %>% dplyr::inner_join(world_sf2 , by = c("geographic_identifier", "st_area") ) 
+
+
+
+all_the_data <- all_the_data %>% dplyr::select(geographic_identifier, st_area, value, geom, unit, source_authority,area_competence)
+
+
+mislocated_continent <- all_the_data %>% dplyr::filter(str_detect(area_competence, "continent"))
+
+
+  image <- tm_shape(st_as_sf(mislocated_continent %>% dplyr::mutate(st_area = as.factor(st_area))))+tm_fill("value")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
+  
+  
+  image2 <- tm_shape(st_as_sf(mislocated_continent %>% dplyr::mutate(st_area = as.factor(st_area))))+tm_fill("source_authority")+tm_facets(by=c("st_area","unit"))+tm_shape(continent)+tm_borders()#+tm_text("source_authority")#+tm_shape(continent)+tm_borders() 
+  # tmap::tmap_save(image, "image.png")
+  # # mapshot(image, file = "image.png")
+  # knitr::include_graphics('image.png')
+
+```
+
+```{r}
+mislocation <- ifelse(nrow(mislocated_continent)==0, FALSE, TRUE)
+if(!mislocation){knitr::knit_exit("No mislocated data in this dataset",fully=FALSE)}
+```
+
+
+```{r results='asis'}
+cat2("# Issue with the data")
+```
+
+```{r results='asis'}
+cat2("## Mislocation")
+```
+
+```{r results='asis'}
+cat2("### On continents")
+```
+
+
+```{r}
+image
+```
+
+
+```{r}
+image2
+
+```
+
+```{r results='asis'}
+cat2("#### Distribution of mislocated data")
+```
+
+
+
+```{r}
+
+mislocated_continent2 <- mislocated_continent %>% dplyr::group_by(unit, source_authority) %>% arrange(unit,desc(source_authority)) %>% dplyr::summarise(value = sum(value, na.rm = TRUE))  %>% ungroup() %>% dplyr::group_by(unit) %>%  dplyr::mutate(pourcentage = prop.table(value)*100)%>%
+  dplyr::mutate(labels = paste0(pourcentage," ",  " % "))%>% arrange(unit,desc( source_authority)) %>% 
+  dplyr::mutate(ypos_ligne = cumsum(pourcentage)- 0.5*pourcentage ) %>%
+  dplyr::distinct()
+ggplot(mislocated_continent2) +aes(
+  x = "",
+  fill = source_authority,
+  colour = source_authority,
+  group = source_authority,
+  weight = pourcentage
+) +
+  geom_bar(position = "fill") +
+  scale_fill_hue(direction = 1) +
+  scale_color_hue(direction = 1) +
+  theme_minimal()+ coord_polar("y", start=0)+ geom_text(data = (mislocated_continent2 %>% mutate_if(is.numeric, round)), size = 3,
+                                                        aes( x = 1 ,y = ypos_ligne/100, label = paste0(pourcentage,"%")), color = "black")+
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank())+
+  labs(x = "", y="") + facet_wrap("unit")
+
+```
+
+
+  
+```{r}
+all_the_data3 <- all_the_data %>% dplyr::mutate(continent = ifelse(area_competence != "continent", "ocean", "continent"))
+
+```
+
+
+```{r}
+# st_geometry(all_the_data3) <- NULL
+final <- all_the_data3 %>% dplyr::group_by(continent, unit) %>% dplyr::summarise(value = sum(value))
+# all_the_data2_without_continent <- all_the_data %>% dplyr::filter(area_competence != "continent")
+# value_without_continent <- sum(all_the_data2_without_continent$value, na.rm =TRUE)
+
+en_nombre_continent <- pull(final %>% dplyr::filter(unit == "Number of fish") %>% dplyr::filter(continent == "continent"))
+en_nombre_ocean <- pull(final %>% dplyr::filter(unit == "Number of fish") %>% dplyr::filter(continent == "ocean"))
+en_tonne_continent <- pull(final %>% dplyr::filter(unit == "Tons") %>% dplyr::filter(continent == "continent"))
+en_tonne_ocean <- pull(final %>% dplyr::filter(unit == "Tons") %>% dplyr::filter(continent == "ocean"))
+
+perte_en_nombre <- (en_nombre_continent / (en_nombre_ocean+en_nombre_continent))*100
+perte_en_tonne <- (en_tonne_continent/ (en_tonne_continent+en_tonne_ocean))*100
+
+# value_with_continent <- sum(all_the_data$value, na.rm = TRUE)
+
+# perte_en_pourcent_conitnent <- ((value_with_continent-value_without_continent)/value_with_continent)*100
+```
+
+Removing the data placed on the continents, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
+
+```{r results='asis'}
+cat2("### In other RFMO's area")
+```
+
+
+We are now interested in the mislocated data in other rfmo's area.
+
+```{r}
+
+# mislocated <- inner_join %>%dplyr::filter(!str_detect(area_competence, "continent")) %>%  ungroup() %>% dplyr::select(area_competence, source_authority, value, unit, geom) %>% dplyr::mutate(area_competence = toupper(area_competence)) %>%  dplyr::mutate(mislocated = case_when(source_authority =="CCSBT" ~TRUE, area_competence%in%c("IATTC", "ICCAT", "IOTC", "WCPFC") & area_competence == source_authority ~ TRUE,
+#                               area_competence == "IOTCWCPFC" & source_authority %in% c("IOTC", "WCPFC")  ~ TRUE,
+#                               area_competence == "IATTCWCPFC" & source_authority %in% c("IATTC", "WCPFC")  ~ TRUE, tolower(area_competence) == area_competence ~ TRUE, 
+#                               TRUE ~ FALSE))
+
+mislocated <- inner_join %>% dplyr::mutate(area_competence = as.character(area_competence)) %>% dplyr::filter(!str_detect(inner_join$area_competence, "continent")) %>% dplyr::filter(!is.null(area_competence))%>% dplyr::filter(area_competence != "")%>% dplyr::mutate(area_competence= as.factor(area_competence)) %>%  ungroup() %>% dplyr::select(area_competence, source_authority, value, unit, geom) %>% dplyr::mutate(source_authority = tolower(source_authority)) %>%  dplyr::mutate(mislocated = case_when(str_detect(area_competence, source_authority) == TRUE ~ TRUE, area_competence == source_authority ~ TRUE, source_authority == "CCSBT"~TRUE,
+                              TRUE ~ FALSE))
+
+final <- mislocated %>% dplyr::group_by(mislocated, unit) %>% dplyr::summarise(value = sum(value))
+en_nombre_false<- pull(final %>% dplyr::filter(unit == "Number of fish") %>% dplyr::filter(mislocated == FALSE))
+en_nombre_true <- pull(final %>% dplyr::filter(unit == "Number of fish") %>% dplyr::filter(mislocated == TRUE))
+en_tonne_false <- pull(final %>% dplyr::filter(unit == "Tons") %>% dplyr::filter(mislocated == FALSE))
+en_tonne_true <- pull(final %>% dplyr::filter(unit == "Tons") %>% dplyr::filter(mislocated == TRUE))
+
+perte_en_nombre <- (en_nombre_false / (en_nombre_true+en_nombre_false))*100
+perte_en_tonne <- (en_tonne_false/ (en_tonne_false+en_tonne_true))*100
+
+
+```
+
+```{r eval=FALSE}
+# tm_shape(IOTC)+tm_fill(alpha = 0.2, col = "red")+tm_shape(IATTC)+tm_fill(alpha = 0.2, col = "yellow")+tm_shape(ICCAT)+tm_fill(alpha = 0.2, col = "purple")+tm_shape(WCPFC)+tm_fill(alpha = 0.2, col = "skyblue")+tm_shape(st_as_sf(mislocated %>% dplyr::filter(mislocated ==FALSE) %>% dplyr::filter(source_authority!="CCSBT")))+tm_polygons(col = "source_authority")+tm_facets("unit")
+```
+
+```{r}
+image <- tm_shape(WCPFC_shape %>% dplyr::mutate(name = "WCPFC"))+tm_borders( col = "red")+tm_text("name")+tm_shape(ICCAT_shape%>% dplyr::mutate(name = "ICCAT"))+tm_borders( col = "yellow")+tm_text("name")+tm_shape(IOTC_shape%>% dplyr::mutate(name = "IOTC"))+tm_borders( col = "purple")+tm_text("name")+tm_shape(IATTC_shape%>% dplyr::mutate(name = "IATTC"))+tm_borders( col = "skyblue")+tm_text("name")+tm_shape(st_as_sf(mislocated %>% dplyr::filter(mislocated ==FALSE) %>% dplyr::filter(source_authority!="ccsbt") %>%  dplyr::filter(area_competence != "") %>% dplyr::filter(!is.null(area_competence))))+tm_polygons(col = "source_authority")+tm_facets("unit") +tm_shape(continent)+tm_borders()#+tm_text("source_authority")
+# tmap::tmap_save(image, "image.png")
+# # mapshot(image, file = "image.png")
+# knitr::include_graphics('image.png')
+image
+```
+
+
+Removing data placed on continents, as well as data from an rfmo in an area outside their jurisdiction, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
+
+```{r}
+rdslevel0 <- readRDS(paste0(as.character(parameter_final), "/rds.rds"))
+
+strata_nomt <- rdslevel0 %>% dplyr::filter(unit %in% c("NOMT")) #%>% dplyr::select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% dplyr::summarise(value = sum(value)) #%>% dplyr::mutate(unit = "NO", unit_target = "MT")
+# strata_no <- rdslevel0 %>% dplyr::filter(unit == "NO") %>% dplyr::mutate(source= "strata_no")
+# strata_nomt_2 <- strata_nomt %>% dplyr::mutate(source = "strata_nomt")
+# t <- gdata::combine(strata_no, strata_nomt)
+# r <- dplyr::full_join(strata_no, strata_nomt_2, by = c("fishingfleet", "gear", "time_start", "time_end", "geographic_identifier",
+# "schooltype", "species", "catchtype", "unit", "source_authority")) %>% dplyr::filter(!is.na(source.x) & !is.na(source.y))
+# upp is to check if data in no could be converted
+
+strata_mtno <- rdslevel0 %>% dplyr::filter(unit %in% c("MTNO")) #%>% dplyr::select(-c(schooltype, catchtype ,fishingfleet)) %>% group_by_all() %>% dplyr::summarise(value=sum(value))#%>% dplyr::mutate(unit = "MT", unit_target = "NO")
+
+strata_converted_level0 <-  rbind(strata_nomt, strata_mtno) %>% ungroup() %>% dplyr::select(-c(value)) %>% dplyr::distinct()
+
+conversion_factor_level0 <- rbind(dplyr::inner_join(strata_nomt , strata_mtno, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% dplyr::rename(NO =value.x, MT = value.y) %>%
+                                    dplyr::group_by_at(vars(one_of(parameter_colnames_to_keep))) %>% 
+  dplyr::summarise(NO = sum(NO), MT = sum(MT)) %>% ungroup()#%>% dplyr::select(-c(unit.y, unit.x))
+  , dplyr::inner_join(strata_mtno , strata_nomt, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% dplyr::rename(MT =value.x, NO = value.y)%>%
+                                    dplyr::group_by_at(vars(one_of(parameter_colnames_to_keep))) %>% 
+  dplyr::summarise(NO = sum(NO), MT = sum(MT)) %>%ungroup() #%>%  dplyr::select(-c(unit.y, unit.x))
+  )%>% dplyr::distinct()%>%
+                                    dplyr::group_by_at(vars(one_of(parameter_colnames_to_keep))) %>% 
+  dplyr::summarise(NO = sum(NO), MT = sum(MT)) %>% dplyr::mutate(conversion_factor = MT/NO) %>% dplyr::distinct()
+```
+
+
+```{r results='asis'}
+cat2("# Absurd conversion factors")
+```
+
+We analyse here the data with conversion factors "absurd", meaning being superior to the maximum catch for the fish of the same species.
+
+We compare the data of this conversion factors absurd, with the total data to see any pattern.
+
+```{r}
+`%notin%` <- Negate(`%in%`)
+absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversion_factor>0.05 & species == "SKJ") | (conversion_factor > 0.09 & species == "ALB") |(conversion_factor>0.2 & species == "YFT") | (conversion_factor >0.5 & species =="SWO")| (conversion_factor>0.2 &species == "BET") | (species %notin% c("ALB","SKJ","SWO", "YFT", "BET")))
+```
+
+```{r message=FALSE, warning=FALSE}
+
+
+titre_1 <- "Strange conversion factors"
+titre_2 <- "rawdata"
+absurd_conversion_factor_tons <- absurd_conversion_factor %>% select(-conversion_factor) %>% pivot_longer(cols = c("NO", "MT"),  names_to= "unit")
+
+pie_chart_2<- studycatchesird::pie_chart_2
+formals(pie_chart_2)$titre_1 <- titre_1
+formals(pie_chart_2)$titre_2 <- titre_2
+
+strange <- pie_chart_2(fishingfleet,first=absurd_conversion_factor_tons,second=data )
+strange
+```
+
+
+```{r}
+# titre_1 <- "Original data"
+# original <- studycatchesird::pie_chart_2(fishingfleet, mapped_data %>% dplyr::filter(unit %in% c("Tons","MT","MTNO")))
+# original
+# plot_grid(strange, original)
+```
+
+```{r results='asis'}
+cat2("## General recap of issues")
+```
+
+
+```{r}
+
+
+
+query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
+
+world_sf <- st_make_valid(st_read(con, query = query))%>% dplyr::filter(!st_is_empty(.))
+
+query_area <- paste0("SELECT * FROM area.rfmos_convention_areas_fao")
+competence_area <- st_make_valid(st_read(con, query = query_area)) %>% dplyr::filter(!st_is_empty(.))
+IOTC_shape <- competence_area %>% dplyr::filter(code == "IOTC")
+IATTC_shape <- competence_area %>% dplyr::filter(code == "IATTC")
+WCPFC_shape <- competence_area %>% dplyr::filter(code == "WCPFC")
+ICCAT_shape <- competence_area %>% dplyr::filter(code == "ICCAT")
+query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+continent <- st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_task2_iotc"
+irregular_iotc <- st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
+irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
+# test <- data %>% dplyr::inner_join(irregular_iotc %>% st_set_geometry(NULL) , by = c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier = code_cwp)
+irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
+irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
+irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
+if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
+
+world_sf <- sf::st_make_valid(world_sf %>% dplyr::mutate(code_cwp = code))
+world_sf <- world_sf[sf::st_is_valid(world_sf),]
+
+
+# tm_shape(st_as_sf(test %>% dplyr::inner_join(world_sf, by = c("geographic_identifier" = "code"))))+tm_polygons()
+pakistan <- irregular_iotc %>% dplyr::filter(code_cwp== "3120060")
+world_sf_combined <- rbind(pakistan, world_sf)
+# world_sf_combined <- gdata::combine(world_sf, irregular_iotc) %>% dplyr::distinct()
+# t <- rbind(world_sf_combined[duplicated(world_sf_combined$code_cwp),],world_sf_combined[duplicated(world_sf_combined$code_cwp, fromLast = TRUE),] )
+
+data <- dplyr::left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% dplyr::select(-c(code_cwp, st_area))
+
+# testtt <- setdiff(irregular_iotc$code_cwp, world_sf$code_cwp)
+# 
+# test <- t %>% dplyr::group_by(code, source) %>% slice(1)
+# tm_shape(st_as_sf(t))+tm_polygons()+tm_fill(col = "source")
+# 
+IOTC <- world_sf[IOTC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iotc = "iotc")
+
+IATTC <- world_sf[IATTC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iattc = "iattc")
+
+WCPFC <- world_sf[WCPFC_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(wcpfc = "wcpfc")
+
+ICCAT <- world_sf[ICCAT_shape,]%>% st_set_geometry(NULL) %>% dplyr::mutate(iccat = "iccat")
+
+
+
+full_join <- dplyr::full_join(dplyr::full_join(dplyr::full_join(dplyr::full_join(world_sf, IOTC), IATTC), WCPFC), ICCAT) %>% st_set_geometry(NULL) 
+
+
+full_join[is.na(full_join)] <-  FALSE
+
+full_join <- full_join %>% dplyr::mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat))))
+world_sf$continent <- st_within(world_sf, continent) %>% lengths > 0 
+world_sf$continent <- str_replace(world_sf$continent, "TRUE","continent")
+
+world_sf <- dplyr::left_join(world_sf, full_join)
+
+world_sf_with_competence_area <- world_sf %>% dplyr::mutate(area_competence = as.factor(gsub("FALSE","",paste0(iotc, iattc, wcpfc, iccat, continent))))
+
+
+inner_join <- data %>% dplyr::inner_join(world_sf_with_competence_area, by = c("geographic_identifier"="code"))
+
+
+
+all_the_data <- inner_join  %>% ungroup() %>% dplyr::group_by(geographic_identifier, st_area, unit, source_authority, area_competence) %>% dplyr::summarise(value= sum(value, na.rm = TRUE))%>% dplyr::distinct() %>% dplyr::inner_join(world_sf%>% dplyr::select(-area_competence) , by = c("geographic_identifier"="code", "st_area") ) %>% dplyr::select(geographic_identifier, st_area, value, geom, unit, source_authority, area_competence)
+
+mislocated_continent <- all_the_data %>% dplyr::filter(str_detect(area_competence, "continent"))
+
+
+
+```
+
+```{r}
+mislocated_continent_init <- rawdata %>% semi_join(mislocated_continent, by = "geographic_identifier")
+```
+
+
+
+```{r}
+
+# mislocated_continent <- mislocated_continent %>% st_set_geometry(NULL)
+# st_geometry(mislocated_continent) <- NULL
+
+located_on_continent <- rawdata %>% semi_join(mislocated_continent , by = "geographic_identifier")
+conversion_factor_above_500_kilos <- rawdata  %>% semi_join(absurd_conversion_factor%>% dplyr::mutate(time_start = as.character(time_start), time_end = as.character(time_end)))
+a <- gdata::combine(located_on_continent, conversion_factor_above_500_kilos) %>% dplyr::rename(issue = source)
+```
+
+```{r}
+# titre_1 <- "Problem conversion factor in tons"
+# prblm_conv_fact <- pie_chart_1(source_authority,a%>% dplyr::filter(unit %in%c("MTNO","MT")))
+# titre_1 <- "Original tons"
+# 
+# original <-  pie_chart_1(source_authority,mapped_data%>% dplyr::filter(unit %in%c("MTNO","MT")))
+# plot_grid(prblm_conv_fact,original)
+pie_chart_2(source_authority,mislocated_continent_init,rawdata)
+
+```
+
+
+```{r message=FALSE, warning=FALSE}
+source_authority <- c("IATTC", "IOTC","WCPFC","CCSBT","ICCAT")
+
+lapply(source_authority, function(x){assign(paste0("table_",x), a #%>% dplyr::filter(source_authority ==x)
+                                            , envir = .GlobalEnv)
+  write.csv(paste0("table_",x), file = paste0("data/issues_with_data_table",x,".csv"))})
+
+
+
+```
+
