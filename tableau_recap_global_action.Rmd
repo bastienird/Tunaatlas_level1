@@ -396,14 +396,14 @@ res2 <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = environment
 
 ```{r echo=FALSE, results='asis'}
 
-cat(' \newpage')
+cat("\n\n\\pagebreak\n")
 
 ```
 
 
 ```{r echo=FALSE, results='asis'}
 
-cat(res2, sep = '\n \newpage')
+cat(res2, sep = "\n\n\\pagebreak\n")
 
 
 ```
@@ -419,12 +419,9 @@ res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet
 ```{r echo=FALSE, results='asis'}
 
 
-cat(' \newpage')
+cat("\n\n\\pagebreak\n")
 
-cat(res, sep = '\n \newpage')
-
-cat(' \newpage')
-
+cat(res, sep = "\n\n\\pagebreak\n")
 
 ```
 
@@ -458,7 +455,7 @@ for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {
   parameter_final <- sub_list_dir_2[counteur_child_tableau_recap+1]
   parameter_short <- TRUE
   res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
-  cat(res, sep = '\n \newpage')
+  cat(res, sep = "\n\n\\pagebreak\n")
   cat(paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)))
   step <- step+1
 }
