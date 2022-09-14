@@ -1,0 +1,315 @@
+---
+title: "Summary of the treatment for a specific entity of the global tuna atlas"
+eval.expr: TRUE
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+  bookdown::pdf_document2:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+  action: action
+  entity: entity
+  config: config
+  filter_species: !r NULL
+  filter_source_authority: !r NULL
+  filter_gear: !r NULL
+  filter_fishingfleet: !r NULL
+  filter_time_start: !r NULL
+  filter_time_end: !r NULL
+  filter_cat_geo: !r NULL
+  filter_catchtype: !r NULL
+  filter_schooltype: !r NULL
+  filter_species_group: !r NULL
+  fact: "effort"
+  
+---
+  
+This document is aimed to recap the impact on the data of the different treatment of the Global Tuna Atlas. 
+
+```{r include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+opts <- params$action
+con <- config$software$output$dbi
+```
+
+```{r}
+for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+
+
+```
+
+
+```{r include=FALSE, results='asis'}
+params_unlock <- params
+for (i in length(params_unlock)){names(params_unlock[i]) <- substitute(i)}
+list_param <- list(params_unlock$filter_cat_geo, params_unlock$filter_gear, params_unlock$filter_source_authority, params_unlock$filter_fishingfleet, params_unlock$filter_time_start, params_unlock$filter_time_end, params_unlock$filter_species, params_unlock$filter_catchtype)
+isNullList <- function(x) all(!lengths(x))
+if (isNullList(list_param)){cat("There are no filter on this data")} else {
+  
+  cat (paste0("The filter used on this data are:  \n "))
+  for (i in 1:length(params_unlock)){
+    if (params_unlock[i] %in% list_param & !is.null(params_unlock[[i]])){
+      cat(paste0("***- On ", names((params_unlock)[i]), " : ", paste((params_unlock)[[i]], collapse = " ; "),"*** \n "))} else {""}
+  }
+}
+
+```
+
+```{r include=FALSE}
+if(dir.exists("Markdown")){
+
+  nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))
+
+  if(!require(readtext)){
+    install.packages("readtext")
+    require(readtext)
+  }
+  if(!require(dplyr)){
+    install.packages("dplyr")
+    require(dplyr)
+  }
+  if(!require(ggplot2)){
+    install.packages("ggplot2")
+    require(ggplot2)
+  }
+  if(!require(patchwork)){
+    install.packages("patchwork")
+    require(patchwork)
+  }
+  if(!require(hrbrthemes)){
+    install.packages("hrbrthemes")
+    require(hrbrthemes)
+  }
+  if(!require(stringr)){
+    install.packages("stringr")
+    require(stringr)
+  }
+  if(!require(readr)){
+    install.packages("readr")
+    require(readr)
+  }
+  if(!require(cowplot)){
+    install.packages("cowplot")
+    require(cowplot)
+  }
+  if(!require(flextable)){
+    install.packages("flextable")
+    require(flextable)
+  }
+}
+```
+
+
+```{r include=FALSE}
+
+  if(!(is.null(params$filter_species))){nominal <- sum((nominal_dataset %>% 
+                                                          filter(species %in% params$filter_species))$value)
+  } else {nominal <- sum(nominal_dataset$value)}
+  
+```
+
+First we present the different steps created while processing the data. 
+
+Secondly we will present the differences between the first dataset (only groupping data) and the last one, after all the processes. 
+
+Thirdly, we will analyse further the final data, checking the eventual mistakes.
+
+Last we will present the differences between the created dataset and the one we provide in the Global Tuna Atlas. 
+
+# Analyse of the processing of the data
+
+```{r include=FALSE}
+sub_list_dir_2 <- list.dirs(path =paste0(getwd(),"/Markdown"), full.names = TRUE, recursive = FALSE)
+details = file.info(paste0(sub_list_dir_2,"/Markdown"))
+details = file.info(sub_list_dir_2)
+details = details[with(details, order(as.POSIXct(mtime))), ]
+sub_list_dir_2 = rownames(details)
+```
+
+
+```{r include=FALSE, results='asis'}
+df <- data.frame(matrix(ncol =10, nrow = 1))
+      colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir_2),"/")[[1]],n=1)),
+                        # "Explanation", "Fonctions", 
+                        "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
+      )
+      if((!is.null(opts))){ #have not change for species$filter
+        tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
+        lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
+        nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
+          main <- readRDS(paste0(sub_list_dir_2[1],"/rds.rds")) %>% filter(species%in%opts$species_filter)
+          tons_init <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
+          nofish_init <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
+          lines_init <- nrow(main)
+        }
+      for (i in sub_list_dir_2){
+        sums <- read.csv(paste0(i,"/sums.csv"))
+        Explanation <- readtext(paste0(i,"/explication.txt"))[2]
+        Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
+        if (file.exists(paste0(i,"/options_written.txt"))){
+          Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
+        if(!is.null(params$filter_species)){
+          main <- readRDS(paste0(i,"/rds.rds")) %>% filter(species%in%params$filter_species)
+          sum_t <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
+          sum_no <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
+          nrow <- nrow(main)
+          
+        } else{sum_t <- pull(sums[1])
+        sum_no <-  pull(sums[2])
+        nrow <- pull(sums[3])}
+        
+        step <- tail(str_split(paste0(i),"/")[[1]],n=1)
+        loss_percent <- 100*((tons_init - sum_t)/tons_init)
+        loss_tons <- (tons_init - sum_t)
+        loss_percent_lines <- 100*((lines_init - nrow)/lines_init)
+        loss_percent_no <- 100*((nofish_init - sum_no)/nofish_init)
+        percentage_of_nominal <- (sum_t*100)/nominal
+        sums <- as.data.frame(data.frame(sum_t, sum_no, nrow))
+        data_i <- cbind(step,
+                        # Explanation, Fonctions, 
+                        Options,
+                        sums, loss_percent,loss_tons,loss_percent_no, loss_percent_lines, percentage_of_nominal)
+        names(data_i) <- colnames(df)
+        df <- rbind(df, data_i)
+        tons_init <- sum_t
+        nofish_init <- sum_no
+        lines_init <- nrow
+        
+      }
+      df = df[-1,]
+      write_csv(df, paste0(getwd(),"/table.csv"))
+      df[df == -Inf] <- 0
+      df <- df %>%  rename(Step = rawdata)
+
+
+      FitFlextableToPage <- function(ft, pgwidth = 6,options_format ="notRmd"){
+        set_flextable_defaults(
+          font.size = 10,
+          font.color = "black",
+          table.layout = "autofit",
+          digits = 2,
+          theme_fun = "theme_box"
+        )
+        table <- flextable(ft) %>% autofit() %>% fit_to_width(30)
+        
+        table %>% 
+          color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
+          color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>% 
+          colformat_num(col_keys = c("`Difference (in % of fish)`"), digits = 2) %>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
+          color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>% 
+          colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2) %>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
+          color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)%>% 
+          colformat_num(col_keys = c("`Difference (in % of lines)`"), digits = 2)
+        if(options_format == "Rmd"){table%>% flextable_to_rmd()}else{table}
+        
+      }
+
+      # save_as_image(FitFlextableToPage(df), path = paste0(getwd(),"/table.png"), webshot = "webshot")
+      # assign(paste0(tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1)), df, envir = .GlobalEnv)
+      # list <- append(list,tail(str_split(paste0(sub_list_dir),"/")[[1]],n=1))
+      
+      
+
+      reduced <- df %>% select(Step, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
+      reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
+      
+
+coeff <- 3
+temperatureColor <- "#69b3a2"
+      
+priceColor <- rgb(0.2, 0.6, 0.9, 1)
+
+print(ggplot(reduced,aes(x = Step,group = 1))+ 
+        geom_line( aes(y=`Sum in tons` ,group = 1), size=0.5, color=priceColor)+geom_point( aes(y=`Sum in tons` ,group = 1)) +
+        geom_line( aes(y=`Sum in number of fish`/ coeff,group = 1), size=0.5, color=temperatureColor)+geom_point( aes(y=`Sum in number of fish`/ coeff))  +
+        scale_y_continuous(
+          
+          # Features of the first axis
+          name = "Tons",
+          
+          # Add a second axis and specify its features
+          sec.axis = sec_axis(~.*coeff, name="Number of fish")
+        ) + 
+        
+        
+        
+        theme(
+          axis.title.y = element_text(color = priceColor, size=8),
+          axis.title.y.right = element_text(color = temperatureColor, size=8)
+        ) +
+        
+        ggtitle("Evolution of the repartition of captures depending on units and Steps")+
+        theme(axis.text.x = element_text(angle = 90)))
+      # ggsave(paste0(getwd(),"/myplot.png"))
+      
+      no_fish <- ggplot(reduced,aes(x = Step,group = 1)) +geom_line( aes(y=`Sum in number of fish`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
+      
+tons <- ggplot(reduced,aes(x = Step,group = 1)) +
+geom_line( aes(y=`Sum in tons`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
+   
+print(cowplot::plot_grid(tons, no_fish))
+      # ggsave(paste0(getwd(),"/myplot2.png"))
+
+```
+
+```{r echo = FALSE, results='asis', eval=FALSE}
+parameter_working_directory <- getwd()
+res <- knitr::knit_child("tableau_recap_entity_child.Rmd", envir = globalenv(), quiet = TRUE)
+cat(res, sep = '\n')
+
+```
+
+# Analyse of final data
+
+```{r echo = FALSE, results='asis'}
+parameter_init <- sub_list_dir_2[1]
+parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
+child <- TRUE
+knitr::knit_exit(paste0(parameter_fact))
+res <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = globalenv(), quiet = TRUE)
+cat(res, sep = '\n')
+
+```
+
+# Summary of different treatment on the data.
+
+```{r echo=FALSE, results='asis'}
+child <- TRUE
+res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
+cat(res, sep = '\n')
+```
+
+
+# Comparison between rawdata and final data.
+
+# Analyse of different steps
+
+```{r echo = FALSE, results='asis'}
+
+for (counteur_child_tableau_recap in 1:1){
+  first <- sub_list_dir_2[counteur_child_tableau_recap]
+  second <- sub_list_dir_2[counteur_child_tableau_recap+1]
+  res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
+  cat(res, sep = '\n \newpage')
+  counteur_child_tableau_recap <- counteur_child_tableau_recap+1
+}
+
+
+```
