@@ -452,7 +452,7 @@ for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {
 function_all_comp <- function(counting){
   assign("parameter_init", sub_list_dir_2[counting], envir = globalenv())
   assign("parameter_final", sub_list_dir_2[counting+1], envir = globalenv())
-  assing("parameter_short", TRUE, envir = globalenv())
+  assign("parameter_short", TRUE, envir = globalenv())
   assign("child", TRUE, envir = globalenv())
   assign("step", step+1, envir = globalenv())
 
