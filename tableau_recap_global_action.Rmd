@@ -57,7 +57,6 @@ knitr::opts_chunk$set(
 	warning = FALSE, fig.align = 'center'
 )
 
-options(knitr.duplicate.label = "allow")#for duplicate chunk names
 ```
 
 ```{r}
@@ -167,8 +166,8 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
     y <-x %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`)) } 
 
   else {y <- x}
-  y <- y %>% mutate_if(is.factor, as.character) %>% mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
-  mutate_if(is.character,~str_replace_all( ., "_", "-" )) %>% mutate_if(is.numeric, function(.){round(.,2)})
+  y <- y %>% dplyr::mutate_if(is.factor, as.character) %>% dplyr::mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
+  dplyr::mutate_if(is.character,~str_replace_all( ., "_", "-" )) %>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
   flextable <- flextable(y)
   if(colour){
   flextable <- flextable %>% 
@@ -185,6 +184,7 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
   return(ft_out)
 
 }
+base::options(knitr.duplicate.label = "allow")#for duplicate chunk names
 
 ```
 
@@ -219,7 +219,7 @@ if(dir.exists("Markdown")){
 ```{r include=FALSE}
 
   if(!(is.null(params$filter_species))){nominal <- sum((nominal_dataset %>% 
-                                                          filter(species %in% params$filter_species))$value)
+                                                          dplyr::filter(species %in% params$filter_species))$value)
   } else {nominal <- sum(nominal_dataset$value)}
   
 ```
@@ -253,9 +253,9 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
         lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
         nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
-          main <- readRDS(paste0(sub_list_dir_2[1],"/rds.rds")) %>% filter(species%in%opts$species_filter)
-          tons_init <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
-          nofish_init <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
+          main <- readRDS(paste0(sub_list_dir_2[1],"/rds.rds")) %>% dplyr::filter(species%in%opts$species_filter)
+          tons_init <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT")))$value)
+          nofish_init <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO")))$value)
           lines_init <- nrow(main)
         }
       for (i in sub_list_dir_2){
@@ -265,9 +265,9 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
         if(!is.null(params$filter_species)){
-          main <- readRDS(paste0(i,"/rds.rds")) %>% filter(species%in%params$filter_species)
-          sum_t <- sum((main %>% filter(unit%in%c("MTNO", "MT")))$value)
-          sum_no <- sum((main %>% filter(unit%in%c("NOMT", "NO")))$value)
+          main <- readRDS(paste0(i,"/rds.rds")) %>% dplyr::filter(species%in%params$filter_species)
+          sum_t <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT")))$value)
+          sum_no <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO")))$value)
           nrow <- nrow(main)
           
         } else{sum_t <- pull(sums[1])
@@ -300,7 +300,7 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
 
      
 
-      reduced <- df %>% select(Step, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% mutate(Step_number = as.numeric(row_number()))
+      reduced <- df %>% select(Step, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
 
@@ -411,6 +411,7 @@ cat(res2, sep = "\n\n\\pagebreak\n")
 # Summary of the treatment done on the data (comparison between the first to the last)
 
 ```{r echo=FALSE, results='asis'}
+
 child <- TRUE
 res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 
