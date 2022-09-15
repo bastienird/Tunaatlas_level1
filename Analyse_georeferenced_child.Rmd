@@ -221,7 +221,7 @@ world_sf <- st_read(con, query = query)
 
 shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
-options(scipen=999)
+base::options(scipen=999)
 
 kbl <- function(data) {
   knitr::kbl(data, booktabs = TRUE, digits = 2) %>% 
