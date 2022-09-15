@@ -86,7 +86,7 @@ if(parameter_fact=="catch"){parameter_colnames_to_keep <-   c("fishingfleet" ,  
 
 
 
-
+\newpage
 
 
 
@@ -254,7 +254,7 @@ if(!child){qflextable2 =function(x, captionn = "Title", autonumm = autonum, pgwi
 
 ```
 
-```{r results='asis', eval=!child}
+```{r results='asis', eval=FALSE}
 cat2("# The data compared")
 ```
 
@@ -310,9 +310,7 @@ knit_child_attention <- knitr::knit_child(text =c(
 cat(knit_child_attention)
 ```
 
-  
 
-  
 ```{r results='asis', cache=FALSE}
 params_unlock <- params
 for (i in length(params_unlock)){names(params_unlock[i]) <- substitute(i)}
@@ -506,13 +504,13 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 fonction_groupement = function(x, init, final){
   x  <-   dplyr::enquo(x)
   groupement_1  <-   init %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines1 = 0,
-                                                                             value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
+                                                                             value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))
   groupement_2  <-   final %>% dplyr::group_by(!!x,unit) %>% dplyr::summarise(number_lines2 = 0,
-                                                                              value_sum_2 = round((sum(value, na.rm=TRUE)))) %>% dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))
+                                                                              value_sum_2 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))
   
-  fulljoin  <-   full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2)) %>%dplyr::mutate(value_sum_1 = ifelse(is.na(value_sum_1), 0, value_sum_1))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>%
+  fulljoin  <-   full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>%
     dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
-    dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = ifelse(is.na(value_sum_2), 0, value_sum_2))%>%dplyr::mutate(Loss_pourcent = ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
+    dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
     dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)/ 10^6) %>%
     dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in millions of tons/fish` = Loss_en_milliers_de_tonne,
                   `Difference in number of lines` = loss_nb_ligne) %>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0))) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",round(value_sum_1) == round(value_sum_2)~"Egal", TRUE ~ `Loss / Gain`))
@@ -608,7 +606,7 @@ The differences is ",loss_en_tonnes," in tons (**",loss_en_tonnes_pourcent,"%**)
 ```{r echo = FALSE, results='asis'}
 
 if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons/fish`)),groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons/fish`)),groups = c("Dimension","unit","Loss / Gain"))
   cat("The stratas differences (completely lost or appearing) between the first one and the second one are (only first 10 per dimension showed if more) :\n")
   cat(knit_print(qflextable2(groupe_df, captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))
@@ -639,11 +637,6 @@ cat2("## Time coverage")
 For each dataset, we compare the catch evolution and the cumulative catch evolution both in tons and number of fish.
 
 
-```{r results='asis'}
-
-```
-
-
 ```{r}
 captures_par_time <- testtime_start %>%dplyr::mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2")%>% pivot_longer(cols = c(`Captures table 1`, `Captures table 2`), names_to = "Origin", values_to ="Captures") %>%dplyr::mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 , TRUE ~ titre_2))
 ```
@@ -651,7 +644,7 @@ captures_par_time <- testtime_start %>%dplyr::mutate(Time = as.Date(Precision))%
 
 ```{r fig.cap=paste0("Catch evolutions for ", `titre_1`, " and ",`titre_2`, " dataset "), results='asis'}
 
-cat2("### Catch evolutions")
+# cat2("### Catch evolutions")
 
 ggplot(captures_par_time) +
   aes(
@@ -669,10 +662,6 @@ ggplot(captures_par_time) +
   facet_wrap(vars(unit), nrow = 2L)+
   labs(x = "Time", y = "Captures")+
   facet_grid("unit", scales = "free_y")
-```
-
-```{r results='asis'}
-
 ```
 
 
@@ -698,7 +687,7 @@ ggplot_capt_par_time = function(x){
 
 ```{r fig.cap=paste0("Cumulated catch evolution in tons for ", `titre_1`, " and ", `titre_2`, " dataset "), results='asis'}
 
-cat2("### Cumulative Catch evolutions")
+# cat2("### Cumulative Catch evolutions")
 
 ggplot_capt_par_time("Tons")
 
@@ -712,6 +701,8 @@ ggplot_capt_par_time("Number of fish")
 
 
 ```
+
+\clearpage
 
 ```{r results='asis'}
 cat2("## Spatial coverage ")
@@ -757,7 +748,7 @@ We represent spatial coverage, faceted by geographical category. The geographica
 
 ```{r results='asis', fig.cap='Spatial footprints of captures in Tons for both datasets'}
 
-cat2("### Spatial coverage in tons")
+# cat2("### Spatial coverage in tons")
 
 empreinte_spat_ton <- fonction_empreinte_spatiale("Tons")
 
@@ -768,7 +759,7 @@ empreinte_spat_ton
 
 ```{r results='asis', eval=is_there_no, fig.cap='Spatial footprints of captures in Tons for both datasets'}
 
-cat2("### Spatial coverage in number of fish")
+# cat2("### Spatial coverage in number of fish")
 
 
 empreinte_spat_no <- fonction_empreinte_spatiale("Number of fish")
@@ -778,8 +769,11 @@ empreinte_spat_no
 
 ```
 
+\clearpage
+
+
 ```{r results='asis'}
-cat(" \n \n ")
+
 cat2("## Repartition of the data for the other dimensions")
 
 ```
@@ -848,7 +842,7 @@ pie_charts_multiple <- lapply(list_pie_chart,FUN = resume_knit_child)
 
 # res <-  lapply(c("gear"), resume_knit_child{
 
-cat(unlist(pie_charts_multiple), sep = " \n \n ")
+cat(unlist(pie_charts_multiple), sep = "\\clearpage")
 
 
 # pie_charts_multiple <- lapply(list_pie_chart,FUN = pie_chart_2_default)
@@ -873,6 +867,8 @@ cat(unlist(pie_charts_multiple), sep = " \n \n ")
 # Name_En
 
 ```
+
+\clearpage
 
 ```{r results='asis'}
 cat2("# Differences between the two datasets")
@@ -904,15 +900,13 @@ t %>%
 
 ```
 
-
+\clearpage
 
 ```{r results='asis'}
 
 cat2("## Differences in geographical data")
 
 ```
-
-
 
 
 ```{r eval=FALSE, include=FALSE, out.width="100%"}
@@ -950,7 +944,7 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
 
 
 
-```{r out.width="100%"}
+```{r}
 
 tmap_mode(plotting_type)
 formals(tm_shape)$drop.empty_facets <- FALSE
@@ -1012,11 +1006,10 @@ knit_child_map =function(unit, plotting_type, shapefile_fix_function, t_filtered
     '```{r results = "asis"}',
     '',
     'unit_title <- gsub("_","..",unit)',
-     'cat2(paste0("### For the unit : ", unit,  " \n \n  "))',
     '```',
     '',
     '',
-    '```{r out.width="100%", results="asis", fig.cap = paste0("Map of the differences between two datasets in millions of ", unit_title)}',
+    '```{r results="asis", fig.cap = paste0("Map of the differences between two datasets in millions of ", unit_title)}',
 '',
   'image_child',
   '',
@@ -1030,7 +1023,7 @@ knit_child_map =function(unit, plotting_type, shapefile_fix_function, t_filtered
 ```
 
 
-```{r out.width="100%", results='asis'}
+```{r}
 
 tmap_mode(plotting_type)
 formals(tm_shape)$drop.empty_facets <- FALSE
@@ -1045,7 +1038,7 @@ t_filtered <- t #%>% filter(`Difference (in %)` >= -100)
 
 
 
-```{r out.width="100%", results='asis'}
+```{r}
 
 if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
    restest <- lapply(unique(t_filtered$unit), FUN = knit_child_map)
@@ -1062,7 +1055,7 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
 ```{r echo=FALSE, results='asis'}
 
 
-cat(unlist(restest), sep = " \n ")
+cat(unlist(restest), sep = "\\clearpage")
 
 
 ```
@@ -1070,37 +1063,32 @@ cat(unlist(restest), sep = " \n ")
 ```{r echo=FALSE, results='asis'}
 
 
-cat(unlist(restest_percent), sep = " \n ")
+cat(unlist(restest_percent), sep = "\\clearpage")
 
 
 ```
 
+
+\clearpage
 
 Here is represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information. The polygongs with red bord lost all the information, the one with blue borders did not loose information.
 
 
-```{r out.width="100%"}
-
-if(plotting_type == "plot"){
-  image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = as.factor(case_when(value_sum_1 == value_sum_2 ~ 'No differences', `value_sum_2` == 0 & value_sum_1 != 0 ~'All data lost' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
-                    # %>%dplyr::filter(unit == "Tons")
-  )+
-    tm_fill( "Difference (in %)", palette="-PiYG", style="fixed", breaks = c(-Inf, -100,0,0,100,100),labels = c("Gain (more than double)","Gain", "No differences","Loss", "All data lost" ),
+```{r}
+  image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = `Difference (in %)`))+    tm_fill( "Impact on the data", palette="-PiYG", style="fixed", breaks = c(-Inf, -100,0,0,100,100),labels = c("Gain (more than double)","Gain", "No differences","Loss", "All data lost" ),
              id="name", midpoint = 0)+tm_borders(lwd = 0.05)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+
-    tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()} else {image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = as.factor(case_when(value_sum_1 == value_sum_2 ~ 'No differences', `value_sum_2` == 0 & value_sum_1 != 0 ~'All data lost' ,`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
-                                                                                                # %>%dplyr::filter(unit == "Tons")
-    )+
-    tm_fill( "Difference (in %)", palette="-PiYG", style="fixed", breaks = c(-Inf, -100,0,0,100,100),labels = c("Gain (more than double)","Gain", "No differences","Loss", "All data lost" ),
-               id="name", midpoint = 0)+tm_borders(lwd = 0.005)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+
-      tm_layout(legend.outside = TRUE)}
+    tm_layout(legend.outside = TRUE)
 
+if(plotting_type == "plot"){image <- image  +tm_shape(continent)+tm_borders()}
+
+ 
 
 ```
 
 
 
 
-```{r out.width="100%", fig.cap=paste0(" Difference (in %) between ", titre_1, " and ", titre_2)}
+```{r results='asis', out.width="100%", fig.cap=paste0("Difference between ", titre_1, " and ", titre_2)}
 
 
 image
@@ -1120,6 +1108,8 @@ difference_coverage <- spatial_coverage_init - spatial_coverage_final
 
 The coverage difference is `r difference_coverage` km square.
 
+\clearpage
+
 ```{r results='asis'}
 cat2("## Loss and gain for each strata")
 ```
@@ -1134,6 +1124,9 @@ disappearing_strates <- t %>%dplyr::filter(value_sum_2 == 0)
 topn <- 6
 ```
 
+
+
+
 ```{r results='asis'}
 cat2("## The differences for each dimension")
 ```
@@ -1146,7 +1139,7 @@ We will look for each dimension the `r topn` most important differences (in numb
 valeur_totale <- sum(init$value, na.rm = TRUE)
 ligne_totale <- nrow(init)
 
-unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group","gear", "Name_En")) %>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons/fish`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
+unit <- t %>% dplyr::filter(Dimension %in% c("species", "source_authority","cat_geo", "fishingfleet", "species_group","gear", "Name_En")) %>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(base::ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in millions of tons/fish`*1000000/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
 
 
 ```

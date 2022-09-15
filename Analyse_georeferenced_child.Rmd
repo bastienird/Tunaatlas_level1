@@ -277,6 +277,8 @@ species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% jani
 
 ```
 
+\clearpage
+
 
 The purpose of this markdown is to describe a dataset at given moment of the worflow
 
@@ -309,57 +311,62 @@ if (isNullList(list_param)){cat("There are no filter on this data")} else {
 
 
 ```{r}
-
-
+is_null_exist <- function(x) {
+  if (!exists(deparse(substitute(x))) || is.null(x)) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
 
 fonction_filtre = function(dataframe_tot_filter) {
   if(parameter_fact == "catch"){dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(species_group%>% dplyr::distinct(), by = c("species"))
     dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
   if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% dplyr::rename(Gear = Name_En)%>%dplyr::mutate(gear = as.character(gear))
   }}
-  if (!is.null(parameter_filter_species)){
+  if (! is_null_exist(parameter_filter_species)){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       species %in% parameter_filter_species)
   }
-  if (!is.null(parameter_filter_gear)){
+  if (! is_null_exist(parameter_filter_gear)){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       gear %in% parameter_filter_gear)
   }    
-  if (!is.null(parameter_filter_source_authority )){
+  if (! is_null_exist(parameter_filter_source_authority )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       source_authority %in% parameter_filter_source_authority)
   }  
-  if (!is.null(parameter_filter_fishingfleet )){
+  if (! is_null_exist(parameter_filter_fishingfleet )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       fishingfleet %in% parameter_filter_fishingfleet)
   }
-  if (!is.null(parameter_filter_time_start )){
+  if (! is_null_exist(parameter_filter_time_start )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       time_start %in% parameter_filter_time_start)
   }
-  if (!is.null(parameter_filter_time_end )){
+  if (! is_null_exist(parameter_filter_time_end )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       time_end %in% parameter_filter_time_end)
   }
-  if (!is.null(parameter_filter_schooltype )){
+  if (! is_null_exist(parameter_filter_schooltype )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       schooltype %in% parameter_filter_schooltype)
   }
-  if (!is.null(parameter_filter_catchtype )){
+  if (! is_null_exist(parameter_filter_catchtype )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       catchtype %in% parameter_filter_catchtype)
   }
   
-  if (!is.null(parameter_filter_cat_geo )){
+  if (! is_null_exist(parameter_filter_cat_geo )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       cat_geo %in% parameter_filter_cat_geo)
   }
-  if (!is.null(parameter_filter_catchtype )){
+  if (! is_null_exist(parameter_filter_catchtype )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
-      catchtype %in% parameter_filter_catchtype)
+      cat_geo %in% parameter_filter_catchtype)
   }
   
-  if (!is.null(parameter_filter_species_group )){
+  if (! is_null_exist(parameter_filter_species_group )){
     dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
       species_group %in% parameter_filter_species_group)
     
@@ -372,8 +379,10 @@ fonction_filtre = function(dataframe_tot_filter) {
 
 
 }
+```
 
 
+```{r}
 init <- fonction_filtre(readRDS(paste0(as.character(parameter_final), "/rds.rds")) %>% dplyr::select(all_of(parameter_colnames_to_keep)))%>%  left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end)) %>%dplyr::mutate(cat_geo = as.character(cat_geo))
 
 if(!exists("parameter_titre_dataset_1")){parameter_titre_dataset_1 <- NULL}
@@ -591,7 +600,7 @@ formals(resume_knit_child)$titre_1 <- titre_1
 ```{r results='asis'}
 pie_charts_multiple <- lapply(list_pie_chart,FUN = resume_knit_child)
 
-cat(unlist(pie_charts_multiple), sep = " \n \n ")
+cat(unlist(pie_charts_multiple), sep ="\\clearpage")
 
 
 ```
@@ -692,7 +701,7 @@ world_sf_combined <- rbind(pakistan, world_sf)
 # world_sf_combined <- gdata::combine(world_sf, irregular_iotc) %>% dplyr::distinct()
 # t <- rbind(world_sf_combined[duplicated(world_sf_combined$code_cwp),],world_sf_combined[duplicated(world_sf_combined$code_cwp, fromLast = TRUE),] )
 
-data <- dplyr::left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) #%>% dplyr::select(-c(code_cwp, st_area))
+data <- dplyr::left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier=dplyr::coalesce(code_cwp, geographic_identifier)) #%>% dplyr::select(-c(code_cwp, st_area))
 
 # testtt <- setdiff(irregular_iotc$code_cwp, world_sf$code_cwp)
 # 
@@ -750,7 +759,7 @@ mislocated_continent <- all_the_data %>% dplyr::filter(str_detect(area_competenc
 ```
 
 ```{r}
-mislocation <- ifelse(nrow(mislocated_continent)==0, FALSE, TRUE)
+mislocation <- base::ifelse(nrow(mislocated_continent)==0, FALSE, TRUE)
 if(!mislocation){knitr::knit_exit("No mislocated data in this dataset",fully=FALSE)}
 ```
 
@@ -944,12 +953,12 @@ strange
 # plot_grid(strange, original)
 ```
 
-```{r results='asis'}
+```{r results='asis', eval=FALSE}
 cat2("## General recap of issues")
 ```
 
 
-```{r}
+```{r eval=FALSE}
 
 
 
@@ -984,7 +993,7 @@ world_sf_combined <- rbind(pakistan, world_sf)
 # world_sf_combined <- gdata::combine(world_sf, irregular_iotc) %>% dplyr::distinct()
 # t <- rbind(world_sf_combined[duplicated(world_sf_combined$code_cwp),],world_sf_combined[duplicated(world_sf_combined$code_cwp, fromLast = TRUE),] )
 
-data <- dplyr::left_join(data, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% dplyr::select(-c(code_cwp, st_area))
+data <- dplyr::left_join(init, irregular_iotc %>% st_set_geometry(NULL), by =c("geographic_identifier"= "code")) %>% dplyr::mutate(geographic_identifier=dplyr::coalesce(code_cwp, geographic_identifier)) %>% dplyr::select(-c(code_cwp, st_area))
 
 # testtt <- setdiff(irregular_iotc$code_cwp, world_sf$code_cwp)
 # 
@@ -1027,13 +1036,13 @@ mislocated_continent <- all_the_data %>% dplyr::filter(str_detect(area_competenc
 
 ```
 
-```{r}
+```{r eval=FALSE}
 mislocated_continent_init <- rawdata %>% semi_join(mislocated_continent, by = "geographic_identifier")
 ```
 
 
 
-```{r}
+```{r eval=FALSE}
 
 # mislocated_continent <- mislocated_continent %>% st_set_geometry(NULL)
 # st_geometry(mislocated_continent) <- NULL
