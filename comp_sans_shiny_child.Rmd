@@ -55,6 +55,7 @@ parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,
    "Difference (in %)"        ,      "Dimension"   ,       "Difference in millions of tons/fish")
 if(!exists("child_header")){child_header = "##"}
 cat2 <- function(x){cat(paste0(child_header, x, " \n"))}
+if(!exists("parameter_fact") | is.null(parameter_fact)){parameter_fact <-  "catch"}
 if(child){title <- paste0('Comparison between', gsub('georef_dataset','',tail(stringr::str_split(parameter_init,'/')[[1]],n=1)), ' and ', gsub('georef_dataset','',tail(stringr::str_split(parameter_final,'/')[[1]],n=1)))}
 if(parameter_fact == "effort"){colnames_to_keep <- c("fishingfleet" ,  
   "unit" ,                  "value" ,                 "source_authority")}
