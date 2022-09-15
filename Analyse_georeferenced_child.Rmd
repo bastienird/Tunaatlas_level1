@@ -1052,19 +1052,19 @@ conversion_factor_above_500_kilos <- rawdata  %>% semi_join(absurd_conversion_fa
 a <- gdata::combine(located_on_continent, conversion_factor_above_500_kilos) %>% dplyr::rename(issue = source)
 ```
 
-```{r}
+```{r eval=FALSE}
 # titre_1 <- "Problem conversion factor in tons"
 # prblm_conv_fact <- pie_chart_1(source_authority,a%>% dplyr::filter(unit %in%c("MTNO","MT")))
 # titre_1 <- "Original tons"
 # 
 # original <-  pie_chart_1(source_authority,mapped_data%>% dplyr::filter(unit %in%c("MTNO","MT")))
 # plot_grid(prblm_conv_fact,original)
-pie_chart_2(source_authority,mislocated_continent_init,rawdata)
+# pie_chart_2(source_authority,mislocated_continent_init,rawdata)
 
 ```
 
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, eval=FALSE}
 source_authority <- c("IATTC", "IOTC","WCPFC","CCSBT","ICCAT")
 
 lapply(source_authority, function(x){assign(paste0("table_",x), a #%>% dplyr::filter(source_authority ==x)
