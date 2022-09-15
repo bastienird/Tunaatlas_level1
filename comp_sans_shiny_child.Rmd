@@ -98,6 +98,29 @@ if(parameter_fact=="catch"){parameter_colnames_to_keep <-   c("fishingfleet" ,  
 
 ```{r}
 last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
+qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colour = FALSE){
+  if("Captures table 1" %in% colnames(x)){
+    y <-x %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`)) } 
+
+  else {y <- x}
+  y <- y %>% dplyr::mutate_if(is.factor, as.character) %>% dplyr::mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
+  dplyr::mutate_if(is.character,~str_replace_all( ., "_", "-" )) %>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
+  flextable <- flextable(y)
+  if(colour){
+  flextable <- flextable %>% 
+          color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
+          color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
+          color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
+          color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)
+  } 
+  if(!is.null(captionn)){flextable_captionned <- set_caption(flextable, caption = captionn,
+  style = "Table Caption")} else {flextable_captionned <- flextable}
+  ft_out <- flextable_captionned %>% autofit()
+  ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
+
+  return(ft_out)
+
+}
 
 ```
 
@@ -352,7 +375,6 @@ if (isNullList(list_param)){cat("There are no filter on this data")} else {
 
 
 ```{r cache=FALSE}
-last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
 
 is_null_exist <- function(x) {
