@@ -405,6 +405,8 @@ cat(res2, sep =  "\\clearpage")
 ```{r echo=FALSE, results='asis'}
 
 child <- TRUE
+assign("child", TRUE, envir = globalenv())
+
 res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 
 ```
@@ -447,8 +449,10 @@ function_all_comp <- function(counting){
   parameter_init <- sub_list_dir_2[counting]
   parameter_final <- sub_list_dir_2[counting+1]
   parameter_short <- TRUE
-  cat(paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)))
-  knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE, options = list(parameter_init = parameter_init, parameter_final = parameter_final))
+  assign("child", TRUE, envir = globalenv())
+  assign("step", step+1, envir = globalenv())
+
+  knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 }
 
 all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)

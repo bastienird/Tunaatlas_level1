@@ -48,6 +48,9 @@ params:
 if(!exists("child")){child = FALSE} else{child = child}
 ```
 
+
+
+
 ```{r eval=child, include=FALSE}
 
 parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,                
@@ -89,7 +92,9 @@ if(parameter_fact=="catch"){parameter_colnames_to_keep <-   c("fishingfleet" ,  
 
 \newpage
 
-
+```{r results='asis'}
+if(exists("step")){  cat(paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)))}
+```
 
 ```{r message=FALSE}
 
