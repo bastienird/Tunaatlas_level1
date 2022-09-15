@@ -13,8 +13,8 @@ output:
     keep_md: true
 
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/mapping_codelist"
-  final: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/overlap_iotc_ccsbt"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220818102142/entities/global_catch_1deg_1m_ps_bb_Bastien_level0/Markdown/rawdata"
+  final: "~/Documents/Tunaatlas_level1/jobs/20220818102142/entities/global_catch_1deg_1m_ps_bb_Bastien_level0/Markdown/rawdata_modyfing_georeferenced_errors"
   dbname: "tunaatlas_sandbox2"
   host: "localhost"
   port: 5432
@@ -38,6 +38,7 @@ params:
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Captures table 1"      ,"Captures table 2"      ,                               "Loss / Gain",    
    Difference (in %)          ,      Dimension   ,       Difference in millions of tons/fish ]
+  short: FALSE
   con: con
 ---
 
@@ -47,11 +48,9 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
-
-
 ```
 
-```{r}
+```{r message=FALSE}
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
 
 if(!(require(base))){ 
@@ -137,7 +136,8 @@ set_flextable_defaults(
   digits = 2,
   theme_fun = "theme_box"
   )
-# qflextable2 = function(x){x <- autofit(kable(x))}
+
+
 last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 plotting_type <- "plot" 
 if (knitr::is_html_output()){plotting_type <- "view" }
@@ -210,6 +210,10 @@ qflextable2 =function(x){
 
 ```
 
+```{r results='asis'}
+cat("# The data compared")
+```
+
 ```{r cache=FALSE}
 species_group <-   read_excel(file.path("data", "SPECIES_LIST_RFMO_WITH_ERRORS.xlsx")) %>% janitor::clean_names() %>% dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
 colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
@@ -246,7 +250,6 @@ cat (paste0("The filter used on this data are:  \n "))
 
 ```
 
-# The data compared
 
 ```{r cache=FALSE}
 last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
@@ -310,7 +313,7 @@ fonction_filtre = function(dataframe_tot_filter) {
         Name_Es = col_skip(), Name_Ar = col_skip()))
 
 dataframe_tot_filter <- dataframe_tot_filter %>% left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
-if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% rename(Gear = Name_En)}
+if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% dplyr::rename(Gear = Name_En)}
 
 }
 ```
@@ -338,20 +341,11 @@ final <- fonction_filtre(readRDS(paste0(as.character(params$final),"/rds.rds"))%
   }
 if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0 | nrow(final%>% dplyr::filter(unit=="Number of fish"))!=0){is_there_no <- TRUE} else{is_there_no <- FALSE}
 
-# palette3_info <- brewer.pal.info[brewer.pal.info$category == "qual", ]  
-# palette3_all <- unlist(mapply(brewer.pal, 
-#                               palette3_info$maxcolors,
-#                               rownames(palette3_info)))
-# set.seed(2643598)  
-# # palette3 <- sample(palette3_all, nrow(unique(df_i11_map$country)), replace=TRUE)
-# palette3 <- sample(palette3_all, nrow(unique(init$species)), replace=TRUE)
-# names(palette3) = init$species
-# palette3
 ```
 
 ```{r}
 differences_in_optionsinit <- readr::read_delim(paste0(params$init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct() 
-# differences_in_optionsinit <- tidyr::unite_(differences_in_optionsinit, paste0(colnames(differences_in_optionsinit), collapse="_"), colnames(differences_in_optionsinit))
+
 differences_in_optionsinit$X1 <- gsub(" ","",differences_in_optionsinit$X1)
 differences_in_optionsinit$X1 <- gsub("options_","",differences_in_optionsinit$X1) 
 differences_in_optionsinit$X2 <- gsub(" ","",differences_in_optionsinit$X2)
@@ -422,11 +416,10 @@ fonction_groupement = function(x, init, final){
 
 ```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 carte_init <- fonction_groupement(geographic_identifier,init, final)
-# gear_init <- fonction_groupement(gear,init, final)
+
 
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"& colnames(init)!= "st_area"]
-  # t <- init[0,]
   t <- carte_init[0,]
 ```
 
@@ -490,25 +483,37 @@ if (round(sum_valeur_init) == round(sum_valeur_final)&nrow(t %>%dplyr::filter(`L
   knitr::knit_exit()}
 ```
 
-# Main differences
+```{r results='asis'}
+cat("# Main differences \n ")
+cat(paste0("The number of lines goes from ", round(nb_ligne_init_millions,3), " millions in table 1 (",   titre_1,") to " , round(nb_ligne_final_millions,3), " millions in table 2 (",titre_2,"), which correspond to a difference of ", round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5),"%. \n 
 
-The number of lines goes from `r round(nb_ligne_init_millions,3)` millions in table 1 (`r titre_1`) to `r round(nb_ligne_final_millions,3)` millions in table 2 (`r titre_2`), which correspond to a difference of `r round(((nb_ligne_init_millions - nb_ligne_final_millions)/nb_ligne_init_millions)*100,5)`%.
+Table 1 has a total of ",round(somme_init_t)," in tons and of ",round(somme_init_no)," in number of fish. \n 
 
-The initial dataset has a total of `r round(somme_init_t)` in tons and of `r round(somme_init_no)` in number of fish.
+Table 2 has a total of ",round(somme_final_t)," in tons and of ",round(somme_final_no)," in number of fish. \n 
 
-The final dataset has a total of `r round(somme_final_t)` in tons and of `r round(somme_final_no)` in number of fish.
+The differences is ",loss_en_tonnes," in tons (**",loss_en_tonnes_pourcent,"%**). The differences is ",loss_en_nombre," in number of fish (**",ifelse(is.na(loss_en_nombre_pourcent), '0% (There was no data in number of fish neither in the first dataset nor in the second)',loss_en_nombre_pourcent),"%**)."))
+```
 
-The differences is `r loss_en_tonnes` in tons (**`r loss_en_tonnes_pourcent`%**). The differences is `r loss_en_nombre` in number of fish (**`r ifelse(is.na(loss_en_nombre_pourcent), "0% (There was no data in number of fish neither in the first dataset nor in the second)",loss_en_nombre_pourcent)`%**).
 
 
-```{r}
+
+
+
+```{r echo = FALSE, results='asis'}
 # qflextable2(head(strates_perdues,10))
 if (nrow(strates_perdues_first_10)!=0){
   groupe_df <- as_grouped_data(strates_perdues_first_10%>%dplyr::mutate(`Loss / Gain` = ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Captures table 1` = "value_sum_1",`Captures table 2` = "value_sum_2") %>% select(params$columns_to_keep) %>%  group_by(Dimension, unit,`Loss / Gain`) %>% arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in millions of tons/fish`)),groups = c("Dimension","unit","Loss / Gain"))
 cat("The stratas differences (completely lost or appearing) between the first one and the second one are (only first 10 per Dimension showed) :\n")
-qflextable2(groupe_df)
-cat(paste0("They represent", round(pourcentage_strates_perdues),"% of the total number of stratas."))
+print(qflextable2(groupe_df))
+cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))
 } else {towrite =("No strata is gain nor lost")}
+```
+
+
+```{r results='asis'}
+if (params$short == TRUE){knitr::knit_exit("This document only present the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter")}
+
+
 ```
 
 # Introduction to the two datasets
@@ -577,7 +582,7 @@ try(ggplot_capt_par_time("Number of fish"))}
 
 ## Spatial coverage
 
-```{r}
+```{r results='asis'}
 tmap_mode(plotting_type)
 fonction_empreinte_spatiale = function(variable_affichee){
  selection = function(x){x %>% dplyr::ungroup() %>% dplyr::select(geographic_identifier, value, cat_geo, unit)}
@@ -609,17 +614,15 @@ image
 }
 
 number_of_cat_geo <- length(unique(testcat_geo$Precision))
-cat_geo <- as.list(unique(testcat_geo$Precision))
+cat_geo <- paste(as.list(unique(testcat_geo$Precision)), collapse = " ; ")
 cat(" \n \n ")
 ```
 
 We represent spatial coverage, faceted by geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).
 
-
-
 ### Spatial coverage in tons
 
-```{r}
+```{r results='asis'}
 cat(" \n \n ")
 fonction_empreinte_spatiale("Tons")
 cat(" \n \n ")
@@ -629,7 +632,7 @@ cat(" \n \n ")
 ### Spatial coverage in number of fish
 
 
-```{r}
+```{r results='asis'}
 cat(" \n \n ")
 if(is_there_no){
 try(fonction_empreinte_spatiale("Number of fish"))}
@@ -651,7 +654,7 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
   # t <- init[0,]
 ```
 
-```{r cat}
+```{r results='asis'}
 pie_chart_2_default <- studycatchesird::pie_chart_2
 formals(pie_chart_2_default)$titre_1 <- titre_1
 formals(pie_chart_2_default)$titre_2 <- titre_2
@@ -815,7 +818,7 @@ The coverage difference is `r difference_coverage` km square.
 
 ## Loss and gain for each strata
 
-This section detail the different differences that observed between the dataframe `r titre_1` and `r titre_2`.
+This section detail the differences that observed between the dataframe `r titre_1` and `r titre_2`.
 
 ```{r}
 disappearing_strates <- t %>%dplyr::filter(value_sum_2 == 0)

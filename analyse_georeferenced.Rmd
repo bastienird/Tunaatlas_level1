@@ -156,21 +156,26 @@ colnames_to_keep <- c("fishingfleet",         "gear",                 "time_star
 
 The purpose of this markdown is to describe the nominal dataset created on the global tunaatlas.
 
-# The data
+# The data analysed
 
-The analyzed data are :
-- ***`r params$final` for the initial data***
+The analyzed data is :
+- ***`r params$final`***
 
-The filters used are:
+```{r results='asis', cache=FALSE}
+params_unlock <- params
+for (i in length(params_unlock)){names(params_unlock[i]) <- substitute(i)}
+list_param <- list(params_unlock$filter_cat_geo, params_unlock$filter_gear, params_unlock$filter_source_authority, params_unlock$filter_fishingfleet, params_unlock$filter_time_start, params_unlock$filter_time_end, params_unlock$filter_species, params_unlock$filter_catchtype)
+isNullList <- function(x) all(!lengths(x))
+if (isNullList(list_param)){cat("There are no filter on this data")} else {
 
-- on species: `r params$filter_species`
-- on gears: `r params$filter_gear`
-- on rfmos: `r params$filter_source_authority`
-- on fleets: `r params$filter_fishing_fleet`
-- on initial dates: `r params$filter_time_start`
-- on final dates: `r params$filter_time_end`
-- on geographical categories: `r params$filter_cat_geo`
-- on catch types: `r params$filter_catchtype`
+cat (paste0("The filter used on this data are:  \n "))
+  for (i in 1:length(params_unlock)){
+    if (params_unlock[i] %in% list_param & !is.null(params_unlock[[i]])){
+    cat(paste0("***- On ", names((params_unlock)[i]), " : ", paste((params_unlock)[[i]], collapse = " ; "),"*** \n "))} else {""}
+  }
+}
+
+```
 
 
 ```{r}
@@ -238,6 +243,7 @@ fonction_filtre = function(dataframe_tot_filter) {
         Name_Es = col_skip(), Name_Ar = col_skip()))
 
 dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% dplyr::rename(Gear = Name_En)}
 # dataframe_tot_filter_normal  <- anti_join(dataframe_tot_filter, irregular_iotc,by =c("geographic_identifier"= "code")) #to make the calcul faster
 # dataframe_tot_filter_iotc_shape <-dataframe_tot_filter %>% inner_join(irregular_iotc , by =c("geographic_identifier"= "code")) %>%
 #  dplyr::mutate(geographic_identifier= ifelse(!is.na(code_cwp), code_cwp, geographic_identifier)) %>% 
@@ -248,6 +254,8 @@ dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_le
 
   
 init <- fonction_filtre(readRDS(paste0(as.character(params$final), "/rds.rds")) %>% dplyr::select(all_of(colnames_to_keep)))
+
+
 
   if (is.null(params$titre_dataset_1)){
     titre_1 <- last_path_reduced(as.character(params$final))
@@ -311,7 +319,9 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
   # t <- init[0,] 
 ```
 
-## Catch evolutions
+## Temporal catches
+
+### Catch evolutions
 
 ```{r}
 captures_par_time <- testtime_start %>% mutate(Time = as.Date(time_start))%>% dplyr::rename(`Captures table 1` = "value_sum_1")%>% pivot_longer(cols = c(`Captures table 1`), names_to = "Origin", values_to ="Captures")%>%dplyr::mutate(Origin = case_when(Origin == "Captures table 1" ~ titre_1 ))
@@ -335,7 +345,7 @@ ggplot(captures_par_time) +
   facet_grid("unit", scales = "free_y")
 ```
 
-## Evolution of the cumulative catches
+### Cumulative catches evolution
 
 ```{r}
 captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>% arrange(time_start) %>% group_by(unit,Origin) %>%  mutate(`Captures cumulées` = cumsum(`Captures`)) %>% dplyr::distinct()
@@ -365,6 +375,11 @@ ggplot_capt_par_time("Number of fish")
 
 ```
 
+## Geographical catches
+
+## Other dimension repartition
+
+
 ```{r}
 # library(cowplot)
 fishing_fleet <- studycatchesird::pie_chart_2(fishingfleet, init)
@@ -372,7 +387,7 @@ source_authority <- studycatchesird::pie_chart_2(source_authority, init)
 species <- studycatchesird::pie_chart_2(species, init)
 species_group <- studycatchesird::pie_chart_2(species_group, init)
 gear <- studycatchesird::pie_chart_2(gear, init)
-Name_En <- studycatchesird::pie_chart_2(Name_En, init)
+Name_En <- studycatchesird::pie_chart_2(Gear, init)
 
 ```
 
@@ -405,8 +420,11 @@ Name_En
 # plot_grid(species, cat_geo, fishing_fleet,source_authority,species_group,  ncol = 1)
 ```
 
+# Issue with the data
 
-# How much data is mislocated on continents ?
+## Mislocation
+
+### On continents
 
 ```{r}
 
@@ -547,7 +565,7 @@ image2
 
 ```
 
-# Distribution of mislocated data 
+#### Distribution of mislocated data 
 
 ```{r}
 
@@ -603,7 +621,9 @@ perte_en_tonne <- (en_tonne_continent/ (en_tonne_continent+en_tonne_ocean))*100
 
 Removing the data placed on the continents, the losses at the end of level 0 amount to `r perte_en_nombre` % in number and `r perte_en_tonne` % in tons. 
 
-We are now interested in the mislocated data
+### In other RFMO's area
+
+We are now interested in the mislocated data in other rfmo's area.
 
 ```{r}
 
@@ -679,7 +699,7 @@ We compare the data of this conversion factors absurd, with the total data to se
 absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversion_factor>0.05 & species == "SKJ") | (conversion_factor > 0.09 & species == "ALB") |(conversion_factor>0.2 & species == "YFT") | (conversion_factor >0.5 & species =="SWO")| (conversion_factor>0.2 &species == "BET") | (species %notin% c("ALB","SKJ","SWO", "YFT", "BET")))
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 
 out <- try((rawdata <- readRDS("Markdown/mapping_codelist/rds.rds")), silent = TRUE)
@@ -712,7 +732,7 @@ strange
 # plot_grid(strange, original)
 ```
 
-# Mislocated data
+## General recap of issues
 
 ```{r}
 
@@ -796,46 +816,6 @@ mislocated_continent <- all_the_data %>% dplyr::filter(str_detect(area_competenc
 mislocated_continent_init <- rawdata %>% semi_join(mislocated_continent, by = "geographic_identifier")
 ```
 
-```{r}
-# titre_1 <- "Mislocated tons"
-# mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% dplyr::filter(unit %in%c("MTNO","MT")))
-# titre_1 <- "Original tons"
-# 
-# original <-  pie_chart_1(fishingfleet,rawdata%>% dplyr::filter(unit %in%c("MTNO","MT")))
-# 
-# plot_grid(mislocated, original)
-
-try(pie_chart_2(fishingfleet,mislocated_continent_init,rawdata))
-
-```
-
-
-
-```{r}
-# titre_1 <- "Mislocated numbers"
-# mislocated <-  pie_chart_1(fishingfleet,mislocated_continent_init %>% dplyr::filter(unit %in%c("NOMT","NO")))
-# titre_1 <- "Original numbers"
-# 
-# original <-  pie_chart_1(fishingfleet,mapped_data%>% dplyr::filter(unit %in%c("NOTM","NO")))
-# 
-# plot_grid(mislocated, original)
-try(pie_chart_2(fishingfleet,mislocated_continent_init,rawdata))
-
-```
-
-
-
-```{r}
-# titre_1 <- "Mislocated tons"
-# mislocated <-  pie_chart_1(species,mislocated_continent_init %>% dplyr::filter(unit %in%c("MTNO","MT")))
-# titre_1 <- "Original tons"
-# 
-# original <-  pie_chart_1(species,mapped_data%>% dplyr::filter(unit %in%c("MTNO","MT")))
-# 
-# plot_grid(mislocated, original)
-pie_chart_2(species,mislocated_continent_init,rawdata)
-
-```
 
 
 ```{r}
