@@ -54,6 +54,12 @@ if(!exists("parameter_fact") || is.null(parameter_fact)){parameter_fact <-  "cat
 ```
 
 
+```{r}
+if(!exists("parameter_short") || is.null(parameter_short)){parameter_short <-  TRUE}
+```
+
+
+
 ```{r eval=child, include=FALSE}
 
 parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,                
