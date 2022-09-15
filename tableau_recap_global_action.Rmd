@@ -406,8 +406,8 @@ cat(res2, sep =  "\\clearpage")
 
 
 assign("child", TRUE, envir = globalenv())
-  assign("parameter_init", sub_list_dir_2[counting], envir = globalenv())
-  assign("parameter_final", sub_list_dir_2[counting+1], envir = globalenv())
+  assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
+  assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
 
 res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 
