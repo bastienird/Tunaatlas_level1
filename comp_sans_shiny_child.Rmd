@@ -65,14 +65,14 @@ if(parameter_fact == "effort"){colnames_to_keep <- c("fishingfleet" ,
 
 ```{r eval=!child, include=FALSE}
 cat2 <- cat
-for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
+if(exists("params")){for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
 	warning = FALSE, fig.align = 'center'
 )
 title <- ""
-
+}
 ```
 
 ```{r}
@@ -476,7 +476,8 @@ cat(explenation_step$X1)
 ```
 
 
-```{r eval=(parameter_short == FALSE)}
+
+```{r}
 if (nrow(differences_between_options2) == 0){
   towrite ="There are no differences between the options to create the two datasets. They are created by the same workflow."
 } else { towrite ="The differences in options choosen between the two dataframes are : "
@@ -484,14 +485,14 @@ qflextable2(differences_between_options2, "Differences between the options of th
 ```
 
 
-```{r results='asis', eval=(parameter_short == FALSE)}
+```{r results='asis', eval=!parameter_short}
 cat(towrite)
 ```
 
 
 
   
-```{r eval=(parameter_short == FALSE), results='asis'}
+```{r eval=!parameter_short, results='asis'}
 
 cat("The options used to create the final data frame are :")
 s <-  differences_in_optionsfinal_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% dplyr::mutate(Options = gsub("_","-",Options))%>% dplyr::mutate(Options = gsub("=","=\n",Options))%>% dplyr::mutate(Value = gsub("_","-",Value))%>% dplyr::mutate(Value = gsub("=","=\n",Value))
@@ -619,7 +620,7 @@ if (nrow(strates_perdues_first_10)!=0){
 ```{r results='asis'}
 exit <- "This document only present the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter"
 if(child){exit <- ""}
-if (parameter_short == TRUE){knitr::knit_exit(exit, fully = FALSE)}
+if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
 
 
 ```
