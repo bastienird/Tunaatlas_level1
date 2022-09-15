@@ -382,8 +382,8 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 # Analyse of the final data
 
 ```{r echo=FALSE, results='asis'}
-parameter_init <- sub_list_dir_2[1]
-parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
+  assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
+  assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
 child <- TRUE
 res2 <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = globalenv(), quiet = TRUE)
 ```
