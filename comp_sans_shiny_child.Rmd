@@ -93,7 +93,7 @@ if(parameter_fact=="catch"){parameter_colnames_to_keep <-   c("fishingfleet" ,  
 \newpage
 
 ```{r results='asis'}
-if(exists("step")){  cat(paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)))}
+if(exists("step") & child){  cat(paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)))}
 ```
 
 ```{r message=FALSE}
