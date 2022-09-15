@@ -90,6 +90,10 @@ if(parameter_fact=="catch"){parameter_colnames_to_keep <-   c("fishingfleet" ,  
 ```
 
 
+```{r}
+last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
+
+```
 
 
 \newpage
