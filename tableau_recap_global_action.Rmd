@@ -454,7 +454,7 @@ function_all_comp <- function(counting){
   assign("parameter_final", sub_list_dir_2[counting+1], envir = globalenv())
   assign("parameter_short", TRUE, envir = globalenv())
   assign("child", TRUE, envir = globalenv())
-  assign("step", step+1, envir = globalenv())
+  assign("step", counting, envir = globalenv())
 
   knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 }
