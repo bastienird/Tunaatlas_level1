@@ -404,8 +404,10 @@ cat(res2, sep =  "\\clearpage")
 
 ```{r echo=FALSE, results='asis'}
 
-child <- TRUE
+
 assign("child", TRUE, envir = globalenv())
+parameter_init <- sub_list_dir_2[1]
+parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
 
 res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 
@@ -446,9 +448,9 @@ for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {
 
 ```{r}
 function_all_comp <- function(counting){
-  parameter_init <- sub_list_dir_2[counting]
-  parameter_final <- sub_list_dir_2[counting+1]
-  parameter_short <- TRUE
+  assign("parameter_init", sub_list_dir_2[counting], envir = globalenv())
+  assign("parameter_final", sub_list_dir_2[counting+1], envir = globalenv())
+  assing("parameter_short", TRUE, envir = globalenv())
   assign("child", TRUE, envir = globalenv())
   assign("step", step+1, envir = globalenv())
 
