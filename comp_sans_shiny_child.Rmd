@@ -50,7 +50,7 @@ if(!exists("child")){child = FALSE} else{child = child}
 
 
 ```{r}
-if(!exists("parameter_fact") | is.null(parameter_fact)){parameter_fact <-  "catch"}
+if(!exists("parameter_fact") || is.null(parameter_fact)){parameter_fact <-  "catch"}
 ```
 
 
