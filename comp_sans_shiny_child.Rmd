@@ -335,7 +335,7 @@ cat(knit_child_attention)
 
 
 ```{r results='asis', cache=FALSE}
-params_unlock <- params
+assign("params_unlock",params, envir = globalenv())
 for (i in length(params_unlock)){names(params_unlock[i]) <- substitute(i)}
 list_param <- list(params_unlock$filter_cat_geo, params_unlock$filter_gear, params_unlock$filter_source_authority, params_unlock$filter_fishingfleet, params_unlock$filter_time_start, params_unlock$filter_time_end, params_unlock$filter_species, params_unlock$filter_catchtype)
 isNullList <- function(x) all(!lengths(x))
