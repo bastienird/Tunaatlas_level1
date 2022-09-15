@@ -464,7 +464,7 @@ all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
 ```
 
 ```{r echo=FALSE, results='asis'}
-cat(all, sep = paste0( "\\clearpage"))
+cat(unlist(all), sep = paste0( "\\clearpage"))
 
 ```
 
