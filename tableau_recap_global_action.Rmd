@@ -380,20 +380,18 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 
 ```
 
+\clearpage
 
 # Analyse of the final data
 
 ```{r echo=FALSE, results='asis'}
   assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
   assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
+  assign("child", TRUE, envir = globalenv())
   assign("parameter_con", con, envir = globalenv())
-child <- TRUE
 res2 <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = globalenv(), quiet = TRUE)
 ```
 
-
-
- \clearpage
 
 
 ```{r echo=FALSE, results='asis'}
@@ -402,6 +400,8 @@ cat(res2, sep =  "\\clearpage")
 
 
 ```
+
+\clearpage
 
 # Summary of the treatment done on the data (comparison between the first to the last)
 
@@ -416,7 +416,7 @@ res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet
 
 ```
 
-\clearpage
+
 
 
 ```{r echo=FALSE, results='asis'}
@@ -427,6 +427,7 @@ cat(res, sep =  "\\clearpage")
 
 ```
 
+\clearpage
 
 # Analyse of all the steps of treatment of the data
 
@@ -466,6 +467,8 @@ all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
 ```
 
 ```{r echo=FALSE, results='asis'}
+
+
 cat(unlist(all), sep = paste0( "\\clearpage"))
 
 ```

@@ -1,5 +1,5 @@
 ---
-title: 'Comparison of two data sets at different levels/options of the tuna atlas'
+title: 'Analyse of a dataset at a given step of treatment in GlobalTuna Atlas'
 author: "IRD"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -40,7 +40,6 @@ if(!exists("child")){child = FALSE} else{child = child}
 
 ```{r eval=child, include=FALSE}
 
-parameter_short <- FALSE
 parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,                     
   "Captures table 1"      ,"Captures table 2"      ,                               "Loss / Gain",    
    "Difference (in %)"        ,      "Dimension"   ,       "Difference in millions of tons/fish") 
@@ -61,7 +60,7 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE, fig.align = 'center'
 )
-title <- 'Comparison of two data sets at different levels/options of the tuna atlas'
+title <- paste0('Analyse of the data : ',gsub('georef_dataset','',tail(stringr::str_split(parameter_final,'/')[[1]],n=1)))
 
 ```
 
