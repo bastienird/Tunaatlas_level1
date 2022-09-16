@@ -299,7 +299,7 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
 
      
 
-      reduced <- df %>% select(Step, `Sum in tons`, `Sum in number of fish`, `Number of lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
+      reduced <- df %>% mutate(`Sum in millions of tons` = `Sum in tons` / 1000000, `Sum in millions of fish` = `Sum in number of fish` / 1000000)%>% select(Step, `Sum in millions of tons`, `Sum in millions of fish`, `Number of lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
 
@@ -309,8 +309,8 @@ temperatureColor <- "#69b3a2"
 priceColor <- rgb(0.2, 0.6, 0.9, 1)
 
 second_graf <- ggplot(reduced,aes(x = Step,group = 1))+ 
-        geom_line( aes(y=`Sum in tons` ,group = 1), size=0.5, color=priceColor)+geom_point( aes(y=`Sum in tons` ,group = 1)) +
-        geom_line( aes(y=`Sum in number of fish`/ coeff,group = 1), size=0.5, color=temperatureColor)+geom_point( aes(y=`Sum in number of fish`/ coeff))  +
+        geom_line( aes(y=`Sum in millions of tons` ,group = 1), size=0.5, color=priceColor)+geom_point( aes(y=`Sum in millions of tons` ,group = 1)) +
+        geom_line( aes(y=`Sum in millions of fish`/ coeff,group = 1), size=0.5, color=temperatureColor)+geom_point( aes(y=`Sum in millions of fish`/ coeff))  +
         scale_y_continuous(
           
           # Features of the first axis
@@ -330,10 +330,10 @@ second_graf <- ggplot(reduced,aes(x = Step,group = 1))+
         ggtitle("Evolution of the repartition of captures depending on units and Steps")+
         theme(axis.text.x = element_text(angle = 90))
 
-no_fish_plot <- ggplot(reduced,aes(x = Step,group = 1)) +geom_line( aes(y=`Sum in number of fish`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
+no_fish_plot <- ggplot(reduced,aes(x = Step,group = 1)) +geom_line( aes(y=`Sum in millions of fish`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
       
 tons_plot <- ggplot(reduced,aes(x = Step,group = 1)) +
-geom_line( aes(y=`Sum in tons`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
+geom_line( aes(y=`Sum in millions tons`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
 ```
 
 
@@ -411,6 +411,8 @@ cat(res2, sep =  "\\clearpage")
 assign("child", TRUE, envir = globalenv())
   assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
   assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
+    assign("step_title", paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)), envir= globalenv())
+
 
 res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 
