@@ -143,7 +143,7 @@ if(!(require(readtext))){
 
 
 ```{r}
-for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
+for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]], envir = globalenv())}
   assign("params", params, envir = globalenv())
 
 ```
@@ -386,6 +386,7 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 ```{r echo=FALSE, results='asis'}
   assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
   assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
+  assign("parameter_con", con, envir = globalenv())
 child <- TRUE
 res2 <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = globalenv(), quiet = TRUE)
 ```
