@@ -35,10 +35,10 @@ function(action, entity, config){
 # wps.out: id = zip_namefile, type = text/zip, title = Outputs are 3 csv files: the dataset of georeferenced catches + a dataset of metadata (including informations on the computation, i.e. how the primary datasets were transformed by each correction) [TO DO] + a dataset providing the code lists used for each dimension (column) of the output dataset [TO DO]. All outputs and codes are compressed within a single zip file. ; 
 #packages
 if(!require(rtunaatlas)){
-  # if(!require(devtools)){
-  #   install.packages("devtools")
-  # }
-  # require(devtools)
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  require(devtools)
   install_github("eblondel/rtunaatlas")
   require(rtunaatlas)
 }
@@ -90,9 +90,12 @@ if(!require(DBI)){
     require(googledrive)
   }
   
+
   counting <- 1
 # source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny_child.Rmd")
 # step_for_rmd <- 1
+  
+  
   
 create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con, data_to_comp = NULL, fact = "catch"){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
@@ -275,10 +278,7 @@ fonction_dossier("rawdata",
                  are binded.",
                  "get_rfmos_datasets_level0"  , list(options_include_IOTC,options_include_ICCAT,
                                                   options_include_IATTC,options_include_WCPFC,
-                                                  options_include_CCSBT, options_iattc_ps_catch_billfish_shark_raise_to_effort,
-                                                  options_iattc_ps_raise_flags_to_schooltype,
-                                                  options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
-                                                  options_iccat_ps_include_type_of_school))
+                                                  options_include_CCSBT))
 saveRDS(georef_dataset, "data/rawdata.rds")
 create_latex("Analyse_georeferenced_child.Rmd", unique = TRUE)
 
@@ -344,7 +344,7 @@ if (opts$iccat_ps_include_type_of_school){
 
   strata_in_withoutschooltype_and_not_in_withshooltype <- dplyr::anti_join (iccat_data, iccat_ce_WithSchooltypeInfo, by=setdiff(columns_to_keep,c("value","schooltype")))
   strata_in_withoutschooltype_and_not_in_withshooltype <- strata_in_withoutschooltype_and_not_in_withshooltype[, columns_to_keep]
-  
+
   # Join datasets: Dataset with the type of school + dataset without the type of school from which we have removed the strata that are also available in the dataset with the type of school.
   iccat_data <- rbind(strata_in_withoutschooltype_and_not_in_withshooltype, iccat_ce_WithSchooltypeInfo)
   georef_dataset <- georef_dataset[, columns_to_keep]
@@ -639,10 +639,10 @@ formals(create_latex)$data_to_comp  <- "mapping_codelist"
 
            if(!exists("options_strata_overlap_iattc_wcpfc")){options_strata_overlap_iattc_wcpfc <- c("geographic_identifier",    "species", "time_start", "time_end",
                                                                                                         "unit")}else {options_strata_overlap_iattc_wcpfc<-unlist(strsplit(opts$strata_overlap_sbf
-                                                                                                                                                                          
+
                                                                                                                                                                           , split=","))}
            config$logger.info(paste0(options_strata_overlap_iattc_wcpfc))
-           
+
            georef_dataset <- function_overlapped(dataset = georef_dataset , con =con , rfmo_to_keep = overlapping_zone_iattc_wcpfc_data_to_keep,
                                                  rfmo_not_to_keep = (if (overlapping_zone_iattc_wcpfc_data_to_keep == "IATTC"){"WCPFC"} else {"IATTC"}),
                                                  strata = options_strata_overlap_iattc_wcpfc)
@@ -674,7 +674,9 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
   fonction_dossier("overlap_iotc_wcpfc",
                    georef_dataset,
-                   "In this step, the georeferenced data present on the overlapping zone between IOTC and WCPFC is handled. The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
+                   paste0("In this step, the georeferenced data present on the overlapping zone between IOTC and WCPFC is handled.
+                   The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both. 
+                   In the case the data is identical on the stratas privided, the remaining data is from ",options_overlapping_zone_iotc_wcpfc_data_to_keep) ,
                    "function_overlapped",
                    list(options_include_WCPFC,
                      options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep, options_strata_overlap_iotc_wcpfc))
@@ -707,7 +709,9 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
            fonction_dossier("overlap_ccsbt_wcpfc",
                             georef_dataset,
-                            "In this step, the georeferenced data present on the overlapping zone between CCSBT and WCPFC is handled. The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
+                            paste0("In this step, the georeferenced data present on the overlapping zone between CCSBT and WCPFC is handled.
+                            The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
+"In the case the data is identical on the stratas privided, the remaining data is from ",options_overlapping_zone_wcpfc_ccsbt_data_to_keep),                                
                             "function_overlapped",
                             list( options_include_CCSBT  ,
                                options_include_WCPFC ,
@@ -737,7 +741,10 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
            fonction_dossier("overlap_iccat_ccsbt",
                             georef_dataset,
-                            "In this step, the georeferenced data present on the overlapping zone between ICCAT and CCSBT is handled. The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
+                            paste0("In this step, the georeferenced data present on the overlapping zone between ICCAT and CCSBT is handled. 
+                            The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
+                                   "In the case the data is identical on the stratas privided, the remaining data is from ",options_overlapping_zone_iccat_ccsbt_data_to_keep),                                
+                            
                             "function_overlapped",
                             list(options_include_CCSBT,
                               options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
@@ -766,7 +773,10 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
 
            fonction_dossier("overlap_other_rfmos_ccsbt",
                             georef_dataset,
-                            "In this step, the georeferenced data present on the overlapping zone between IOTC and CCSBT is handled. The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
+                            paste0("In this step, the georeferenced data present on the overlapping zone between IOTC and CCSBT is handled.
+                            The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
+                                   "In the case the data is identical on the stratas privided, the remaining data is from ",options_overlapping_zone_iccat_ccsbt_data_to_keep),                                
+                            
                             "function_overlapped",
                             list( options_include_CCSBT  ,
                                options_include_IOTC ,options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_overlapping_zone_iccat_ccsbt_data_to_keep,options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
@@ -830,7 +840,7 @@ if (!is.null(opts$curation_absurd_converted_data)){
   strata_mtno <- georef_dataset %>% filter(unit%in%c("MTNO"))
   strata_converted_level0 <-  rbind(strata_nomt, strata_mtno) %>% ungroup() %>% dplyr::select(-c(value)) %>% dplyr::distinct()
   conversion_factor_level0 <- rbind(dplyr::inner_join(strata_nomt , strata_mtno, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% dplyr::rename(NO =value.x, MT = value.y) %>%
-                                      dplyr::group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet) %>% 
+                                      dplyr::group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet) %>%
                                       dplyr::summarise(NO = sum(NO), MT = sum(MT)) %>% ungroup()#%>% dplyr::select(-c(unit.y, unit.x))
                                     , dplyr::inner_join(strata_mtno , strata_nomt, by = setdiff(colnames(strata_mtno), c("value", "unit") )) %>% dplyr::rename(MT =value.x, NO = value.y)%>%
                                       dplyr::group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet)%>%
@@ -844,7 +854,7 @@ if (!is.null(opts$curation_absurd_converted_data)){
   georef_dataset <- rbind(georef_dataset_without_nomt, conversion_factor_to_keep %>% mutate(unit = "NOMT") %>% rename(value = NO) %>% select(colnames(georef_dataset_without_nomt)))
   fonction_dossier("Removing_absurd_nomt",
                    georef_dataset,
-                   "In this step, we target implausible data. We check data having declaration both in NOMT and MTNO and if the conversion factor is implausible. 
+                   "In this step, we target implausible data. We check data having declaration both in NOMT and MTNO and if the conversion factor is implausible.
                    We either remove NOMT strata which corresponds to MTNO declaration implausible or me remove the corresponding MTNO data",
                    "function_spatial_curation_data_mislocated",
                    list(curation_absurd_converted_data))
@@ -1490,7 +1500,7 @@ fonction_dossier("Level2_RF3without_gears",
 
          dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
          dataset<-data.frame(dataset)
-         
+
          #----------------------------------------------------------------------------------------------------------------------------
          #@eblondel additional formatting for next time support
          dataset$time_start <- as.Date(dataset$time_start)
@@ -1515,18 +1525,18 @@ fonction_dossier("Level2_RF3without_gears",
              df_codelists <- read.csv(cl_relations[[1]]$link)
            }
          }
-         
-         
+
+
          #@geoflow -> output structure as initially used by https://raw.githubusercontent.com/ptaconet/rtunaatlas_scripts/master/workflow_etl/scripts/generate_dataset.R
          dataset <- list(
-           dataset = dataset, 
+           dataset = dataset,
            additional_metadata = NULL, #nothing here
            codelists = df_codelists #in case the entity was provided with a link to codelists
          )
-         
-         
+
+
          if (fact=="effort" & DATA_LEVEL %in% c("1", "2")){
-           # Levels 1 and 2 of non-global datasets should be expressed with tRFMOs code lists. However, for the effort unit code list and in those cases, we take the tuna atlas effort unit codes although this is not perfect. but going back to tRFMOs codes is too complicated 
+           # Levels 1 and 2 of non-global datasets should be expressed with tRFMOs code lists. However, for the effort unit code list and in those cases, we take the tuna atlas effort unit codes although this is not perfect. but going back to tRFMOs codes is too complicated
            df_codelists$code_list_identifier[which(df_codelists$dimension=="unit")]<-"effortunit_rfmos"
          }
          # ltx_combine(combine = wd, out = "alltex.tex", clean = 0)
@@ -1534,12 +1544,15 @@ fonction_dossier("Level2_RF3without_gears",
 
          #@geoflow -> export as csv
          output_name_dataset <- file.path("data", paste0(entity$identifiers[["id"]], "_harmonized.csv"))
-         write.csv(dataset$dataset, output_name_dataset, row.names = FALSE)
+         write.csv(head(dataset$dataset), output_name_dataset, row.names = FALSE)
          output_name_codelists <- file.path("data", paste0(entity$identifiers[["id"]], "_codelists.csv"))
          write.csv(dataset$codelists, output_name_codelists, row.names = FALSE)
-         #----------------------------------------------------------------------------------------------------------------------------  
-         entity$addResource("harmonized", output_name_dataset)
+# ---------------------------------------------------------------------------------------------------------------------------
+           
+        entity$addResource("harmonized", output_name_dataset)
+
          entity$addResource("codelists", output_name_codelists)
+
          entity$addResource("geom_table", opts$geom_table)
          #### END
          config$logger.info("-----------------------------------------------------------------------------------------------------")
