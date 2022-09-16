@@ -49,6 +49,8 @@ if(!exists("child")){child = FALSE} else{child = child}
 ```
 
 
+
+
 ```{r}
 if(!exists("parameter_fact") || is.null(parameter_fact)){parameter_fact <-  "catch"}
 ```
@@ -67,7 +69,7 @@ parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,
    "Difference (in %)"        ,      "Dimension"   ,       "Difference in millions of tons/fish")
 if(!exists("child_header")){child_header = "##"}
 cat2 <- function(x){cat(paste0(child_header, x, " \n"))}
-if(child){title <- paste0('Comparison between', gsub('georef_dataset','',tail(stringr::str_split(parameter_init,'/')[[1]],n=1)), ' and ', gsub('georef_dataset','',tail(stringr::str_split(parameter_final,'/')[[1]],n=1)))}
+if(child){title <- step_title}
 if(parameter_fact == "effort"){colnames_to_keep <- c("fishingfleet" ,  
   "unit" ,                  "value" ,                 "source_authority")}
 
@@ -86,6 +88,11 @@ knitr::opts_chunk$set(
 title <- ""
 }
 ```
+
+```{r results='asis'}
+cat2(title)
+```
+
 
 ```{r}
 if(parameter_fact=="catch"){parameter_colnames_to_keep <-   c("fishingfleet" ,           "species" ,                  
