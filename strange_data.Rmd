@@ -53,53 +53,53 @@ absurd = function(x){x %>% select(-value_sum_1) %>% filter(value_sum1 > 1.1 * se
 absurd_cart <- absurd(carte_init)
 ```
 
-<!-- Analyse for years/species :  -->
+Analyse for years/species :
 
 
 
-<!-- ```{r} -->
-<!-- year_init <- mapped_data%>% mutate(unit = case_when(unit == "NOMT"~ "NO", unit == "MTNO"~"MT", TRUE ~ unit))%>% group_by(time_start, species,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1)) -->
+```{r}
+year_init <- mapped_data%>% mutate(unit = case_when(unit == "NOMT"~ "NO", unit == "MTNO"~"MT", TRUE ~ unit))%>% group_by(time_start, species,unit) %>% summarise(value_sum_1 = sum(value, na.rm=TRUE), number_lines1 = n()) %>%mutate(value_sum1 = ifelse(is.na(value_sum_1), 0, value_sum_1))
 
-<!--   second_highest_value <- year_init %>% group_by(unit) %>%   arrange(desc(value_sum1)) %>%  -->
-<!--   slice(seq_len(2)) %>% arrange(value_sum1) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value_sum1) -->
-<!--   year_init_2 <- year_init%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value_sum1)) -->
+  second_highest_value <- year_init %>% group_by(unit) %>%   arrange(desc(value_sum1)) %>%
+  slice(seq_len(2)) %>% arrange(value_sum1) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value_sum1)
+  year_init_2 <- year_init%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value_sum1))
 
-<!-- absurd_year <- year_init_2 %>% select(-value_sum_1) %>% filter(value_sum1 > 1.1 * second_highest_value & value_sum1 > 2*mean) -->
-<!-- ``` -->
+absurd_year <- year_init_2 %>% select(-value_sum_1) %>% filter(value_sum1 > 1.1 * second_highest_value & value_sum1 > 2*mean)
+```
 
-<!-- Maybe absurd it is just because it is declared this time in number and it used to be in tons. -->
+Maybe absurd it is just because it is declared this time in number and it used to be in tons.
 
-<!-- Let's check the catches of FRI in 1990. -->
+Let's check the catches of FRI in 1990.
 
-<!-- ```{r} -->
-<!-- FRI_catches <- mapped_data %>% filter(species == "FRI") -->
+```{r}
+FRI_catches <- mapped_data %>% filter(species == "FRI")
 
-<!-- FRI_catches_by_year <- FRI_catches %>% group_by(time_start, unit) %>% summarise(value = sum(value)) -->
-<!-- ``` -->
-
-
-<!-- # Years with catches superior than 2 times the mean and 10 percent of the second highest. -->
-
-<!-- ```{r} -->
-<!-- qflextable(absurd_year) -->
-<!-- ``` -->
-
-<!-- For this year, we check in details the data.  -->
-
-<!-- ```{r} -->
-<!-- absurd_year_init <- semi_join(mapped_data, absurd_year, by = c("unit", "time_start")) -->
-
-<!-- second_highest_value <- absurd_year_init %>% group_by(unit, time_start) %>%   arrange(desc(value)) %>%  -->
-<!--   slice(seq_len(2)) %>% arrange(value) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value) -->
-<!-- absurd_year_init <- absurd_year_init%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value)) -->
-
-<!-- absurd_year_init_absurd <- absurd_year_init %>% filter(value > 1.1 * second_highest_value & value > 2*mean) -->
-<!-- ``` -->
+FRI_catches_by_year <- FRI_catches %>% group_by(time_start, unit) %>% summarise(value = sum(value))
+```
 
 
-<!-- ```{r} -->
-<!-- qflextable(absurd_year_init_absurd) -->
-<!-- ``` -->
+# Years with catches superior than 2 times the mean and 10 percent of the second highest.
+
+```{r}
+qflextable(absurd_year)
+```
+
+For this year, we check in details the data.
+
+```{r}
+absurd_year_init <- semi_join(mapped_data, absurd_year, by = c("unit", "time_start"))
+
+second_highest_value <- absurd_year_init %>% group_by(unit, time_start) %>%   arrange(desc(value)) %>%
+  slice(seq_len(2)) %>% arrange(value) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value)
+absurd_year_init <- absurd_year_init%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value))
+
+absurd_year_init_absurd <- absurd_year_init %>% filter(value > 1.1 * second_highest_value & value > 2*mean)
+```
+
+
+```{r}
+qflextable(absurd_year_init_absurd)
+```
 
 # Areas with catches superior than 2 times the mean and 10 percent of the second highest.
 

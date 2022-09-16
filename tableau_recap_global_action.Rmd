@@ -142,7 +142,7 @@ if(!(require(readtext))){
 ```
 
 
-```{r}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]], envir = globalenv())}
   try(assign("params", params, envir = globalenv()))
 

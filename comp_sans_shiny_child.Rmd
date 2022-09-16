@@ -131,8 +131,11 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
 
 ```
 
+```{r}
+if(!child){cat("\\newpage")}
+```
 
-\newpage
+
 
 
 <!-- ```{r results='asis'} -->
