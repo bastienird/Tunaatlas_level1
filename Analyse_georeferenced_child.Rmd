@@ -3,10 +3,11 @@ title: 'Analyse of a dataset at a given step of treatment in GlobalTuna Atlas'
 author: "IRD"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  bookdown::html_document2:
+  bookdown::pdf_document2:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
-  bookdown::pdf_document2:
+    extra_dependencies: "subfig"
+  bookdown::html_document2:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
 params: 
@@ -23,8 +24,8 @@ params:
   filter_species_group: !r NULL
   titre_dataset_1: !r NULL
   titre_dataset_2: !r NULL
-  dbname: "tunaatlas"
-  host: "db-tunaatlas.d4science.org"
+  dbname: "tunaatlas_sandbox2"
+  host: "localhost"
   port: 5432
   user: "tunaatlas_u"
   password: "21c0551e7ed2911"
@@ -146,13 +147,13 @@ if(!(require(RColorBrewer))){
 if(!(require(cowplot))){ 
   install.packages(cowplot) 
   (require(cowplot))} 
-if(!require(sutdycatchesird)){
+if(!require(studycatchesird)){
   if(!require(remotes)){
     install.packages("remotes")
   }
   require(remotes)
   install_github("BastienIRD/sutdycatchesird")
-  require(sutdycatchesird)
+  require(studycatchesird)
 }
 if(!(require(tmap))){ 
   install.packages(tmap) 
@@ -452,14 +453,8 @@ sum_valeur_init <- sum(init$value, na.rm = TRUE)/10^6
 ```
 
 ```{r results='asis'}
-cat2("## Temporal catches")
+cat2(paste0("## Temporal coverage of : ", parameter_fact))
 ```
-
-
-```{r results='asis'}
-cat2("### Catch evolutions")
-```
-
 
 
 ```{r}
@@ -498,9 +493,9 @@ captures_par_time <- captures_par_time %>% mutate(Time = as.Date(time_start))%>%
 
 
 ```{r}
-ggplot_capt_par_time = function(x){
+ggplot_capt_par_time = function(x, legend = TRUE){
   
-  ggplot(captures_par_time %>%dplyr::filter(unit==x)) +
+  ggplot_capt_time <- ggplot(captures_par_time %>%dplyr::filter(unit==x)) +
     aes(
       x = Time,
       y = `Captures cumulées`,
@@ -511,16 +506,12 @@ ggplot_capt_par_time = function(x){
     theme_minimal() +
     facet_wrap(vars(unit)) +
     labs(x = "Time", y = "Cumulated captures")+guides(fill=guide_legend(title="Dataset"))
+  if (!legend){ggplot_capt_time <- ggplot_capt_time+
+  theme(legend.position="none")} else{
+    ggplot_capt_time <- ggplot_capt_time
+  }
+  return(ggplot_capt_time)
 }
-```
-
-
-```{r, fig.cap=paste0("Cumulated catch evolution in tons for ", `titre_1`, "dataset ") }
-
-
-ggplot_capt_par_time("Tons")
-
-
 ```
 
 ```{r}
@@ -528,16 +519,28 @@ if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0){is_there_no <- TRUE}
 ```
 
 
-```{r , eval=is_there_no,  fig.cap=paste0("Cumulated catch evolution in number of fish for ", titre_1," dataset") }
+```{r, eval=!is_there_no, fig.cap=paste0("Cumulated catch evolution in tons ", `titre_1`, "dataset ") }
 
 
-ggplot_capt_par_time("Number of fish")
+ggplot_capt_par_time("Tons")
+
+
+```
+
+
+
+```{r echo=F, eval = is_there_no,  out.width = "50%",fig.show='hold',fig.cap="Cumulated catch evolution in tons and number of fish"}
+
+par(mfrow=c(1,2))
+ggplot_capt_par_time("Number of fish", legend = FALSE)
+ggplot_capt_par_time("Tons", legend = FALSE)
+
 
 
 ```
 
 ```{r results='asis'}
-cat2("## Geographical catches")
+cat2(paste0("## Geographical coverage of : ", parameter_fact))
 ```
 
 ```{r results='asis', eval=FALSE}
@@ -560,7 +563,9 @@ for (i in 1:length(pie_charts_multiple)){
 ```{r}
 
 if ("Gear"%in% colnames(init) & "Gear"%in% colnames(init) ){
-  list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group","Gear")} else {list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "species", "species_group", "Name_En")}
+  list_pie_chart <- list("fishingfleet","cat_geo", "source_authority","Gear" #,"species", "species_group"
+  )} else {list_pie_chart <- list("fishingfleet","cat_geo", "source_authority", "Name_En"# ,"species", "species_group"
+                                                         )}
 ```
 
 
@@ -593,6 +598,26 @@ resume_knit_child = function(dimension, first, second = NULL, titre_1, titre_2){
 ```{r}
 formals(resume_knit_child)$first <- init
 formals(resume_knit_child)$titre_1 <- titre_1
+```
+
+```{r results='asis'}
+
+cat2(paste0("## Taxonomic coverage of : " ,parameter_fact))
+
+t <- resume_knit_child(list("species_group", "species"))
+
+```
+
+```{r results='asis'}
+
+cat(unlist(t), sep ="\\clearpage")
+
+```
+
+```{r fig.cap="Repartition of the taxonomic coverage", out.width = "50%",fig.show='hold'  }
+par(mfrow=c(1,2))
+studycatchesird::pie_chart_2(species, init, titre_1 = "", title_yes_no = FALSE)
+studycatchesird::pie_chart_2(species_group, init, titre_1 = "", title_yes_no = FALSE)
 ```
 
 
@@ -917,7 +942,7 @@ conversion_factor_level0 <- rbind(dplyr::inner_join(strata_nomt , strata_mtno, b
 
 
 ```{r results='asis'}
-cat2("# Absurd conversion factors")
+cat2("## Absurd conversion factors")
 ```
 
 We analyse here the data with conversion factors "absurd", meaning being superior to the maximum catch for the fish of the same species.

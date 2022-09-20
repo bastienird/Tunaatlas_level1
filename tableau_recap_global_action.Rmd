@@ -7,6 +7,7 @@ output:
     toc_depth: 3
     number_sections: true
     always_allow_html: true
+    extra_dependencies: "subfig"
     fig_caption: true
     tab_caption: true
     lof: true
@@ -223,15 +224,13 @@ if(dir.exists("Markdown")){
   
 ```
 
-First we present the different steps created while processing the data. 
+First we present the data created by the GlobalTuna Atlas, as well as the comparison between this data and the rawdata provided by the RFMO's before the global Tuna Atlas treatment.
 
-Secondly we will present the differences between the first dataset (only groupping data) and the last one, after all the processes. 
+In a second time we will present the process of the GlobalTuna Atlas in order to reference exactly the choices made.
 
-Thirdly, we will analyse further the final data, checking the eventual mistakes.
+\clearpage
 
-Last we will present the differences between the created dataset and the one we provide in the Global Tuna Atlas. 
-
-# Analyse of the processing of the data
+# Summary of the entity : `r entity$identifiers[["id"]]` 
 
 ```{r include=FALSE}
 sub_list_dir_2 <- list.dirs(path =paste0(getwd(),"/Markdown"), full.names = TRUE, recursive = FALSE)
@@ -242,16 +241,77 @@ sub_list_dir_2 = rownames(details)
 ```
 
 
+```{r echo=FALSE, results='asis'}
+assign("titre_1", entity$identifiers[["id"]], envir = globalenv())
+
+  assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
+  assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
+  assign("child", TRUE, envir = globalenv())
+  assign("parameter_con", con, envir = globalenv())
+try(res2 <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = globalenv(), quiet = TRUE))
+```
+
+
+
+```{r echo=FALSE, results='asis'}
+
+try(cat(res2, sep =  "\\clearpage"))
+
+
+```
+
+\clearpage
+
+# Summary of the treatment done on the data (comparison between the first to the last)
+
+
+
+```{r echo=FALSE, results='asis'}
+assign("parameter_mapped", TRUE, envir = globalenv())
+
+assign("child", TRUE, envir = globalenv())
+  assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
+  assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
+    assign("step_title", "", envir= globalenv())
+    assign("child_header", "#", envir= globalenv())
+  
+
+try(res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE))
+
+```
+
+
+
+
+```{r echo=FALSE, results='asis'}
+
+
+
+try(cat(res, sep =  "\\clearpage"))
+
+```
+
+
+
+
+
+\clearpage
+
+# Analyse of the processing of the data
+
+
+
 ```{r include=FALSE}
 df <- data.frame(matrix(ncol =12, nrow = 1))
       colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir_2),"/")[[1]],n=1)),
-                        "Explanation", "Fonctions", 
+                        "Explenation", "Fonctions", 
                         "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
       )
       if((!is.null(opts))){ #have not change for species$filter
         tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
         lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
-        nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
+        nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])
+        } else{
           main <- readRDS(paste0(sub_list_dir_2[1],"/rds.rds")) %>% dplyr::filter(species%in%opts$species_filter)
           tons_init <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT")))$value)
           nofish_init <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO")))$value)
@@ -259,7 +319,7 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         }
       for (i in sub_list_dir_2){
         sums <- read.csv(paste0(i,"/sums.csv"))
-        Explanation <- readtext(paste0(i,"/explication.txt"))[2]
+        Explenation <- readtext(paste0(i,"/explication.txt"))[2]
         Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
@@ -281,7 +341,7 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         percentage_of_nominal <- (sum_t*100)/nominal
         sums <- as.data.frame(data.frame(sum_t, sum_no, nrow))
         data_i <- cbind(step,
-                        Explanation, Fonctions, 
+                        Explenation, Fonctions, 
                         Options,
                         sums, loss_percent,loss_tons,loss_percent_no, loss_percent_lines, percentage_of_nominal)
         names(data_i) <- colnames(df)
@@ -291,15 +351,16 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         lines_init <- nrow
         
       }
-      df = df[-1,]
-      df[df == -Inf] <- 0
-      df <- df %>%  rename(Step = rawdata)
+      df2 = df[-1,]
+      df2[df2 == -Inf] <- 0
+      colnames(df2)[1] <- "Step"
+      # df <- df %>%  rename(Step = rawdata)
 
 
 
      
 
-      reduced <- df %>% mutate(`Sum in millions of tons` = `Sum in tons` / 1000000, `Sum in millions of fish` = `Sum in number of fish` / 1000000)%>% select(Step, `Sum in millions of tons`, `Sum in millions of fish`, `Number of lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
+      reduced <- df2 %>% mutate(`Sum in millions of tons` = `Sum in tons` / 1000000, `Sum in millions of fish` = `Sum in number of fish` / 1000000)%>% select(Step, `Sum in millions of tons`, `Sum in millions of fish`, `Number of lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
 
@@ -342,11 +403,6 @@ qflextable2(reduced, colour = FALSE, captionn ="Evolution of Sum in tons and Sum
 ```
 
 
-```{r echo=FALSE, results='asis'}
-
-qflextable2(df %>% select(-c("Sum in tons", "Sum in number of fish", "Number of lines", "Difference in tons","Options")), colour = TRUE, captionn ="Review of all the impact and purpose of every the treatment done")
-
-```
 
 
 
@@ -366,8 +422,8 @@ cowplot::plot_grid(tons_plot, no_fish_plot)
 
 
 ```{r eval=FALSE, include=FALSE, results='asis'}
-res3 <- knitr::knit_child("tableau_recap_entity_child.Rmd", envir = globalenv(), quiet = TRUE)
-cat(res3, sep =  "\\clearpage")
+try(res3 <- knitr::knit_child("tableau_recap_entity_child.Rmd", envir = globalenv(), quiet = TRUE))
+try(cat(res3, sep =  "\\clearpage"))
 
 ```
 
@@ -380,64 +436,10 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 
 ```
 
-\clearpage
 
-# Analyse of the final data
-
-```{r echo=FALSE, results='asis'}
-  assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
-  assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
-  assign("child", TRUE, envir = globalenv())
-  assign("parameter_con", con, envir = globalenv())
-res2 <- knitr::knit_child("Analyse_georeferenced_child.Rmd", envir = globalenv(), quiet = TRUE)
-```
-
-
-
-```{r echo=FALSE, results='asis'}
-
-cat(res2, sep =  "\\clearpage")
-
-
-```
-
-\clearpage
-
-# Summary of the treatment done on the data (comparison between the first to the last)
-
-```{r echo=FALSE, results='asis'}
-
-
-assign("child", TRUE, envir = globalenv())
-  assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
-  assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
-    assign("step_title", paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)), envir= globalenv())
-
-
-res <- knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
-
-```
-
-
-
-
-```{r echo=FALSE, results='asis'}
-
-
-
-cat(res, sep =  "\\clearpage")
-
-```
-
-\clearpage
-
-# Analyse of all the steps of treatment of the data
+# Detail of all the steps of treatment of the data
 
 For each treatment on the data, we provide a report on what exactly has been created, disappeared or has been transformed.
-
-```{r echo=FALSE, results='asis'}
-cat("## Step 1")
-```
 
 ```{r eval  =FALSE}
 for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {  
@@ -459,25 +461,27 @@ function_all_comp <- function(counting){
   assign("parameter_short", TRUE, envir = globalenv())
   assign("child", TRUE, envir = globalenv())
   assign("step", counting, envir = globalenv())
-  assign("step_title", paste0("## Step ", step, " from ", last_path(parameter_init), " to ", last_path(parameter_final)), envir= globalenv())
+  assign("child_header", "#", envir= globalenv())
+  assign("step_title", paste0("## Treatment : " ,last_path(parameter_final)), envir= globalenv())
 
   knitr::knit_child("comp_sans_shiny_child.Rmd", envir = globalenv(), quiet = TRUE)
 }
 
-all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
+try(all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp))
 
 ```
 
 ```{r echo=FALSE, results='asis'}
 
 
-cat(unlist(all), sep = paste0( "\\clearpage"))
+try(cat(unlist(all), sep = paste0( "\\clearpage")))
 
 ```
 
 
 ```{r echo = FALSE, results='asis', eval=FALSE}
 step <- 1
+assign("parameter_mapped", FALSE, envir = globalenv())
 for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {  
   parameter_init <- sub_list_dir_2[counteur_child_tableau_recap]
   parameter_final <- sub_list_dir_2[counteur_child_tableau_recap+1]
@@ -490,3 +494,31 @@ for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {
 
 
 ```
+
+\clearpage
+
+# Annexe
+
+```{r echo=FALSE, results='asis'}
+colnames(df2)[1] <-  "Treatment"
+qflextable2(df2 %>% select(c("Treatment", "Explenation", "Function"= "Fonctions")), colour = FALSE, captionn ="Review of all the impact and purpose of every the treatment done")
+
+```
+
+
+```{r}
+df_mapping_final_this_dimension <- read_csv("data/mapping_codelist_summary.csv")
+t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%group_by(across(everything())) %>%  mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% ungroup() %>% mutate(src_code = as.character(src_code)) %>% ungroup() %>%  group_by(source_authority) %>%  mutate(row = row_number()) %>% filter(src_code != trg_code)
+
+i <-pivot_wider(t %>% group_by(source_authority) , names_from = source_authority, names_prefix = "Ancient name for ", values_from = "src_code")  %>% rename("New code" = trg_code) %>% rename(Dimension = src_codingsystem)%>%
+    relocate(Dimension) %>% select(-row)
+ster <- i %>% group_by(Dimension, `New code`) %>% summarise_at(vars(-group_cols()),funs(toString)) %>% mutate_all(.funs = function(x){gsub(",$", "",gsub(c("NA", ",NA", " NA"), "", gsub("  ","",gsub("NA,", "", x))))})
+
+
+t <- flextable::as_grouped_data(ster, groups = c("Dimension"))
+```
+
+```{r}
+qflextable2(t, caption = "Replacement code during the mapping codelist treatment")
+```
+
