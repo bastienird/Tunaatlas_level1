@@ -1,6 +1,6 @@
 load_dataset <- function(action,entity, config, options){
+
   opts <- action$options
-  
   if(!require(rtunaatlas)){
     remotes::install_github("eblondel/rtunaatlas")
     require(rtunaatlas)
@@ -14,10 +14,6 @@ load_dataset <- function(action,entity, config, options){
   if(!require(googledrive)){
     install.packages("googledrive")
     require(googledrive)
-  }
-  if(!require(RPostgreSQL)){
-    install.packages("RPostgreSQL")
-    require(RPostgreSQL)
   }
   
   #control to check that everything is ok on mappings side, if not we stop the workflow until mappings are fixed/updated
