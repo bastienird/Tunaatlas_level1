@@ -1544,7 +1544,7 @@ fonction_dossier("Level2_RF3without_gears",
 
          #@geoflow -> export as csv
          output_name_dataset <- file.path("data", paste0(entity$identifiers[["id"]], "_harmonized.csv"))
-         write.csv(head(dataset$dataset), output_name_dataset, row.names = FALSE)
+         write.csv(dataset$dataset, output_name_dataset, row.names = FALSE)
          output_name_codelists <- file.path("data", paste0(entity$identifiers[["id"]], "_codelists.csv"))
          write.csv(dataset$codelists, output_name_codelists, row.names = FALSE)
 # ---------------------------------------------------------------------------------------------------------------------------
