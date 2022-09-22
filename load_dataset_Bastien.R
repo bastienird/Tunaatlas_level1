@@ -1,6 +1,6 @@
 load_dataset <- function(action,entity, config, options){
-  opts <- action$options
   
+  opts <- action$options
   if(!require(rtunaatlas)){
     remotes::install_github("eblondel/rtunaatlas")
     require(rtunaatlas)
@@ -14,10 +14,6 @@ load_dataset <- function(action,entity, config, options){
   if(!require(googledrive)){
     install.packages("googledrive")
     require(googledrive)
-  }
-  if(!require(RPostgreSQL)){
-    install.packages("RPostgreSQL")
-    require(RPostgreSQL)
   }
   
   #control to check that everything is ok on mappings side, if not we stop the workflow until mappings are fixed/updated
@@ -374,7 +370,7 @@ load_dataset <- function(action,entity, config, options){
     # }
     
     # sql_query_dataset_extraction
-    # sql_query_dataset_extraction<-getSQLSardaraQueries(con,InputMetadataset)
+    sql_query_dataset_extraction<-getSQLSardaraQueries(con,InputMetadataset)
     config$logger.info(sprintf("Update metadata sql_query_dataset_extraction' field for '%s'",dataset_pid))
     dataset_update_meta_sql <- paste0("UPDATE metadata.metadata SET sql_query_dataset_extraction='",gsub("'","''",sql_query_dataset_extraction$query_CSV_with_labels),"' WHERE identifier='",InputMetadataset$identifier,"'")
     config$logger.info(sprintf("SQL: %s", dataset_update_meta_sql))
