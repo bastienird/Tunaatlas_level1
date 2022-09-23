@@ -37,9 +37,9 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "db-tunaatlas.d4science.org",
+			"host": "localhost",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox"
+			"dbname": "tunaatlas_sandbox2"
 		},
 		"properties" : {}
 	},
@@ -49,7 +49,7 @@
 		"software_type": "googledrive",
 		"parameters": {
 			"email": "firmstunaatlas@gmail.com",
-			"token": "4/1AdQt8qiu3y27tPruKSFahRKj6TBuQZJ85qzqXr11COGDmg4ZZzwuPEgYJS4"
+			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
 		},
 		"properties" : {}
 	}
@@ -63,7 +63,7 @@
 			"upload_to_db": true,
 			"create_materialized_view": true,
 			"add_sql_comments": true,
-			"upload_to_googledrive": false
+			"upload_to_googledrive": true
 		}
 	}
   

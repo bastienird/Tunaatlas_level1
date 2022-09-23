@@ -10,7 +10,7 @@ output:
     number_sections: true
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
-  final: "~/Documents/Tunaatlas_level1/jobs/20220723181100/entities/global_catch_1deg_1m_ps_bb_firms_Bastien_filtering_wcpfc_at_the_end_level0/Markdown/raising"
+  final: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/Level2_RF1"
   rawdata: "data/rawdata"
   dbname: "tunaatlas"
   host: "db-tunaatlas.d4science.org"

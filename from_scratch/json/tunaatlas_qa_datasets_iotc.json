@@ -37,9 +37,9 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "db-tunaatlas.d4science.org",
+			"host": "localhost",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox"
+			"dbname": "tunaatlas_sandbox2"
 		},
 		"properties" : {}
 	},
@@ -48,7 +48,7 @@
 		"type": "input",
 		"software_type": "googledrive",
 		"parameters": {
-			"email": "bastiengrassetensat@gmail.com",
+			"email": "firmstunaatlas@gmail.com",
 			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
 		},
 		"properties" : {}
@@ -57,13 +57,13 @@
   "actions": [
 	{
 		"id": "load_dataset",
-		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/load_dataset_Bastien.R",
+		"script": "https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/tunaatlas_actions/load_dataset.R",
 		"run": true,
 		"options": {
 			"upload_to_db": true,
 			"create_materialized_view": true,
 			"add_sql_comments": true,
-			"upload_to_googledrive": false
+			"upload_to_googledrive": true
 		}
 	}
   

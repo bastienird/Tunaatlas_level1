@@ -36,9 +36,9 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "db-tunaatlas.d4science.org",
+			"host": "localhost",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox"
+			"dbname": "tunaatlas_sandbox2"
 		},
 		"properties" : {
 			"user_readonly": "tunaatlas_u",
@@ -56,9 +56,9 @@
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
 			"password": "21c0551e7ed2911",
-			"host": "db-tunaatlas.d4science.org",
+			"host": "localhost",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox"
+			"dbname": "tunaatlas_sandbox2"
 		},
 		"properties" : {
 		}
@@ -69,7 +69,7 @@
 		"software_type": "googledrive",
 		"parameters": {
 			"email": "bastiengrassetensat@gmail.com",
-			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
+			"token": "4/1ARtbsJoMYg0QjS2CMIfI-DmcaVT3KinLG8xh0-a1cl4JBpUphBcdkBmkOl4"
 		},
 		"properties" : {}
 	}

@@ -1,7 +1,14 @@
 function_overlapped =function(dataset, con, rfmo_to_keep, rfmo_not_to_keep, 
       strata =c("geographic_identifier",    "species", "time_start", "time_end",
-                 "unit")){
-  
+                 "unit", opts = opts)){
+  variable <- opts$fact
+  columns_to_keep <- NULL
+  if (variable == "catch"){
+    columns_to_keep<-c("source_authority","species","gear","fishingfleet","schooltype","time_start","time_end","geographic_identifier","catchtype","unit","value")
+  } else if (variable=="effort"){
+    columns_to_keep<-c("source_authority","gear","fishingfleet","schooltype","time_start","time_end","geographic_identifier","unit","value")
+  }
+  strata <- intersect(strata, columns_to_keep)
 #   overlapping_zone_request <- paste0("SELECT codesource_area,area,wkt from
 # (WITH rfmo_to_keep_area_of_competence AS (
 #   SELECT rfmos_convention_areas_fao.geom
