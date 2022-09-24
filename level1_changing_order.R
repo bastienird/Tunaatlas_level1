@@ -643,6 +643,8 @@ formals(create_latex)$data_to_comp  <- "mapping_codelist"
                                                                                                                                                                           , split=","))}
            config$logger.info(paste0(options_strata_overlap_iattc_wcpfc))
 
+           formals(function_overlapped)$opts <- opts
+           
            georef_dataset <- function_overlapped(dataset = georef_dataset , con =con , rfmo_to_keep = overlapping_zone_iattc_wcpfc_data_to_keep,
                                                  rfmo_not_to_keep = (if (overlapping_zone_iattc_wcpfc_data_to_keep == "IATTC"){"WCPFC"} else {"IATTC"}),
                                                  strata = options_strata_overlap_iattc_wcpfc)
