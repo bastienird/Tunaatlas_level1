@@ -112,11 +112,12 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
   
   config$logger.info("Execute rtunaatlas::convert_units() function")
   config$logger.info(sprintf("Gridded catch dataset before tunaatlas::convert_units() has [%s] lines", nrow(georef_dataset)))
+  if(fact == "catch"){
   sum_no_before <- georef_dataset %>% filter(unit=="NO")  %>% select(value)  %>% sum()
   species_no_before <- georef_dataset %>% filter(unit=="NO") %>% distinct(species)
   cat(species_no_before$species)
   cat(intersect(species_no_before$species,unique(df_conversion_factor$species)))
-  
+  }
   georef_dataset<-rtunaatlas::convert_units(con = con,
                                             df_input = georef_dataset,
                                             df_conversion_factor = df_conversion_factor,
