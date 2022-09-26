@@ -591,7 +591,12 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   if(!is.null(opts$mapping_keep_src_code)) mapping_keep_src_code = opts$mapping_keep_src_code
 
   config$logger.info("Mapping code lists of georeferenced datasets...")
-  georef_dataset <- map_codelists(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
+  georef_dataset <- map_codelists_Bastien(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
+  
+  mapping_codelistB <- map_codelistsB(con, opts$fact, mapping_dataset, georef_dataset, mapping_keep_src_code)
+  georef_dataset <- mapping_codelistB$dataset_mapped
+  mapping_codelist_summary <- mapping_codelistB$summary_mapping
+  write_csv(mapping_codelist_summary, "data/mapping_codelist_summary.csv")
   config$logger.info("Mapping code# con <- config$software$input$dbi
  lists of georeferenced datasets OK")
 
