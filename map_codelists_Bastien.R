@@ -1,29 +1,25 @@
-function(con, fact, mapping_dataset,dataset_to_map, mapping_keep_src_code = FALSE){
-  
+map_codelistsB = function(con, fact, mapping_dataset,dataset_to_map, mapping_keep_src_code = FALSE){
   # Get the dimensions to map from the mapping_dataset
   if (fact=="catch"){
-    dimension_to_map<-c("species","fishingfleet","schooltype","catchtype","gear")
+    dimension_to_map<-c("gear","species","fishingfleet","schooltype","catchtype")
   } else if (fact=="effort"){
     dimension_to_map<-c("gear","fishingfleet","schooltype","unit")
   }
   # One by one, map the dimensions
-  df_mapping_all_dimensions <- NULL
   for (i in 1:length(dimension_to_map)){ # i takes the values of the dimensions to map
     dimension <- dimension_to_map[i]
     if (dimension %in% colnames(dataset_to_map)){
-      mapping_dataset_this_dimension<-mapping_dataset %>% filter (dimensions_to_map == dimension)  
+      mapping_dataset_this_dimension<-mapping_dataset %>% filter (dimensions_to_map == dimension)
       df_mapping_final_this_dimension<-NULL
       for (j in 1:nrow(mapping_dataset_this_dimension)){ # With this loop, we extract one by one, for 1 given dimension, the code list mapping datasets from the DB. The last line of the loop binds all the code list mappings datasets for this given dimension.
         df_mapping<-rtunaatlas::extract_dataset(con,list_metadata_datasets(con,identifier=mapping_dataset_this_dimension$db_mapping_dataset_name[j]))  # Extract the code list mapping dataset from the DB
         df_mapping$source_authority<-mapping_dataset_this_dimension$source_authority[j]  # Add the dimension "source_authority" to the mapping dataset. That dimension is not included in the code list mapping datasets. However, it is necessary to map the code list.
         df_mapping_final_this_dimension<-rbind(df_mapping_final_this_dimension,df_mapping)
+        df_mapping <- rbind(df_mapping_final_this_dimension, df_mapping)
       }
-      df_mapping_all_dimensions<-rbind(df_mapping_all_dimensions,df_mapping_final_this_dimension)
-      
-      }
+      dataset_to_map <- rtunaatlas::map_codelist(dataset_to_map,df_mapping_final_this_dimension,dimension,mapping_keep_src_code)$df  # Codes are mapped by tRFMOs (source_authority)
+    }
   }
-  dataset_to_map <- rtunaatlas::map_codelist(dataset_to_map,df_mapping_all_dimensions,dimension,mapping_keep_src_code)$df  # Codes are mapped by tRFMOs (source_authority) 
-  
-  
-  return(dataset_to_map)
+  dataset_and_mapping <- list(dataset_mapped = dataset_to_map, summary_mapping =df_mapping)
+  return(dataset_and_mapping)
 }
