@@ -591,6 +591,7 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   if(!is.null(opts$mapping_keep_src_code)) mapping_keep_src_code = opts$mapping_keep_src_code
 
   config$logger.info("Mapping code lists of georeferenced datasets...")
+  source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
   georef_dataset <- map_codelists_Bastien(con, "catch", mapping_dataset, georef_dataset, mapping_keep_src_code)
   
   mapping_codelistB <- map_codelistsB(con, opts$fact, mapping_dataset, georef_dataset, mapping_keep_src_code)
