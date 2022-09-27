@@ -642,9 +642,7 @@ formals(create_latex)$data_to_comp  <- "mapping_codelist"
          if (opts$include_IATTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_iattc_wcpfc_data_to_keep)) {
 
            if(!exists("options_strata_overlap_iattc_wcpfc")){options_strata_overlap_iattc_wcpfc <- c("geographic_identifier",    "species", "time_start", "time_end",
-                                                                                                        "unit")}else {options_strata_overlap_iattc_wcpfc<-unlist(strsplit(opts$strata_overlap_sbf
-
-                                                                                                                                                                          , split=","))}
+                                                                                                        "unit")}else {options_strata_overlap_iattc_wcpfc<-unlist(strsplit(opts$strata_overlap_iattc_wcpfc , split=","))}
            config$logger.info(paste0(options_strata_overlap_iattc_wcpfc))
 
            formals(function_overlapped)$opts <- opts
@@ -665,7 +663,7 @@ formals(create_latex)$data_to_comp  <- "mapping_codelist"
 if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_iotc_wcpfc_data_to_keep)) {
   # overlapping_zone_iotc_wcpfc_data_to_keep <- opts$overlapping_zone_iotc_wcpfc_data_to_keep
   if(!exists("options_strata_overlap_iotc_wcpfc")){options_strata_overlap_iotc_wcpfc <- c("geographic_identifier",    "species", "time_start", "time_end",
-                                                                                          "unit", "gear")} else {options_strata_overlap_iotc_wcpfc<-unlist(strsplit(opts$strata_overlap_sbf, split=","))}
+                                                                                          "unit", "gear")} else {options_strata_overlap_iotc_wcpfc<-unlist(strsplit(opts$strata_overlap_iotc_wcpfc, split=","))}
 
 
   georef_dataset <- function_overlapped(georef_dataset, con, rfmo_to_keep = overlapping_zone_iotc_wcpfc_data_to_keep,
@@ -701,7 +699,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 7/: Overlapping zone (WCPFC/CCSBT): keep data from WCPFC or CCSBT?")
           if(!exists("options_strata_overlap_sbf")){options_strata_overlap_sbf <- c("species", "time_start", "time_end",
-                                                                                    "unit")} else {options_strata_overlap_sbf<-unlist(strsplit(opts$strata_overlap_sbf, split=","))}
+                                                                                    "unit")} else {options_strata_overlap_sbf<-unlist(strsplit(opts$strata_overlap_sbf, split=";"))}
 
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          if (opts$include_WCPFC && opts$include_CCSBT && !is.null(opts$overlapping_zone_wcpfc_ccsbt_data_to_keep)) {
