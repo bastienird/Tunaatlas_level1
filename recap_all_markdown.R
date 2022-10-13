@@ -16,7 +16,7 @@ comparison_each_step <- function(action, entity, config, options){
          "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/Analyse_georeferenced_child.Rmd",
          "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny_child_effort.Rmd")
   lapply(c,copyrmd)
-  rmarkdown::render("tableau_recap_global_action.Rmd"  , 
+  rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
   params = list(action = action,
                 entity = entity, config = config))
 }
