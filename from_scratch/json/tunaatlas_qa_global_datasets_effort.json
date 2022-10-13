@@ -35,10 +35,10 @@
 		"parameters": {
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
-			"password": "21c0551e7ed2911",
-			"host": "localhost",
+			"password": "{{DB_PASSWORD}}",
+			"host": "{{DB_HOST}}",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox2"
+			"dbname": "{{DB_NAME}}"
 		},
 		"properties" : {}
 	},
@@ -49,20 +49,20 @@
 		"parameters": {
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
-			"password": "21c0551e7ed2911",
-			"host": "localhost",
+			"password": "{{DB_PASSWORD}}",
+			"host": "{{DB_HOST}}",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox2"
+			"dbname": "{{DB_NAME}}"
 		},
 		"properties" : {}
 	},
-		{
+	{
 		"id": "googledrive",
 		"type": "input",
 		"software_type": "googledrive",
 		"parameters": {
-			"email": "bastiengrassetensat@gmail.com",
-			"token": "4/1ARtbsJoVNQj-Mgu5KoHv3Bv7HnqgSoYkgVlwjw3AIjPrtfQaQayn7JB08sM"
+			"email": "{{GMAIL_USER}}",
+			"token": "{{GMAIL_TOKEN}}"
 		},
 		"properties" : {}
 	}
@@ -72,8 +72,8 @@
 		"type": "output",
 		"software_type": "googledrive",
 		"parameters": {
-			"email": "bastiengrassetensat@gmail.com",
-			"token": "4/1ARtbsJoVNQj-Mgu5KoHv3Bv7HnqgSoYkgVlwjw3AIjPrtfQaQayn7JB08sM"
+			"email": "{{GMAIL_USER}}",
+			"token": "{{GMAIL_TOKEN}}"
 		},
 		"properties" : {}
 	}
@@ -97,7 +97,7 @@
 	},
 	{
 		"id": "enrich_for_db_services",
-		"script": "https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/tunaatlas_actions/enrich_db_for_services.R",
+		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/enrich_db_for_services_Bastien.R",
 		"run": true
 	},
 	{		"id": "comparison_each_step",

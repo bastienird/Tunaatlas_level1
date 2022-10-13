@@ -35,10 +35,10 @@
 		"parameters": {
 			"drv": "PostgreSQL",
 			"user": "tunaatlas_u",
-			"password": "21c0551e7ed2911",
-			"host": "localhost",
+			"password": "{{DB_PASSWORD}}",
+			"host": "{{DB_HOST}}",
 			"port": "5432",
-			"dbname": "tunaatlas_sandbox2"
+			"dbname": "{{DB_NAME}}"
 		},
 		"properties" : {}
 	},
@@ -47,8 +47,8 @@
 		"type": "input",
 		"software_type": "googledrive",
 		"parameters": {
-			"email": "bastiengrassetensat@gmail.com",
-			"token": "4/1ARtbsJoVNQj-Mgu5KoHv3Bv7HnqgSoYkgVlwjw3AIjPrtfQaQayn7JB08sM"
+			"email": "{{GMAIL_USER}}",
+			"token": "{{GMAIL_TOKEN}}"
 		},
 		"properties" : {}
 	}
@@ -57,11 +57,11 @@
 	{
 		"id": "load_dataset",
 		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/load_dataset_Bastien.R",
-		"run": false,
+		"run": true,
 		"options": {
-			"upload_to_db": false,
-			"create_materialized_view": false,
-			"add_sql_comments": false,
+			"upload_to_db": true,
+			"create_materialized_view": true,
+			"add_sql_comments": true,
 			"upload_to_googledrive": false
 		}
 	}

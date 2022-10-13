@@ -17,7 +17,7 @@
     "entities": [
       {
         "handler": "gsheet",
-        "source": "https://docs.google.com/spreadsheets/d/1T-nUq7CLsMUZqlfEkYReURHz7UbxalusFdTUR-juUtY/edit?usp=sharing"
+        "source": "https://docs.google.com/spreadsheets/d/1T-nUq7CLsMUZqlfEkYReURHz7UbxalusFdTUR-juUtY/edit#gid=1360415228"
       }
     ],
     "contacts" : [
@@ -35,10 +35,10 @@
       "parameters": {
         "drv": "PostgreSQL",
         "user": "tunaatlas_u",
-        "password": "21c0551e7ed2911",
-        "host": "localhost",
-        "port": "5432",
-        "dbname": "tunaatlas_sandbox2"
+			"password": "{{DB_PASSWORD}}",
+			"host": "{{DB_HOST}}",
+			"port": "5432",
+			"dbname": "{{DB_NAME}}"
       },
       "properties" : {}
     },
@@ -47,8 +47,8 @@
   		"type": "input",
   		"software_type": "googledrive",
   		"parameters": {
-			"email": "firmstunaatlas@gmail.com",
-			"token": "4/1AX4XfWjbiYgYccSbJtExzXxEpJUoXDOlZ7BXVOgZJytEByk2ukDVBirQXqs"
+			"email": "{{GMAIL_USER}}",
+			"token": "{{GMAIL_TOKEN}}"
 		},
 		"properties" : {}
 	}
@@ -62,7 +62,7 @@
         "upload_to_db": true,
         "create_materialized_view": true,
         "add_sql_comments": true,
-        "upload_to_googledrive": true
+        "upload_to_googledrive": false
       }
     }
     
