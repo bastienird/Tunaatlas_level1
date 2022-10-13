@@ -77,11 +77,11 @@ executeWorkflow("tunaatlas_qa_dbmodel+codelists.json")#works
 executeWorkflow("tunaatlas_qa_mappings.json")
 
 
-executeWorkflow("tunaatlas_qa_datasets_iccat.json") # ok
-executeWorkflow("tunaatlas_qa_datasets_ccsbt.json") # ok
-executeWorkflow("tunaatlas_qa_datasets_wcpfc.json") # ok 
-executeWorkflow("tunaatlas_qa_datasets_iattc.json") # ok
-executeWorkflow("tunaatlas_qa_datasets_iotc.json") # ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iccat.json") # ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_ccsbt.json") # ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_wcpfc.json") # ok 
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iattc.json") # ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iotc.json") # ok
 executeWorkflow("tunaatlas_qa_global_datasets_catch.json")
 
 
@@ -89,10 +89,10 @@ load_dot_env(file = "effort_server.env")
 
 
 
-executeWorkflow("tunaatlas_qa_datasets_ccsbt_effort.json") #ok
-executeWorkflow("tunaatlas_qa_datasets_wcpfc_effort.json") #ok
-executeWorkflow("tunaatlas_qa_datasets_iattc_effort.json") # ok
-executeWorkflow("tunaatlas_qa_datasets_iotc_effort.json") # ok
-executeWorkflow("tunaatlas_qa_datasets_iccat_effort.json") # ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_ccsbt_effort.json") #ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_wcpfc_effort.json") #ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iattc_effort.json") # ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iotc_effort.json") # ok
+executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iccat_effort.json") # ok
 
 executeWorkflow("tunaatlas_qa_global_datasets_effort.json")
