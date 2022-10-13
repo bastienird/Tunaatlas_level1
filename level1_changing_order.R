@@ -198,7 +198,7 @@ url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel
 source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
-source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/do_unit_conversion_B.R")
+# source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/do_unit_conversion_B.R") # 
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/function_raising_georef_to_nominal_B.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
@@ -218,6 +218,7 @@ source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/funct
 
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_dossier.R")
 # function_creation_options()
+
 
   j <- 1
   
@@ -592,10 +593,11 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
 
   config$logger.info("Mapping code lists of georeferenced datasets...")
   source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
-  mapping_codelistB <- map_codelistsB(con, opts$fact, mapping_dataset, georef_dataset, mapping_keep_src_code)
+  mapping_codelistB <- map_codelistsB(con, opts$fact, mapping_dataset, georef_dataset, mapping_keep_src_code, summary_mapping = TRUE) #this map condelist function is to retieve the mapping dataset used
   georef_dataset <- mapping_codelistB$dataset_mapped
   mapping_codelist_summary <- mapping_codelistB$summary_mapping
-  write_csv(mapping_codelist_summary, "data/mapping_codelist_summary.csv")
+  output_mapping_codelist_name <- file.path("data", "mapping_codelist_summary.csv")
+  write.csv(mapping_codelist_summary, output_mapping_codelist_name)
   config$logger.info("Mapping code# con <- config$software$input$dbi
  lists of georeferenced datasets OK")
 
@@ -642,7 +644,8 @@ formals(create_latex)$data_to_comp  <- "mapping_codelist"
          if (opts$include_IATTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_iattc_wcpfc_data_to_keep)) {
 
            if(!exists("options_strata_overlap_iattc_wcpfc")){options_strata_overlap_iattc_wcpfc <- c("geographic_identifier",    "species", "time_start", "time_end",
-                                                                                                        "unit")}else {options_strata_overlap_iattc_wcpfc<-unlist(strsplit(opts$strata_overlap_iattc_wcpfc , split=","))}
+                                                                                                        "unit")
+           } else {options_strata_overlap_iattc_wcpfc<-unlist(strsplit(opts$strata_overlap_iattc_wcpfc , split=","))}
            config$logger.info(paste0(options_strata_overlap_iattc_wcpfc))
 
            formals(function_overlapped)$opts <- opts
@@ -663,7 +666,8 @@ formals(create_latex)$data_to_comp  <- "mapping_codelist"
 if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_iotc_wcpfc_data_to_keep)) {
   # overlapping_zone_iotc_wcpfc_data_to_keep <- opts$overlapping_zone_iotc_wcpfc_data_to_keep
   if(!exists("options_strata_overlap_iotc_wcpfc")){options_strata_overlap_iotc_wcpfc <- c("geographic_identifier",    "species", "time_start", "time_end",
-                                                                                          "unit", "gear")} else {options_strata_overlap_iotc_wcpfc<-unlist(strsplit(opts$strata_overlap_iotc_wcpfc, split=","))}
+                                                                                          "unit", "gear")
+  } else {options_strata_overlap_iotc_wcpfc<-unlist(strsplit(opts$strata_overlap_iotc_wcpfc, split=","))}
 
 
   georef_dataset <- function_overlapped(georef_dataset, con, rfmo_to_keep = overlapping_zone_iotc_wcpfc_data_to_keep,
@@ -699,7 +703,8 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          config$logger.info("LEVEL 0 => STEP 7/: Overlapping zone (WCPFC/CCSBT): keep data from WCPFC or CCSBT?")
           if(!exists("options_strata_overlap_sbf")){options_strata_overlap_sbf <- c("species", "time_start", "time_end",
-                                                                                    "unit")} else {options_strata_overlap_sbf<-unlist(strsplit(opts$strata_overlap_sbf, split=";"))}
+                                                                                    "unit")
+          } else {options_strata_overlap_sbf<-unlist(strsplit(opts$strata_overlap_sbf, split=","))}
 
          #-----------------------------------------------------------------------------------------------------------------------------------------------------------
          if (opts$include_WCPFC && opts$include_CCSBT && !is.null(opts$overlapping_zone_wcpfc_ccsbt_data_to_keep)) {
@@ -957,7 +962,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   config$logger.info("Extract and load FIRMS Level 0 nominal catch data input (required if raising process is asked) ")
   	nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
   	class(nominal_catch$value) <- "numeric"
-  	# nominal_catch <- map_codelists(con, "catch", mapping_dataset, nominal_catch, mapping_keep_src_code)
+  	nominal_catch2 <- map_codelists(con, "catch", mapping_dataset, nominal_catch, mapping_keep_src_code)
   	# nominal_catch <- read.csv2("entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/data/nominal_catch_mapped.csv", sep = ";")
   #         #@juldebar keep same units for all datatets
   	if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "MT"
@@ -1547,8 +1552,12 @@ fonction_dossier("Level2_RF3without_gears",
          # create_latex("tableau_recap_entity.Rmd")
 
          #@geoflow -> export as csv
+         if(!require(data.table)){
+           install.packages("data.table")
+           require(data.table)
+         }
          output_name_dataset <- file.path("data", paste0(entity$identifiers[["id"]], "_harmonized.csv"))
-         write.csv(dataset$dataset, output_name_dataset, row.names = FALSE)
+         fwrite(dataset$dataset, output_name_dataset, row.names = FALSE)#export with fwrite which simplifies the data having too many decimals
          output_name_codelists <- file.path("data", paste0(entity$identifiers[["id"]], "_codelists.csv"))
          write.csv(dataset$codelists, output_name_codelists, row.names = FALSE)
 # ---------------------------------------------------------------------------------------------------------------------------
