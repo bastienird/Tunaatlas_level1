@@ -71,28 +71,32 @@ if(!require(dotenv)){
   install.packages("dotenv")
   require(dotenv)
 }
+if(!require(bookdown)){
+  install.packages("bookdown")
+  require(bookdown)
+}
 load_dot_env(file = "catch_server.env")
 
-executeWorkflow("tunaatlas_qa_dbmodel+codelists.json")#works
-executeWorkflow("tunaatlas_qa_mappings.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")#works
+executeWorkflow("from_scratch/json/tunaatlas_qa_mappings.json")
 
 
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iccat.json") # ok
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_ccsbt.json") # ok
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_wcpfc.json") # ok 
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iattc.json") # ok
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iotc.json") # ok
-executeWorkflow("tunaatlas_qa_global_datasets_catch.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iccat.json") # ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_ccsbt.json") # ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_wcpfc.json") # ok 
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc.json") # ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iotc.json") # ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
 
 
 load_dot_env(file = "effort_server.env")
 
 
 
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_ccsbt_effort.json") #ok
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_wcpfc_effort.json") #ok
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iattc_effort.json") # ok
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iotc_effort.json") # ok
-executeWorkflow("tunaatfrom_scratch/json/las_qa_datasets_iccat_effort.json") # ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_ccsbt_effort.json") #ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_wcpfc_effort.json") #ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc_effort.json") # ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iotc_effort.json") # ok
+executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iccat_effort.json") # ok
 
-executeWorkflow("tunaatlas_qa_global_datasets_effort.json")
+executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_effort.json")

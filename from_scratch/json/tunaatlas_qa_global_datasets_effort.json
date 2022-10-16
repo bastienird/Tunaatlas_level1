@@ -102,7 +102,7 @@
 	},
 	{		"id": "comparison_each_step",
 		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/recap_all_markdown.R",
-		"run": false
+		"run": true
 	  
 	},
 	{
