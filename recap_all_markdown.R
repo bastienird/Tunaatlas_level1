@@ -1,7 +1,15 @@
-comparison_each_step <- function(action, entity, config, options){
+comparison_each_step <- function(action, entity, config){
   if(!(require(here))){ 
     install.packages("here") 
     (require(here))} 
+  if(!require(stringr)){
+    install.packages("stringr")
+    require(stringr)
+  }
+  if(!require(bookdown)){
+    install.packages("bookdown")
+    require(bookdown)
+  }
   copyrmd <- function(x){
     last_path = function(y){tail(str_split(y,"/")[[1]],n=1)}
     use_github_file(repo_spec =x,
@@ -17,7 +25,8 @@ comparison_each_step <- function(action, entity, config, options){
          "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny_child_effort.Rmd")
   lapply(c,copyrmd)
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
-  params = list(action = action,
-                entity = entity, config = config))
+                    params = list(action = action,
+                                  entity = entity, config = config))
 }
+
 
