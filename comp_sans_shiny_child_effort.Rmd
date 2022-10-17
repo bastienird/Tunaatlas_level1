@@ -20,7 +20,7 @@ params:
   password: ""
   further_analysis: "FALSE"
   filtering: !r list(species = NULL)
-  fact: "effort"
+  fact: "catch"
   colnames_to_keep: !r list("fishingfleet" ,    "unit" ,     "gear", "geographic_identifier", "time_start" , "time_end",             "value" ,                 "source_authority") 
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
@@ -242,9 +242,6 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 ```
 
-```{r}
-print(config$software$output$dbi)
-```
 
 
 ```{r cache=FALSE}
@@ -348,7 +345,7 @@ if (!exists("parameter_final")) {parameter_final <- NULL}
 ```{r}
 init <- readRDS(paste0(as.character(parameter_init),"/rds.rds")) %>%dplyr::select(all_of(colnames_to_keep))%>%  left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end)) %>%dplyr::mutate(cat_geo = as.character(cat_geo)) 
 if(is_null_or_not_exist(parameter_final)){final <- init
- final <- final[0,]
+ final <- final[0,] %>% mutate(unit = as.character(unit))
  unique_analyse <-  TRUE} else{
 final <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))%>%dplyr::select(all_of(colnames_to_keep)) %>%   left_join(shape_without_geom, by = c("geographic_identifier"="code"))  %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end))%>%dplyr::mutate(cat_geo = as.character(cat_geo))
 unique_analyse <- FALSE}
