@@ -12,7 +12,7 @@ output:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220926115816_global_effort/entities/global_catch_effort_test/Markdown/rawdata"
   dbname: "tunaatlas_sandbox2"
   host: "localhost"
   port: 5432
@@ -980,14 +980,15 @@ if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_
 
 ```{r eval=unique_analyse}
 figures<- lapply(pie_charts_multiple, function(x){x$pie_chart})
-dimension <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension :", x$dimension)})
+dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension :", x$dimension)})
 
 
 ```
 
-```{r echo=FALSE, fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension))), eval=unique_analyse, fig.ncol = 2, out.width = "50%", fig.align = "center"}
+```{r echo=FALSE, fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), eval=unique_analyse, fig.ncol = 2, out.width = "50%", fig.align = "center"}
 
 figures
+
 ```
 
 
