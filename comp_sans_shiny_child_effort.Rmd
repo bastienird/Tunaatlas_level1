@@ -924,6 +924,7 @@ if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
 ```{r}
 function_pie_chart_df <- function(dimension, ...){
   formals(pie_chart_2_default)$dimension <- dimension
+  dimension_returned <- dimension
   pie_chart = pie_chart_2_default(...)
   if(length(pie_chart) == 2){df = pie_chart$df
   pie_chart = pie_chart$plot} else{
@@ -931,8 +932,8 @@ function_pie_chart_df <- function(dimension, ...){
     df = NULL}
 
 if(!is.null(df)){
-df <- qflextable2(df, captionn = paste0("Strata movement for the dimension : ", dimension))}
-  return(list(pie_chart=pie_chart,df=df, dimension=dimension))
+df <- qflextable2(df, captionn = paste0("Strata movement for the dimension : ", dimension_returned))}
+  return(list(pie_chart=pie_chart,df=df, dimension=dimension_returned))
 }
 ```
 
