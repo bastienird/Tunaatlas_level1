@@ -13,11 +13,11 @@ output:
     number_sections: TRUE
 params: 
   init: "~/Documents/Tunaatlas_level1/jobs/20220926115816_global_effort/entities/global_catch_effort_test/Markdown/rawdata"
-  dbname: "tunaatlas_sandbox2"
-  host: "localhost"
-  port: 5432
-  user: "tunaatlas_u"
-  password: "21c0551e7ed2911"
+  dbname: ""
+  host: ""
+  port: 
+  user: ""
+  password: ""
   further_analysis: "FALSE"
   filtering: !r list(species = NULL)
   fact: "effort"
@@ -241,6 +241,11 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 
 ```
+
+```{r}
+print(config$software$output$dbi)
+```
+
 
 ```{r cache=FALSE}
 out <- try((con <- config$software$output$dbi), silent = TRUE)
@@ -962,7 +967,19 @@ resume_knit_child = function(x){
 
 
 ```{r}
-if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first= init, second = final, topn = 3)}else{pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first= init, topn = 3)}
+if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first= init, second = final, topn = 3)}else{pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first= init, topn = 3, title_yes_no = FALSE )}
+```
+
+```{r eval=unique_analyse}
+figures<- lapply(pie_charts_multiple, function(x){x$pie_chart})
+dimension <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension :", x$dimension)})
+
+
+```
+
+```{r echo=FALSE, fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension))), eval=unique_analyse, fig.ncol = 2, out.width = "50%", fig.align = "center"}
+
+figures
 ```
 
 
