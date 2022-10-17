@@ -12,15 +12,17 @@ output:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220926115816_global_effort/entities/global_catch_effort_test/Markdown/rawdata"
-  dbname: ""
-  host: ""
-  port: 
-  user: ""
-  password: ""
+  init: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata"
+  dbname: "tunaatlas_sandbox2"
+  host: "localhost"
+  port: 5432
+  user: "tunaatlas_u"
+  password: "21c0551e7ed2911"
   further_analysis: "FALSE"
+  time_dimension:
+  geographical_dimension:
   filtering: !r list(species = NULL)
-  fact: "catch"
+  fact: "effort"
   colnames_to_keep: !r list("fishingfleet" ,    "unit" ,     "gear", "geographic_identifier", "time_start" , "time_end",             "value" ,                 "source_authority") 
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
@@ -350,7 +352,8 @@ if(is_null_or_not_exist(parameter_final)){final <- init
 final <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))%>%dplyr::select(all_of(colnames_to_keep)) %>%   left_join(shape_without_geom, by = c("geographic_identifier"="code"))  %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end))%>%dplyr::mutate(cat_geo = as.character(cat_geo))
 unique_analyse <- FALSE}
 
-if(parameter_fact=="catch"){lapply(list(init, final), function(dataframe_tot_filter){
+if(parameter_fact=="catch"){
+  function_dataframe_tot_filter =function(dataframe_tot_filter){
   dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(species_group%>% dplyr::distinct(), by = c("species"))
   
     dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
@@ -359,7 +362,9 @@ if(parameter_fact=="catch"){lapply(list(init, final), function(dataframe_tot_fil
   
   dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = dplyr::case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ unit)) 
   
-})
+}
+init <- function_dataframe_tot_filter(init)
+final <- function_dataframe_tot_filter(final)
   }
 
 
@@ -441,12 +446,13 @@ matchingList <- lapply(matchingList, function(x){ #handling single filter
 
 }
   )
+if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
 
-filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList){
+filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList, geo_dim){
   if(length(matchingList)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
   if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
     dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
-return(dataframe_to_filter)
+return(dataframe_to_filter %>% rename("geographic_identifier" := {{geo_dim}}))
 }
   #function to filter on all the filter_parameters
 
@@ -456,10 +462,10 @@ return(dataframe_to_filter)
 
 # rapply(list_init_final, f = filtering_function, colnames_to_filter = colnames_to_filter, matchingList = matchingList, how = "replace")
 # purrr::modify(list(init, final), .f = filtering_function, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
-
+formals(filtering_function)$geo_dim = geographical_dimension
 init <- filtering_function(init, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
-final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
-if(unique_analyse){final <- init[0,]}
+
+if(unique_analyse){final <- init[0,] %>% mutate(unit = as.character(unit))} else {final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)}
 
 
 
@@ -646,7 +652,7 @@ set_caption(join, caption = "Summary of the difference between the two datasets"
 ```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis', eval=!unique_analyse}
 
 if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Los<- / Gain` = base::ifelse(loss >= 0, "Loss", "Gain"))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Los<- / Gain` = dplyr::case_when(loss > 0~ "Loss", loss == 0 ~ "No differences", loss < 0~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
   cat("The stratas differences (completely lost or appearing) between the first one and the second one are (only first 10 per dimension showed if more) :\n")
   cat(knit_print(qflextable2(groupe_df%>% select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))
@@ -893,7 +899,7 @@ formals(pie_chart_2_default)$titre_2 <- titre_2
 # formals(pie_chart_2_default)$first <- init
 # formals(pie_chart_2_default)$second <- final
 if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
-  list_pie_chart <- list("fishingfleet","source_authority","Gear")} else {list_pie_chart <- list("fishingfleet","source_authority", "gear")}
+  list_pie_chart <- list("fishingfleet","source_authority","Gear")} else if ("Name_En"%in% colnames(init) & "Name_En"%in% colnames(final) ){list_pie_chart <- list("fishingfleet","source_authority","Name_En")} else {list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value"))))[[1]]}
 
 # t <- pie_chart_2_default(fishingfleet, init, final, topn = 1)
 # if(unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = pie_chart_2_default, first = init, topn = 4)}
@@ -919,8 +925,13 @@ if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
 
 ```{r}
 function_pie_chart_df <- function(dimension, ...){
-eval(parse(text = paste0("pie_chart = pie_chart_2_default(", dimension," ,..., title_yes_no = FALSE)")))
-eval(parse(text = paste0("df = pie_chart_2_default(", dimension, ",..., title_yes_no = FALSE, dataframe = TRUE)$df")))
+  formals(pie_chart_2_default)$dimension <- dimension
+  pie_chart = pie_chart_2_default(...)
+  if(length(pie_chart) == 2){df = pie_chart$df
+  pie_chart = pie_chart$plot} else{
+    pie_chart = pie_chart
+    df = NULL}
+
 if(!is.null(df)){
 df <- qflextable2(df, captionn = paste0("Strata movement for the dimension : ", dimension))}
   return(list(pie_chart=pie_chart,df=df, dimension=dimension))
@@ -981,19 +992,17 @@ figures
 ```
 
 
-```{r}
+```{r eval=!unique_analyse}
 pie_chart_knit <- lapply(pie_charts_multiple, FUN = resume_knit_child)
-
-
 
 ```
 
-```{r results='asis'}
+```{r results='asis', eval=!unique_analyse}
 cat(unlist(pie_chart_knit),  sep = "\n")
 ```
 
 
-```{r eval=(nrow(final)==0)}
+```{r eval=unique_analyse}
 knitr::knit_exit(fully = FALSE)
 ```
 
