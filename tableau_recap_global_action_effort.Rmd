@@ -51,11 +51,11 @@ knitr::opts_chunk$set(
 
 ```{r}
 
-opts <- action
+opts <- action$options
 con <- config$software$output$dbi
-parameter_fact = action$fact
-parameter_filtering <- if(!is.null(action$filtering)){action$filtering} else{ list(species = NULL, fishingfleet = NULL)}
-params <- list(config = config, entity = entity,action = action , parameter_filtering = parameter_filtering)
+parameter_fact = opts$fact
+parameter_filtering <- if(!is.null(opts$filtering)){opts$filtering} else{ list(species = NULL, fishingfleet = NULL)}
+params <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering)
 ```
 
 ```{r}
