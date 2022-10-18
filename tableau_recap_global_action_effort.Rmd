@@ -57,7 +57,6 @@ parameter_fact = opts$fact
 
 ```{r}
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
-parameter_fact <-  "catch"
 if(!(require(base))){ 
   install.packages("base") 
   (require(base))} 
@@ -574,10 +573,10 @@ function_all_comp <- function(counting){
   assign("parameter_short", TRUE, envir = globalenv())
   assign("child", TRUE, envir = globalenv())
   assign("step", counting, envir = globalenv())
-  assign("child_header", "#", envir= globalenv())
+  assign("child_header", "# ", envir= globalenv())
   assign("step_title", paste0("Treatment : " ,last_path(parameter_final)), envir= globalenv())
 
-  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = globalenv(), options = list(params, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title = paste0("Treatment : " ,last_path(parameter_final)), parameter_con=parameter_con,parameter_fact = parameter_fact ), quiet = TRUE)
+  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = globalenv(), options = list(params, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title = paste0(" Treatment : " ,last_path(parameter_final)), parameter_con=parameter_con,parameter_fact = parameter_fact ), quiet = TRUE)
 }
 
 all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
