@@ -550,7 +550,7 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 
 For each treatment on the data, we provide a report on what exactly has been created, disappeared or has been transformed.
 
-```{r eval  =FALSE}
+```{r eval=FALSE}
 for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {  
   print(paste0("compteur = ",counteur_child_tableau_recap))
   parameter_init <- sub_list_dir_2[counteur_child_tableau_recap]
@@ -565,15 +565,15 @@ for (counteur_child_tableau_recap in (1:(length(sub_list_dir_2)-1)))  {
 
 ```{r}
 function_all_comp <- function(counting){
-  assign("parameter_init", sub_list_dir_2[counting], envir = globalenv())
-  assign("parameter_final", sub_list_dir_2[counting+1], envir = globalenv())
-  assign("parameter_short", TRUE, envir = globalenv())
-  assign("child", TRUE, envir = globalenv())
-  assign("step", counting, envir = globalenv())
-  assign("child_header", "# ", envir= globalenv())
-  assign("step_title", paste0("Treatment : " ,last_path(parameter_final)), envir= globalenv())
+  # assign("parameter_init", sub_list_dir_2[counting], envir = globalenv())
+  # assign("parameter_final", sub_list_dir_2[counting+1], envir = globalenv())
+  # assign("parameter_short", TRUE, envir = globalenv())
+  # assign("child", TRUE, envir = globalenv())
+  # assign("step", counting, envir = globalenv())
+  # assign("child_header", "# ", envir= globalenv())
+  # assign("step_title", paste0("Treatment : " ,last_path(parameter_final)), envir= globalenv())
 
-  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = globalenv(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title = paste0(" Treatment : " ,last_path(parameter_final)), parameter_con=parameter_con,parameter_fact = parameter_fact ), recursive=FALSE)), quiet = TRUE)
+  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title = paste0(" Treatment : " ,last_path(parameter_final)), parameter_con=parameter_con,parameter_fact = parameter_fact, parameter_short = TRUE, child = TRUE, step =counting, child_header = "# "  ), recursive=FALSE)), quiet = TRUE)
 }
 
 all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
