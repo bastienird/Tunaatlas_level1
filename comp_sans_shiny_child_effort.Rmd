@@ -926,7 +926,8 @@ function_pie_chart_df <- function(dimension, ...){
   formals(pie_chart_2_default)$dimension <- dimension
   dimension_returned <- dimension
   pie_chart = pie_chart_2_default(...)
-  if(length(pie_chart) == 2){df = pie_chart$df
+  if(exists("pie_chart$df")){
+    df = pie_chart$df
   pie_chart = pie_chart$plot} else{
     pie_chart = pie_chart
     df = NULL}
@@ -980,7 +981,7 @@ if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_
 
 ```{r eval=unique_analyse}
 figures<- lapply(pie_charts_multiple, function(x){x$pie_chart})
-dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension :", x$dimension)})
+dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension : ", x$dimension)})
 
 
 ```
