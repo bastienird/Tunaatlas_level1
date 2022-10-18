@@ -80,7 +80,7 @@ if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- FALSE}
 
 ```{r include=FALSE}
 
-if(!exists("child_header")){child_header = "#"}
+if(!exists("child_header")){child_header = "# "}
 cat2 <- function(x){cat(paste0(child_header, x, " \n"))}
 
 
