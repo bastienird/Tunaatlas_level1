@@ -194,8 +194,8 @@ if (isNullList(params$filtering)){cat("There are no filter on this data")} else 
 ```{r include=FALSE}
 if(dir.exists("Markdown")){
 
-  if(params$fact == "catch"){
-    nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}else if (params$fact == "effort"){
+  if(parameter_fact == "catch"){
+    nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}else if (parameter_fact == "effort"){
     nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))
   }
 
@@ -323,7 +323,7 @@ return(dataframe_to_filter)
 
 
 
-```{r include=FALSE, eval=(params$fact == "catch")}
+```{r include=FALSE, eval=(parameter_fact == "catch")}
 if(!exists("nominal")){nominal <- 1}
 df <- data.frame(matrix(ncol =12, nrow = 1))
       colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir_2),"/")[[1]],n=1)),
@@ -420,7 +420,7 @@ tons_plot <- ggplot(reduced,aes(x = Step,group = 1)) +
 geom_line( aes(y=`Sum in millions of tons`,group = 1), size=0.5)+theme(axis.text.x = element_text(angle = 90))
 ```
 
-```{r include=FALSE , eval=(params$fact == "effort")}
+```{r include=FALSE , eval=(parameter_fact == "effort")}
 if(!exists("nominal")){nominal <- 1}
 df <- data.frame(matrix(ncol =12, nrow = 1))
       colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir_2),"/")[[1]],n=1)),
@@ -510,16 +510,16 @@ geom_line( aes(y=`Sum in millions of hooks`,group = 1), size=0.5)+theme(axis.tex
 ```
 
 
-```{r echo=FALSE, results='asis', eval=(params$fact == "catch")}
+```{r echo=FALSE, results='asis', eval=(parameter_fact == "catch")}
 qflextable2(reduced, colour = FALSE, captionn ="Evolution of Sum in tons and Sum in number of fish and lines along the steps")
 ```
 
-```{r echo=FALSE, results='asis', eval=(params$fact == "effort")}
+```{r echo=FALSE, results='asis', eval=(parameter_fact == "effort")}
 qflextable2(reduced, colour = FALSE, captionn ="Evolution of Sum in hooks and Sum in fishing days and lines along the steps")
 ```
 
 
-```{r echo=FALSE, fig.cap='Evolution of captures in tons and number of fish during the process',results='asis', eval=(params$fact == "catch")}
+```{r echo=FALSE, fig.cap='Evolution of captures in tons and number of fish during the process',results='asis', eval=(parameter_fact == "catch")}
 
 
 
@@ -529,7 +529,7 @@ cowplot::plot_grid(tons_plot, no_fish_plot)
 
 ```
 
-```{r echo=FALSE, fig.cap='Evolution of captures in fishing days and hooks during the process',results='asis', eval=(params$fact == "effort")}
+```{r echo=FALSE, fig.cap='Evolution of captures in fishing days and hooks during the process',results='asis', eval=(parameter_fact == "effort")}
 
 cowplot::plot_grid(fishing_days_plot, hooks_plot)
 
