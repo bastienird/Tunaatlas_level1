@@ -252,7 +252,7 @@ sub_list_dir_2 = rownames(details)
 #   assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
 #   assign("child", TRUE, envir = globalenv())
 #   assign("parameter_con", con, envir = globalenv())
-res2 <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[1], child = TRUE, parameter_con = con,parameter_fact = parameter_fact, titre_1 =entity$identifiers[["id"]]), recursive=FALSE)), quiet = TRUE)
+res2 <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[1], titre_1 =entity$identifiers[["id"]], step_title = ""), recursive=FALSE)), quiet = TRUE)
 ```
 
 
@@ -273,7 +273,7 @@ cat(res2, sep =  "\\clearpage")
 
 ```{r echo=FALSE, results='asis'}
 
-res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_fact = parameter_fact, parameter_init =sub_list_dir_2[1], parameter_final = sub_list_dir_2[length(sub_list_dir_2)], child = TRUE , parameter_mapped = TRUE, child_header = "" ), recursive=FALSE)), quiet = TRUE)
+res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init =sub_list_dir_2[1], parameter_final = sub_list_dir_2[length(sub_list_dir_2)] , parameter_mapped = TRUE, child_header = "" ), recursive=FALSE)), quiet = TRUE)
 
 ```
 
@@ -573,7 +573,7 @@ function_all_comp <- function(counting){
   # assign("child_header", "# ", envir= globalenv())
   # assign("step_title", paste0("Treatment : " ,last_path(parameter_final)), envir= globalenv())
 
-  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title = paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1])), parameter_con=con,parameter_fact = parameter_fact, parameter_short = TRUE, child = TRUE, step =counting, child_header = "# "  ), recursive=FALSE)), quiet = TRUE)
+  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title = paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1])), parameter_short = TRUE, step =counting, child_header = "# "  ), recursive=FALSE)), quiet = TRUE)
 }
 
 all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
