@@ -50,8 +50,9 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
-opts <- action
-con <- config$software$output$dbi
+opts <- params$action
+con <- params$software$output$dbi
+parameter_fact = opts$fact
 ```
 
 ```{r}
