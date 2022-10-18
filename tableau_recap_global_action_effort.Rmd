@@ -272,15 +272,8 @@ cat(res2, sep =  "\\clearpage")
 
 
 ```{r echo=FALSE, results='asis'}
-assign("parameter_mapped", TRUE, envir = globalenv())
 
-assign("child", TRUE, envir = globalenv())
-  assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
-  assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)], envir = globalenv())
-    assign("child_header", "#", envir= globalenv())
-  
-
-res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = globalenv(), options = do.call(list, unlist(list(parameters,parameter_fact = parameter_fact ), recursive=FALSE)), quiet = TRUE)
+res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_fact = parameter_fact, parameter_init =sub_list_dir_2[1], parameter_final = sub_list_dir_2[length(sub_list_dir_2)], child = TRUE , parameter_mapped = TRUE, child_header = "" ), recursive=FALSE)), quiet = TRUE)
 
 ```
 
