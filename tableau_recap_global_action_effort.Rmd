@@ -52,7 +52,7 @@ knitr::opts_chunk$set(
 ```{r}
 
 opts <- action
-con <- software$output$dbi
+con <- config$software$output$dbi
 parameter_fact = opts$fact
 filter <- try(parameter_filtering = opts$filtering)
 if("try-error" %in% class(filter)){parameter_filtering <- list(species = NULL)}
