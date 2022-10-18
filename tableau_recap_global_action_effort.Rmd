@@ -51,10 +51,11 @@ knitr::opts_chunk$set(
 
 ```{r}
 
-opts <- params$action
-con <- params$software$output$dbi
-parameter_fact = params$fact
-
+opts <- action
+con <- software$output$dbi
+parameter_fact = opts$fact
+filter <- try(parameter_filtering = opts$filtering)
+if("try-error" %in% class(filter)){parameter_filtering <- list(species = NULL)}
 ```
 
 ```{r}
@@ -179,12 +180,12 @@ base::options(knitr.duplicate.label = "allow")#for duplicate chunk names
 ```{r include=FALSE, results='asis'}
 
 isNullList <- function(x) all(!lengths(x))
-if (isNullList(params$filtering)){cat("There are no filter on this data")} else {
+if (isNullList(parameter_filtering)){cat("There are no filter on this data")} else {
   
   cat (paste0("The filter used on this data are:  \n "))
-  for (i in 1:length(params$filtering)){
-    if (!is.null(params$filtering[[i]])){
-      cat(paste0("***- On ", names((params$filtering)[i]), " : ", paste((params$filtering)[[i]], collapse = " ; "),"*** \n"))
+  for (i in 1:length(parameter_filtering)){
+    if (!is.null(parameter_filtering[[i]])){
+      cat(paste0("***- On ", names((parameter_filtering)[i]), " : ", paste((parameter_filtering)[[i]], collapse = " ; "),"*** \n"))
     } else {""}
   }
 }
@@ -202,7 +203,7 @@ if(dir.exists("Markdown")){
 
 }
 
-matchingList <- params$filtering %>% purrr::keep( ~ !is.null(.) )
+matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
 
 filtering_function = function(dataframe_to_filter, filtering_params = matchingList){
   colnames_to_filter <- colnames(dataframe_to_filter %>% select(names(filtering_params)))
