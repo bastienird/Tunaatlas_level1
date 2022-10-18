@@ -54,8 +54,7 @@ knitr::opts_chunk$set(
 opts <- action
 con <- config$software$output$dbi
 parameter_fact = action$fact
-filter <- try(parameter_filtering = action$filtering)
-if("try-error" %in% class(filter)){parameter_filtering <- list(species = NULL)}
+parameter_filtering <- if(!is.null(action$filtering)){action$filtering} else{ list(species = NULL, fishingfleet = NULL)}
 params <- list(config = config, entity = entity,action = action , parameter_filtering = parameter_filtering)
 ```
 
