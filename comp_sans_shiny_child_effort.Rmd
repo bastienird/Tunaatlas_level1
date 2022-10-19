@@ -399,7 +399,7 @@ fwrite(final, "final.csv")
 
 
 
-```{r results='asis', eval=!parameter_short & !unique_analyse)}
+```{r results='asis', eval=!parameter_short & !unique_analyse}
 try(knit_child_attention <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
@@ -418,7 +418,7 @@ try(knit_child_attention <- knitr::knit_child(text =c(
 ''), envir = environment(), quiet= TRUE))
 ```
 
-```{r results='asis', eval=!parameter_short & !unique_analyse)}
+```{r results='asis', eval=!parameter_short & !unique_analyse}
 try(cat(knit_child_attention))
 ```
 
