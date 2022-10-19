@@ -31,7 +31,6 @@ params:
   entity: entity
   config: config
   filtering: !r list(unit = c("HOOKS", "DAYS"))
-  fact: "effort"
 ---
 
  \clearpage
@@ -51,12 +50,12 @@ knitr::opts_chunk$set(
 
 ```{r}
 
-opts <- action$options
-con <- config$software$output$dbi
-parameter_fact = opts$fact
-parameter_filtering <- if(!is.null(opts$filtering)){opts$filtering} else{ list(species = NULL, fishingfleet = NULL)}
+opts <- params$action$options
+con <- params$config$software$output$dbi
+parameter_fact = params$action$options$fact
+parameter_filtering <- if(!is.null(params$action$options$filtering)){params$action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
 # if(exists('params')){parameters <- params}else{
-parameters <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con, child = TRUE)
+parameters <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con, child = TRUE)
 # }
 ```
 
@@ -251,7 +250,7 @@ sub_list_dir_2 = rownames(details)
 assign("titre_1", entity$identifiers[["id"]], envir = environment())
 
   assign("parameter_init", sub_list_dir_2[1], envir = environment())
-  assign("parameter_fact", parameter_fact, envir = environment())
+  assign("parameter_fact", action$options$parameter_fact, envir = environment())
   assign("child", TRUE, envir = environment())
   assign("parameter_con", con, envir = environment())
 options_knit <- do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[1], step_title = "", parameter_fact = parameter_fact), recursive=FALSE))
