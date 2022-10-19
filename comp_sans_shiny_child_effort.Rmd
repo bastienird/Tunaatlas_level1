@@ -985,7 +985,7 @@ if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_
 ```
 
 ```{r eval=unique_analyse}
-figures<- lapply(pie_charts_multiple, function(x){x$pie_chart})
+figures<- lapply(pie_charts_multiple, function(x){x$pie_chart[[1]]})
 dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension : ", x$dimension)})
 
 
