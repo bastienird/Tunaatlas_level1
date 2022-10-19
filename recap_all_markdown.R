@@ -23,12 +23,9 @@ comparison_each_step <- function(action, entity, config, options){
   c <- c("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/tableau_recap_global_action_effort.Rmd", 
          "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny_child_effort.Rmd")
   lapply(c,copyrmd)
-  assign("action", action, envir = globalenv())
-  assign("entity", entity, envir = globalenv())
-  assign("config", config, envir = globalenv())
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
                     params = list(action = action,
-                                  entity = entity, config = config), envir = globalenv())
+                                  entity = entity, config = config), envir =  new.env())
 }
 
 
