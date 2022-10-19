@@ -520,7 +520,12 @@ explenation_step <- readr::read_delim(paste0(parameter_final,"/explication.txt")
 
 ```
 
-```{r results='asis', eval=treatment}
+```{r}
+if(!exists("last_to_first")){last_to_first <- FALSE}
+```
+
+
+```{r results='asis', eval=treatment & !last_to_first}
 cat("Summary of this treatment : ")
 cat(explenation_step$X1)
 ```

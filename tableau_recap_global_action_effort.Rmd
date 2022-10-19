@@ -271,7 +271,7 @@ cat(res2, sep =  "\\clearpage")
 
 ```{r echo=FALSE, results='asis'}
 
-res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init =sub_list_dir_2[1], parameter_final = sub_list_dir_2[length(sub_list_dir_2)] , parameter_mapped = TRUE, step_title = "" ), recursive=FALSE)), quiet = TRUE)
+res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init =sub_list_dir_2[1], parameter_final = sub_list_dir_2[length(sub_list_dir_2)] , parameter_mapped = TRUE, step_title = "", last_to_first = TRUE ), recursive=FALSE)), quiet = TRUE)
 
 ```
 
@@ -558,7 +558,8 @@ For each treatment on the data, we provide a report on what exactly has been cre
   # assign("step_title", paste0("Treatment : " ,last_path(parameter_final)), envir= globalenv())
 
 function_all_comp <- function(counting){
-  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title = paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1])), parameter_short = TRUE, child_header = "## "  ), recursive=FALSE)), quiet = TRUE)
+  step_title_treatment <-  paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1]))
+  res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title =step_title_treatment, parameter_short = TRUE, child_header = "## "  ), recursive=FALSE)), quiet = TRUE)
 }
 
 all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
