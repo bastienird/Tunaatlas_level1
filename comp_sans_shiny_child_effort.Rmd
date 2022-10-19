@@ -564,12 +564,12 @@ value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dp
 groupement_2  <-   final %>% dplyr::group_by(!!! rlang::syms(x),unit) %>% dplyr::summarise(number_lines2 = 0,
 value_sum_2 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% mutate(unit = as.character(unit))
 
-fulljoin  <-   full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>%
+fulljoin  <-   full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = case_when(loss == 0 ~ "Egal", loss > 0 ~"Loss",  loss < 0 ~"Gain")) %>%
 dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
 dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
 dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)) %>%
 dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_en_milliers_de_tonne,
-`Difference in number of lines` = loss_nb_ligne)  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",round(`Difference in value`) == 0~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
+`Difference in number of lines` = loss_nb_ligne)%>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
 }
 ```
 
@@ -1081,10 +1081,10 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
   if(plotting_type == "plot"){
     image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
       tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-              id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+              id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
       tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()} else {image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
         tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-                id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+                id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
         tm_layout(legend.outside = TRUE)}
   #   tmap::tmap_save(image,"image2.png")
   # # mapshot(image, file = "image.png")
@@ -1094,7 +1094,7 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
   
   image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
     tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-            id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+            id="name", midpoint = 0)+ tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
     tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
   image
   #   tmap::tmap_save(image,"image3.png")
@@ -1117,12 +1117,12 @@ t_filtered <- inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geograp
 if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
   if(plotting_type == "plot"){
     image <- tm_shape(t_filtered)  +
-      tm_fill("Difference (in %)",style = "equal", palette = "Blues", auto.palette.mapping = FALSE, midpoint = 0)+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+      tm_fill("Difference (in %)",style = "equal", palette = "Blues", auto.palette.mapping = FALSE, midpoint = 0)+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
       tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()
     } else {
       image <- tm_shape(t_filtered) +
         tm_fill("Difference (in %)", palette="PiYG", style="cont", n=8,
-                id="name", midpoint = 0)+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+                id="name", midpoint = 0)+tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
         tm_layout(legend.outside = TRUE)}
 
 
@@ -1130,7 +1130,7 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
   
   image <- tm_shape(t_filtered%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
     tm_polygons(col = "Difference (in %)", palette="PiYG", style="cont", n=8,
-            id="name", midpoint = 0,interval.closure	= "left")+ tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = TRUE)+
+            id="name", midpoint = 0,interval.closure	= "left")+ tm_facets(by = c("unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
     tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
 
 }
@@ -1258,12 +1258,7 @@ Here is represented for each area the polygons keeping all the initial informati
 ```{r}
 breaks <- inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = dplyr::case_when(`Difference (in %)` == -Inf ~"Appearing data", -Inf<`Difference (in %)`  & `Difference (in %)`<= -100 ~"Gain (more than double)" ,  -100<`Difference (in %)`  & `Difference (in %)`<0 ~ "Gain",`Difference (in %)`==0~"No differences" ,0<`Difference (in %)`  & `Difference (in %)`<100 ~ "Loss",`Difference (in %)` ==100 ~  "All data lost" ))
 
- image <- tm_shape(breaks)+    tm_fill( "Impact on the data", palette="-PiYG", 
-             id="name", midpoint = 0)+tm_borders(lwd = 0.05)+ tm_facets(by = c("unit", "cat_geo"), free.scales = TRUE,free.coords = TRUE)+    tm_layout(legend.outside = TRUE)
-
-  # image <- tm_shape(inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = dplyr::case_when((`Difference (in %)` != -Inf &`Difference (in %)` < -100) ~ -1000, TRUE ~`Difference (in %)`  )))+    tm_fill( "Impact on the data", palette="-PiYG", style="fixed", breaks = c(-Inf,-1001, -100,0,0,100,100),labels = c("Appearing data", "Gain (more than double)","Gain", "No differences","Loss", "All data lost" ),
-  #            id="name", midpoint = 0)+tm_borders(lwd = 0.05)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+
-  #   tm_layout(legend.outside = TRUE)
+ image <- tm_shape(breaks)+tm_fill( "Impact on the data", palette="-PiYG",  id="name", midpoint = 0)+tm_borders(lwd = 0.05)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE, drop.units = FALSE)+    tm_layout(legend.outside = TRUE)
 
 if(plotting_type == "plot"){image <- image  +tm_shape(continent)+tm_borders()}
 
