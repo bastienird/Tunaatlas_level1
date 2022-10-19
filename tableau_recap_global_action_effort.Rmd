@@ -299,7 +299,7 @@ child_env$last_to_first <- TRUE
   # assign("last_to_first", TRUE, pos = environment())
   # assign("parameter_con", con, pos = environment())
 
-res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = child_en, quiet = TRUE)
+res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = child_env, quiet = TRUE)
 ```
 
 
