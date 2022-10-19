@@ -657,7 +657,7 @@ join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
 ```
 
 
-```{r echo=FALSE, out.width="100%", results='asis'}
+```{r echo=FALSE, out.width="100%", eval=!unique_analyse, results='asis'}
 
 set_caption(join, caption = "Summary of the difference between the two datasets",  style = "Table Caption")
 
