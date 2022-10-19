@@ -12,7 +12,7 @@ output:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata"
+  init: "~/Documents/Tunaatlas_level1/jobs/20221019232032/entities/global_catch_1deg_level0__final_test/Markdown/rawdata"
   dbname: "tunaatlas_sandbox2"
   host: "localhost"
   port: 5432
@@ -32,7 +32,7 @@ params:
   config: config
   action: action
   short: FALSE
-  mapped: TRUE
+  mapped: FALSE
 ---
 
 ```{r cache=FALSE, include=FALSE}
@@ -393,6 +393,9 @@ titre_1 <- gsub("_","-",titre_1)
 ```
 
 ```{r}
+if(!(require(data.table))){ 
+  install.packages("data.table") 
+  (require(data.table))}
 fwrite(head(init,50), "init_50.csv")
 fwrite(final, "final.csv")
 ```
@@ -642,7 +645,7 @@ if(parameter_short == FALSE){cat2("# Main differences \n ")}
 ```
 
 
-```{r results='asis', eval=!unique_analyse, out.width="100%"}
+```{r  eval=!unique_analyse}
 units <- unique(c(unique(init$unit), unique(final$unit)))
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
@@ -659,14 +662,14 @@ join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
 ```
 
 
-```{r echo=FALSE, out.width="100%", eval=!unique_analyse, results='asis'}
+```{r  eval=!unique_analyse,echo=FALSE, results='asis', out.width="100%"}
 
 set_caption(join, caption = "Summary of the difference between the two datasets",  style = "Table Caption")
 
 ```
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis', eval=!unique_analyse}
+```{r echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
 
 if (nrow(strates_perdues_first_10)!=0){
   groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Los<- / Gain` = dplyr::case_when(loss > 0~ "Loss", loss == 0 ~ "No differences", loss < 0~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
