@@ -277,14 +277,17 @@ options_knit <-  do.call(list, unlist(list(parameters, parameter_init =sub_list_
   assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)] , envir = environment())
   assign("child", TRUE, envir = environment())
   assign("parameter_mapped", TRUE, envir = environment())
-  assign("step_title", "", envir = environment())
-  rm(step_title)
+  assign("title_1", "Initial_data", envir = environment())
+  assign("title_2", "Final_data", envir = environment())
+  if(exists("step_title")) {rm(step_title)}
 
   assign("last_to_first", TRUE, envir = environment())
   assign("parameter_con", con, envir = environment())
 
 res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options =options_knit, quiet = TRUE)
-rm(last_to_first)
+rm(last_to_first, envir = environment())
+rm(title_1, envir = environment())
+rm(title_2, envir = environment())
 ```
 
 
