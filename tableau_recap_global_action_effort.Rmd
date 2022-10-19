@@ -607,7 +607,7 @@ t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%group_by(ac
 
 i <-pivot_wider(t %>% group_by(source_authority) , names_from = source_authority, names_prefix = "Ancient name for ", values_from = "src_code")  %>% rename("New code" = trg_code) %>% rename(Dimension = src_codingsystem)%>%
     relocate(Dimension) %>% select(-row)
-ster <- i %>% group_by(Dimension, `New code`) %>% summarise_at(vars(-group_cols()),funs(toString)) %>% mutate_all(.funs = function(x){gsub(",$", "",gsub(c("NA", ",NA", " NA"), "", gsub("  ","",gsub("NA,", "", x))))})
+ster <- i %>% group_by(Dimension, `New code`) %>% summarise_at(vars(-group_cols()),.funs = function(x){toString(x[!duplicated(x)])}) %>% mutate_all(.funs = function(x){gsub(",$", "",gsub(c("NA", ",NA", " NA"), "", gsub("  ","",gsub("NA,", "", x))))})
 
 
 t <- flextable::as_grouped_data(ster, groups = c("Dimension"))
