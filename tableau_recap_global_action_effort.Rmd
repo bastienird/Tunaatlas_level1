@@ -253,7 +253,8 @@ sub_list_dir_2 = rownames(details)
 #   assign("parameter_init", sub_list_dir_2[1], envir = globalenv())
 #   assign("child", TRUE, envir = globalenv())
 #   assign("parameter_con", con, envir = globalenv())
-res2 <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[1], step_title = ""), recursive=FALSE)), quiet = TRUE)
+options_knit <- do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[1], step_title = ""), recursive=FALSE))
+res2 <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = options_knit, quiet = TRUE)
 ```
 
 
@@ -271,8 +272,8 @@ cat(res2, sep =  "\\clearpage")
 # Summary of the treatment done on the data (comparison between the first to the last)
 
 ```{r echo=FALSE, results='asis'}
-
-res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init =sub_list_dir_2[1], parameter_final = sub_list_dir_2[length(sub_list_dir_2)] , parameter_mapped = TRUE, step_title = "", last_to_first = TRUE ), recursive=FALSE)), quiet = TRUE)
+options_knit <-  do.call(list, unlist(list(parameters, parameter_init =sub_list_dir_2[1], parameter_final = sub_list_dir_2[length(sub_list_dir_2)] , parameter_mapped = TRUE, step_title = "", last_to_first = TRUE ), recursive=FALSE))
+res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options =options_knit, quiet = TRUE)
 
 ```
 
