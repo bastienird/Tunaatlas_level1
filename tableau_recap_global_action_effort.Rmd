@@ -284,7 +284,7 @@ options_knit <-  do.call(list, unlist(list(parameters, parameter_init =sub_list_
   assign("parameter_con", con, envir = environment())
 
 res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options =options_knit, quiet = TRUE)
-
+rm(last_to_first)
 ```
 
 
@@ -568,6 +568,7 @@ function_all_comp <- function(counting){
   assign("step", counting, envir = environment())
   assign("child_header", "##", envir= environment())
   assign("step_title", paste0(" Treatment : " ,last_path(parameter_final)), envir= environment())
+  rm(parameter_mapped)
 
   step_title_treatment <-  paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1]))
   res <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[counting], parameter_final = sub_list_dir_2[counting+1],  step_title =step_title_treatment, parameter_short = TRUE, child_header = "## "  ), recursive=FALSE)), quiet = TRUE)
