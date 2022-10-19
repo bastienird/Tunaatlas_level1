@@ -12,7 +12,7 @@ output:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220926115816_global_effort/entities/global_catch_effort_test/Markdown/rawdata"
+  init: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata"
   dbname: "tunaatlas_sandbox2"
   host: "localhost"
   port: 5432
@@ -22,7 +22,7 @@ params:
   time_dimension:
   geographical_dimension:
   filtering: !r list(species = NULL)
-  fact: "effort"
+  fact: "catch"
   colnames_to_keep: !r list("fishingfleet" ,    "unit" ,     "gear", "geographic_identifier", "time_start" , "time_end",             "value" ,                 "source_authority") 
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",

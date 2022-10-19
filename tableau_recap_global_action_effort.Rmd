@@ -7,8 +7,7 @@ output:
     toc_depth: 3
     number_sections: true
     always_allow_html: true
-    extra_dependencies: "subfig"
-    extra_dependencies: ["adjustbox"]
+    extra_dependencies: ["adjustbox", "subfig"]
     fig_caption: true
     tab_caption: true
     lof: true
