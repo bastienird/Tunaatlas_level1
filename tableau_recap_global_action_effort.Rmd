@@ -55,8 +55,9 @@ opts <- action$options
 con <- config$software$output$dbi
 parameter_fact = opts$fact
 parameter_filtering <- if(!is.null(opts$filtering)){opts$filtering} else{ list(species = NULL, fishingfleet = NULL)}
-if(exists('params')){parameters <- params}else{
-parameters <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con, child = TRUE)}
+# if(exists('params')){parameters <- params}else{
+parameters <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con, child = TRUE)
+# }
 ```
 
 ```{r}
