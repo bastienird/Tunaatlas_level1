@@ -344,8 +344,7 @@ if (!exists("parameter_final")) {parameter_final <- NULL}
 
 ```{r}
 init <- readRDS(paste0(as.character(parameter_init),"/rds.rds")) %>%dplyr::select(all_of(colnames_to_keep))%>%  left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end)) %>%dplyr::mutate(cat_geo = as.character(cat_geo)) 
-if(is_null_or_not_exist(parameter_final)){final <- init
- final <- final[0,] %>% mutate(unit = as.character(unit))
+if(is_null_or_not_exist(parameter_final)){final <- init[0,] 
  unique_analyse <-  TRUE} else{
 final <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))%>%dplyr::select(all_of(colnames_to_keep)) %>%   left_join(shape_without_geom, by = c("geographic_identifier"="code"))  %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end))%>%dplyr::mutate(cat_geo = as.character(cat_geo))
 unique_analyse <- FALSE}
@@ -463,7 +462,7 @@ return(dataframe_to_filter %>% rename("geographic_identifier" := {{geo_dim}}))
 formals(filtering_function)$geo_dim = geographical_dimension
 init <- filtering_function(init, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
 
-if(unique_analyse){final <- init[0,] %>% mutate(unit = as.character(unit))} else {final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)}
+if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)}
 
 
 
@@ -560,9 +559,11 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 ```{r cache=FALSE}
 fonction_groupement = function(x, init, final){
 groupement_1  <-   init %>% dplyr::group_by(!!! rlang::syms(x),unit) %>% dplyr::summarise(number_lines1 = 0,
-value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))
+value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% mutate(unit = as.character(unit))
+
 groupement_2  <-   final %>% dplyr::group_by(!!! rlang::syms(x),unit) %>% dplyr::summarise(number_lines2 = 0,
-value_sum_2 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))
+value_sum_2 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% mutate(unit = as.character(unit))
+
 fulljoin  <-   full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>%
 dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
 dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
