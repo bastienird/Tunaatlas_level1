@@ -51,6 +51,7 @@ is_null_or_not_exist <- function(x) {
 
 ```{r include=FALSE}
 if(!exists("child")){child = FALSE} else{child = child}
+if(!exists("step_title")){step_title_t_f = FALSE} else{step_title_t_f = TRUE}
 ```
 
 ```{r include=FALSE}
@@ -103,7 +104,7 @@ knitr::opts_chunk$set(
 cat2 <- cat
 ```
 
-```{r results='asis', eval=exists("step_title")}
+```{r results='asis', eval=step_title_t_f}
 cat2(step_title)
 ```
 
