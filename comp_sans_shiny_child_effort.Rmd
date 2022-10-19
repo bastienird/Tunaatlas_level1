@@ -885,10 +885,6 @@ cat2("## Repartition of the data for the other dimensions")
 We check the distribution of the value of each dimension and each unit.
 
 
-
-
-
-
 <!-- ```{r} -->
 <!-- formals(resume_knit_child)$titre_1 <- titre_1 -->
 <!-- formals(resume_knit_child)$titre_2 <- titre_2 -->
@@ -944,6 +940,7 @@ df <- qflextable2(df, captionn = paste0("Strata movement for the dimension : ", 
 ```
 
 
+
 ```{r}
 resume_knit_child = function(x){
   
@@ -997,9 +994,7 @@ dimension_title_subfigures <- c("","")
 
 
 ```{r echo=FALSE, eval=unique_analyse, fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
-
-figures
-
+for (i in figures){plot(i)}
 ```
 
 
