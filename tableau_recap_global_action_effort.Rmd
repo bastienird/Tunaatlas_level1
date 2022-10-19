@@ -8,6 +8,7 @@ output:
     number_sections: true
     always_allow_html: true
     extra_dependencies: "subfig"
+    extra_dependencies: ["adjustbox"]
     fig_caption: true
     tab_caption: true
     lof: true
