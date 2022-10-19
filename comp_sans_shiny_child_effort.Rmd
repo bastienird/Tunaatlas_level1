@@ -7,7 +7,7 @@ output:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
     keep_tex: true
-    extra_dependencies: "subfig"
+    extra_dependencies: ["adjustbox", "subfig"]
   bookdown::html_document2:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
@@ -315,6 +315,9 @@ if(parameter_fact == "catch"){colnames_to_keep <- c("fishingfleet",         "gea
 ```
 
 
+```{r}
+write(parameter_fact, "parameter_fact.txt")
+```
 
 
 ```{r results='asis', cache=FALSE, eval=!child}
@@ -387,6 +390,12 @@ titre_1 <- gsub("_","-",titre_1)
 # if(nrow(<- %>% dplyr::filter(unit=="Number of fish"))!=0 & nrow(final%>% dplyr::filter(unit=="Number of fish"))==0){all_no_lost <- TRUE} else{all_no_lost <- FALSE}
 
 ```
+
+```{r}
+fwrite(head(init,50), "init_50.csv")
+fwrite(final, "final.csv")
+```
+
 
 ```{r results='asis', eval=(parameter_short == FALSE & !unique_analyse)}
 try(knit_child_attention <- knitr::knit_child(text =c(
@@ -631,9 +640,7 @@ if(parameter_short == FALSE){cat2("# Main differences \n ")}
 ```
 
 
-
 ```{r results='asis', eval=!unique_analyse, out.width="100%"}
-
 units <- unique(c(unique(init$unit), unique(final$unit)))
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
@@ -647,9 +654,14 @@ join <- full_join(init_group, final_group) %>% arrange(unit) %>%rowwise() %>%  m
 join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)}))%>% 
           color(~ `Difference` < 0, color = "green",~ `Difference`) %>% 
           color(~ `Difference` >0, color = "red",~ `Difference`)
-set_caption(join, caption = "Summary of the difference between the two datasets",  style = "Table Caption")
 ```
 
+
+```{r echo=FALSE, out.width="100%", results='asis'}
+
+set_caption(join, caption = "Summary of the difference between the two datasets",  style = "Table Caption")
+
+```
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis', eval=!unique_analyse}

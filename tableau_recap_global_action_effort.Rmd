@@ -254,7 +254,7 @@ assign("titre_1", entity$identifiers[["id"]], envir = environment())
   assign("parameter_fact", parameter_fact, envir = environment())
   assign("child", TRUE, envir = environment())
   assign("parameter_con", con, envir = environment())
-options_knit <- do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[1], step_title = ""), recursive=FALSE))
+options_knit <- do.call(list, unlist(list(parameters, parameter_init = sub_list_dir_2[1], step_title = "", parameter_fact = parameter_fact), recursive=FALSE))
 res2 <- knitr::knit_child("comp_sans_shiny_child_effort.Rmd", envir = environment(), options = options_knit, quiet = TRUE)
 ```
 
