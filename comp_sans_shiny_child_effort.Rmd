@@ -450,7 +450,7 @@ try(cat(knit_mapped))
 
 ```{r}
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
-kable(summary(matchingList),"matchinlist.csv")
+kable(summary(matchingList))
 
 colnames_to_filter <- colnames(init %>% select(names(matchingList)))
 
