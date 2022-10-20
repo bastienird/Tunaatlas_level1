@@ -466,7 +466,7 @@ matchingList <- lapply(matchingList, function(x){ #handling single filter
 if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
 
 filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList, geo_dim, parameter_fact, parameter_UNK_for_not_standards_unit){
-  if(length(matchingList)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
+  if(length(colnames_to_filter)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
   if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
     dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
 return(dataframe_to_filter %>% rename("geographic_identifier" := {{geo_dim}}))
