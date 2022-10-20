@@ -593,6 +593,9 @@ carte_init <- fonction_groupement("gear",init, final)
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"& colnames(init)!= "st_area"]
 t <- carte_init[0,]
+
+
+fwrite(head(carte_init), "head_cart_init.csv")
 ```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -648,6 +651,7 @@ if(parameter_short == FALSE){cat2("# Main differences \n ")}
 
 ```{r  eval=!unique_analyse}
 units <- unique(c(unique(init$unit), unique(final$unit)))
+write(units, "units.txt")
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
 init_group <- init %>% group_by(unit) %>% summarise(titre_test1 = sum(value)) 
