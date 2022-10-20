@@ -450,7 +450,6 @@ try(cat(knit_mapped))
 
 ```{r}
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
-kable(summary(matchingList))
 
 colnames_to_filter <- colnames(init %>% select(names(matchingList)))
 
@@ -489,6 +488,11 @@ init <- filtering_function(init, colnames_to_filter = colnames_to_filter, matchi
 if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)}
 
 
+
+```
+
+```{r results='asis'}
+kable(summary(matchingList))
 
 ```
 
