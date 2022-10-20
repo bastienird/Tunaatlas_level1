@@ -238,7 +238,7 @@ In a second time we will present the process of the GlobalTuna Atlas in order to
 # Summary of the entity : `r entity$identifiers[["id"]]` 
 
 ```{r include=FALSE}
-sub_list_dir_2 <- list.dirs(path =paste0(getwd(),"/Markdown"), full.names = TRUE, recursive = FALSE)
+sub_list_dir_2 <- paste0("Markdown/",list.dirs(path =paste0(getwd(),"/Markdown"), full.names = FALSE, recursive = FALSE))
 details = file.info(paste0(sub_list_dir_2,"/Markdown"))
 details = file.info(sub_list_dir_2)
 details = details[with(details, order(as.POSIXct(mtime))), ]
