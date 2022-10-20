@@ -575,9 +575,11 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 fonction_groupement = function(x, init, final){
 groupement_1  <-   init %>% dplyr::group_by(!!! rlang::syms(x),unit) %>% dplyr::summarise(number_lines1 = 0,
 value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% mutate(unit = as.character(unit))
+fwrite(groupement_1, "groupement_1.csv")
 
 groupement_2  <-   final %>% dplyr::group_by(!!! rlang::syms(x),unit) %>% dplyr::summarise(number_lines2 = 0,
 value_sum_2 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% mutate(unit = as.character(unit))
+fwrite(groupement_1, "groupement_2.csv")
 
 fulljoin  <-   dplyr::full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss == 0 ~ "Egal", loss > 0 ~"Loss",  loss < 0 ~"Gain")) %>%
 dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
