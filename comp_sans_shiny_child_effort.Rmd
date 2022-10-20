@@ -76,7 +76,7 @@ if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
 }
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- FALSE}
-if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(column = NULL, column2= NULL)}{matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )}
+if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(column = NULL, column2= NULL)}else{matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )}
 ```
 
 
