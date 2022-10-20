@@ -310,7 +310,7 @@ species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% jani
                                                   Name_Es = col_skip(), Name_Ar = col_skip()))
 if(parameter_fact == "catch"){colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
                       "geographic_identifier","schooltype",           "species",              "catchtype",           
-                      "unit",                 "value",                "source_authority", "Gear")} else if(parameter_fact == "effort") {colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
+                      "unit",                 "value",                "source_authority")} else if(parameter_fact == "effort") {colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
                       "geographic_identifier","schooltype",                           
                       "unit",                 "value",                "source_authority")} else {colnames_to_keep <-parameter_colnames_to_keep}
 
@@ -336,6 +336,9 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 }
 
 ```
+
+
+
 
 
 ```{r}
