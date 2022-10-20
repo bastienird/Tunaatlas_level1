@@ -611,9 +611,6 @@ t <- carte_init[0,]
 fwrite(head(carte_init), "head_cart_init.csv")
 ```
 
-```{r}
-knitr::knit_exit(fully = TRUE)
-```
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -740,9 +737,6 @@ kable(summary(time_dimension_list_groupped_diff[1]))
 qflextable2(as.data.frame(summary(time_dimension_list_groupped_diff[[1]] %>% mutate_if(is.character, as.factor))))
 ```
 
-```{r}
-knitr::knit_exit(fully =FALSE )
-```
 
 ```{r}
 map <- lapply(time_dimension_list_groupped_diff, function(x){ggplot(x) +
