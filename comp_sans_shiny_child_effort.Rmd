@@ -603,7 +603,7 @@ dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_e
 ```
 
 
-```{r}
+```{r eval=FALSE}
 fonction_groupement = function(x, init, final){
   these_col <- enquo(x) 
 groupement_1  <-   init %>% dplyr::group_by(#!!!rlang::syms(x)
