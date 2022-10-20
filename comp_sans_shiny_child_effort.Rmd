@@ -76,7 +76,7 @@ if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
 }
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- FALSE}
-if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- NULL}
+if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(column = NULL, column2= NULL)}{matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )}
 ```
 
 
@@ -449,7 +449,7 @@ try(cat(knit_mapped))
 
 
 ```{r}
-matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
+
 
 colnames_to_filter <- colnames(init %>% select(names(matchingList)))
 
@@ -488,11 +488,6 @@ init <- filtering_function(init, colnames_to_filter = colnames_to_filter, matchi
 if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)}
 
 
-
-```
-
-```{r results='asis'}
-kable(summary(matchingList))
 
 ```
 
@@ -633,9 +628,6 @@ t <- carte_init[0,]
 fwrite(head(carte_init), "head_cart_init.csv")
 ```
 
-```{r}
-knitr::knit_exit(fully = TRUE)
-```
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}

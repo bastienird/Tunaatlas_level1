@@ -228,6 +228,11 @@ nominal_dataset <- filtering_function(nominal_dataset)
 
 ```
 
+```{r}
+print(matchingList)
+print(summary(nominal_dataset))
+```
+
 
 First we present the data created by the GlobalTuna Atlas, as well as the comparison between this data and the rawdata provided by the RFMO's before the global Tuna Atlas treatment.
 
