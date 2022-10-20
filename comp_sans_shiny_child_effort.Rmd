@@ -463,7 +463,7 @@ matchingList <- lapply(matchingList, function(x){ #handling single filter
   )
 if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
 
-filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList, geo_dim){
+filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList, geo_dim, parameter_fact, parameter_UNK_for_not_standards_unit){
   if(length(matchingList)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
   if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
     dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
@@ -478,6 +478,9 @@ return(dataframe_to_filter %>% rename("geographic_identifier" := {{geo_dim}}))
 # rapply(list_init_final, f = filtering_function, colnames_to_filter = colnames_to_filter, matchingList = matchingList, how = "replace")
 # purrr::modify(list(init, final), .f = filtering_function, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
 formals(filtering_function)$geo_dim = geographical_dimension
+formals(filtering_function)$parameter_fact = parameter_fact
+formals(filtering_function)$parameter_UNK_for_not_standards_unit = parameter_UNK_for_not_standards_unit
+
 init <- filtering_function(init, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
 
 if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)}
@@ -575,8 +578,8 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 ```
 
 ```{r}
-fonction_groupement = function(x, init, final){
-  these_col <- enquo(x) 
+fonction_groupement = function(column, init, final){
+  these_col <- dplyr::enquo(column) 
 groupement_1  <-   init %>% dplyr::group_by(#!!!rlang::syms(x)
   !!these_col,unit) %>% dplyr::summarise(number_lines1 = 0,
 value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% mutate(unit = as.character(unit))
@@ -594,10 +597,12 @@ dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)) %>%
 dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_en_milliers_de_tonne,
 `Difference in number of lines` = loss_nb_ligne)%>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
 }
+
 ```
 
+
 ```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
-carte_init <- fonction_groupement(fishingfleet,init, final)
+carte_init <- fonction_groupement(column = fishingfleet,init, final)
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"& colnames(init)!= "st_area"]
 t <- carte_init[0,]
