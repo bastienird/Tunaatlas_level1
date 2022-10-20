@@ -578,8 +578,34 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 ```
 
 ```{r}
-fonction_groupement = function(column, init, final){
-  these_col <- dplyr::enquo(column) 
+fonction_groupement = function(x, init, final){
+  # these_col <- enquo(x) 
+groupement_1  <-   init %>% dplyr::group_by(!!!rlang::syms(x)
+  #!!these_col
+  ,unit) %>% dplyr::summarise(number_lines1 = 0,
+value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% mutate(unit = as.character(unit))
+fwrite(groupement_1, "groupement_1.csv")
+
+groupement_2  <-   final %>% dplyr::group_by(!!!rlang::syms(x)
+  #!!these_col
+  ,unit) %>%  dplyr::summarise(number_lines2 = 0,
+value_sum_2 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% mutate(unit = as.character(unit))
+fwrite(groupement_2, "groupement_2.csv")
+
+fulljoin  <-   dplyr::full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss == 0 ~ "Egal", loss > 0 ~"Loss",  loss < 0 ~"Gain")) %>%
+dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
+dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
+dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)) %>%
+dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_en_milliers_de_tonne,
+`Difference in number of lines` = loss_nb_ligne)%>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
+}
+
+```
+
+
+```{r}
+fonction_groupement = function(x, init, final){
+  these_col <- enquo(x) 
 groupement_1  <-   init %>% dplyr::group_by(#!!!rlang::syms(x)
   !!these_col,unit) %>% dplyr::summarise(number_lines1 = 0,
 value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% mutate(unit = as.character(unit))
@@ -597,12 +623,10 @@ dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)) %>%
 dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_en_milliers_de_tonne,
 `Difference in number of lines` = loss_nb_ligne)%>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
 }
-
 ```
 
-
 ```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
-carte_init <- fonction_groupement(column = fishingfleet,init, final)
+carte_init <- fonction_groupement(fishingfleet,init, final)
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"& colnames(init)!= "st_area"]
 t <- carte_init[0,]
@@ -611,6 +635,9 @@ t <- carte_init[0,]
 fwrite(head(carte_init), "head_cart_init.csv")
 ```
 
+```{r}
+knitr::knit_exit(fully = TRUE)
+```
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -737,6 +764,9 @@ kable(summary(time_dimension_list_groupped_diff[1]))
 qflextable2(as.data.frame(summary(time_dimension_list_groupped_diff[[1]] %>% mutate_if(is.character, as.factor))))
 ```
 
+```{r}
+knitr::knit_exit(fully =FALSE )
+```
 
 ```{r}
 map <- lapply(time_dimension_list_groupped_diff, function(x){ggplot(x) +
