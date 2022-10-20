@@ -76,6 +76,7 @@ if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
 }
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- FALSE}
+if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- NULL}
 ```
 
 
@@ -610,28 +611,6 @@ dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_e
 
 ```
 
-
-```{r eval=FALSE}
-fonction_groupement = function(x, init, final){
-  these_col <- enquo(x) 
-groupement_1  <-   init %>% dplyr::group_by(#!!!rlang::syms(x)
-  !!these_col,unit) %>% dplyr::summarise(number_lines1 = 0,
-value_sum_1 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% mutate(unit = as.character(unit))
-fwrite(groupement_1, "groupement_1.csv")
-
-groupement_2  <-   final %>% dplyr::group_by(#!!!rlang::syms(x)
-  !!these_col,unit) %>%  dplyr::summarise(number_lines2 = 0,
-value_sum_2 = round((sum(value, na.rm=TRUE)))) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% mutate(unit = as.character(unit))
-fwrite(groupement_1, "groupement_2.csv")
-
-fulljoin  <-   dplyr::full_join(groupement_1, groupement_2)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss == 0 ~ "Egal", loss > 0 ~"Loss",  loss < 0 ~"Gain")) %>%
-dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
-dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
-dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)) %>%
-dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_en_milliers_de_tonne,
-`Difference in number of lines` = loss_nb_ligne)%>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
-}
-```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 
