@@ -597,7 +597,7 @@ dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_e
 ```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
-carte_init <- fonction_groupement("fishingfleet",init, final)
+carte_init <- fonction_groupement(fishingfleet,init, final)
 
 Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"& colnames(init)!= "st_area"]
 t <- carte_init[0,]
