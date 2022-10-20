@@ -310,7 +310,7 @@ species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% jani
                                                   Name_Es = col_skip(), Name_Ar = col_skip()))
 if(parameter_fact == "catch"){colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
                       "geographic_identifier","schooltype",           "species",              "catchtype",           
-                      "unit",                 "value",                "source_authority")} else if(parameter_fact == "effort") {colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
+                      "unit",                 "value",                "source_authority", "Gear")} else if(parameter_fact == "effort") {colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",           "time_end",            
                       "geographic_identifier","schooltype",                           
                       "unit",                 "value",                "source_authority")} else {colnames_to_keep <-parameter_colnames_to_keep}
 
@@ -336,9 +336,6 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 }
 
 ```
-
-
-
 
 
 ```{r}
@@ -599,6 +596,11 @@ t <- carte_init[0,]
 
 fwrite(head(carte_init), "head_cart_init.csv")
 ```
+
+```{r}
+knitr::knit_exit(fully = TRUE)
+```
+
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 for (i in Dimensions){
@@ -932,8 +934,10 @@ formals(pie_chart_2_default)$titre_1 <- titre_1
 formals(pie_chart_2_default)$titre_2 <- titre_2
 # formals(pie_chart_2_default)$first <- init
 # formals(pie_chart_2_default)$second <- final
-if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
-  list_pie_chart <- list("fishingfleet","source_authority","Gear")} else if ("Name_En"%in% colnames(init) & "Name_En"%in% colnames(final) ){list_pie_chart <- list("fishingfleet","source_authority","Name_En")} else {list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value"))))[[1]]}
+# if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
+  # list_pie_chart <- list("fishingfleet","source_authority","Gear")} else {
+    list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value"))))[[1]]
+    # }
 
 # t <- pie_chart_2_default(fishingfleet, init, final, topn = 1)
 # if(unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = pie_chart_2_default, first = init, topn = 4)}
