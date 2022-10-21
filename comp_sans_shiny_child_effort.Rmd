@@ -323,10 +323,6 @@ if(parameter_fact == "catch"){colnames_to_keep <- c("fishingfleet",         "gea
 ```
 
 
-```{r}
-write(parameter_fact, "parameter_fact.txt")
-```
-
 
 ```{r results='asis', cache=FALSE, eval=!child}
 
@@ -397,14 +393,6 @@ titre_1 <- gsub("_","-",titre_1)
 # if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0 | nrow(final%>% dplyr::filter(unit=="Number of fish"))!=0){is_there_no <- TRUE} else{is_there_no <- FALSE}
 # if(nrow(<- %>% dplyr::filter(unit=="Number of fish"))!=0 & nrow(final%>% dplyr::filter(unit=="Number of fish"))==0){all_no_lost <- TRUE} else{all_no_lost <- FALSE}
 
-```
-
-```{r}
-if(!(require(data.table))){ 
-  install.packages("data.table") 
-  (require(data.table))}
-fwrite(head(init,50), "init_50.csv")
-fwrite(final, "final.csv")
 ```
 
 
@@ -583,7 +571,6 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 
 ```{r}
 fonction_groupement = function(these_col, init, final){
-  fwrite(head(init), "init_2.csv")
   if(!(require(rlang))){ 
   install.packages("rlang") 
   (require(rlang))} 
@@ -593,8 +580,6 @@ fonction_groupement = function(these_col, init, final){
 groupement_1  <-   init %>%ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
   ,unit) %>% dplyr::summarise(value_sum_1 = round((sum(value, na.rm=TRUE)))) %>% ungroup() %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% mutate(unit = as.character(unit))%>% dplyr::mutate(number_lines1 = n())
-fwrite(groupement_1, "groupement_1.csv")
-fwrite(head(final), "final_2.csv")
 
 # groupement_2 <- final[, value := lapply(.SD, sum), by = these_col, .SDcols = "value"]
 # groupement_2 <- groupement_2 %>% mutate(number_lines2 = 0)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>% mutate(unit = as.character(unit))
@@ -602,7 +587,6 @@ fwrite(head(final), "final_2.csv")
 groupement_2  <-   final %>%ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
   ,unit) %>%  dplyr::summarise(value_sum_2 = round((sum(value, na.rm=TRUE)))) %>% ungroup()  %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% mutate(unit = as.character(unit)) %>% dplyr::mutate(number_lines2 = n())
-fwrite(groupement_2, "groupement_2.csv")
 
 fulljoin  <-   dplyr::full_join(groupement_1, groupement_2) %>%  dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss == 0 ~ "Egal", loss > 0 ~"Loss",  loss < 0 ~"Gain")) %>%
 dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
@@ -617,9 +601,6 @@ dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_e
 
 ```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 
-fwrite(head(final), "final_3.csv")
-fwrite(head(init), "init_3.csv")
-
 
 carte_init <- fonction_groupement("fishingfleet",init, final)
 
@@ -627,7 +608,6 @@ Dimensions <- colnames(init)[colnames(init) != "unit" & colnames(init)!= "value"
 t <- carte_init[0,]
 
 
-fwrite(head(carte_init), "head_cart_init.csv")
 ```
 
 
@@ -685,7 +665,6 @@ if(parameter_short == FALSE){cat2("# Main differences \n ")}
 
 ```{r  eval=!unique_analyse}
 units <- unique(c(unique(init$unit), unique(final$unit)))
-write(units, "units.txt")
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
 init_group <- init %>% group_by(unit) %>% summarise(titre_test1 = sum(value)) 
@@ -756,9 +735,6 @@ kable(summary(time_dimension_list_groupped_diff[1]))
 qflextable2(as.data.frame(summary(time_dimension_list_groupped_diff[[1]] %>% mutate_if(is.character, as.factor))))
 ```
 
-```{r}
-knitr::knit_exit(fully =FALSE )
-```
 
 ```{r}
 map <- lapply(time_dimension_list_groupped_diff, function(x){ggplot(x) +
