@@ -55,7 +55,9 @@ con <- params$config$software$output$dbi
 parameter_fact = params$action$options$fact
 parameter_filtering <- if(!is.null(params$action$options$filtering)){params$action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
 # if(exists('params')){parameters <- params}else{
-parameters <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con, child = TRUE)
+parameters_child <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con, child = TRUE)
+child_env = new.env()
+child_env <- parameters_child
 # }
 ```
 
@@ -226,11 +228,6 @@ nominal_dataset <- filtering_function(nominal_dataset)
 
   
 
-```
-
-```{r}
-print(matchingList)
-print(summary(nominal_dataset))
 ```
 
 
