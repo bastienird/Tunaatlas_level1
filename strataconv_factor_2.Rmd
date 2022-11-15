@@ -1,9 +1,28 @@
 ---
-title: "Comp facteur de conversion Alain B / Level 0"
-output: html_document
-date: "2022-03-23"
+title: "Comp facteur de conversion Alain / Level 0"
+output:
+  bookdown::pdf_document2:
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+    keep_tex: true
+    extra_dependencies: ["adjustbox", "subfig"]
+  bookdown::html_document2:
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+date: '2022-03-23'
 params:
-  species: !r c('ALB', 'BET', 'SKJ', 'YFT', "SWO")
+  final: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/Modifying_IOTC_cwp_errors"
+  rawdata: "data/rawdata"
+  dbname: "tunaatlas"
+  host: "db-tunaatlas.d4science.org"
+  port: 5432
+  user: "tunaatlas_u"
+  password: "21c0551e7ed2911"
+  plotting: "plot"
+  world_coastline: "gshhs_world_coastlines"
+  con: con
+  filter_species: !r NULL
+
 ---
 
 ```{r setup, include=FALSE}
@@ -12,25 +31,97 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
-library(readtext)
-library(flextable)
+
+knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
+
+if(!(require(base))){ 
+  install.packages("base") 
+  (require(base))} 
+if(!(require(flextable))){ 
+  install.packages("flextable") 
+  (require(flextable))} 
+if(!(require(remotes))){ 
+  install.packages("remotes") 
+  (require(remotes))} 
+if(!(require(utils))){ 
+  install.packages("utils") 
+  (require(utils))} 
+if(!(require(stringr))){ 
+  install.packages("stringr") 
+  (require(stringr))} 
+if(!(require(knitr))){ 
+  install.packages("knitr") 
+  (require(knitr))} 
+if(!(require(DBI))){ 
+  install.packages("DBI") 
+  (require(DBI))} 
+if(!(require(odbc))){ 
+  install.packages("odbc") 
+  (require(odbc))} 
+if(!(require(rlang))){ 
+  install.packages("rlang") 
+  (require(rlang))} 
+if(!(require(sf))){ 
+  install.packages("sf") 
+  (require(sf))} 
+if(!(require(kableExtra))){ 
+  install.packages("kableExtra") 
+  (require(kableExtra))} 
+if(!(require(readxl))){ 
+  install.packages("readxl") 
+  (require(readxl))} 
+if(!(require(readr))){ 
+  install.packages("readr") 
+  (require(readr))} 
+if(!(require(tidyr))){ 
+  install.packages("tidyr") 
+  (require(tidyr))} 
+if(!(require(ggplot2))){ 
+  install.packages("ggplot2") 
+  (require(ggplot2))} 
+if(!(require(stats))){ 
+  install.packages("stats") 
+  (require(stats))} 
+if(!(require(RColorBrewer))){ 
+  install.packages("RColorBrewer") 
+  (require(RColorBrewer))} 
+if(!(require(cowplot))){ 
+  install.packages("cowplot") 
+  (require(cowplot))} 
+if(!require(sutdycatchesird)){
+  if(!require(remotes)){
+    install.packages("remotes")
+  }
+  require(remotes)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
+if(!(require(tmap))){ 
+  install.packages("tmap") 
+  (require(tmap))} 
+if(!(require(RPostgreSQL))){ 
+  install.packages("RPostgreSQL") 
+  (require(RPostgreSQL))} 
+if(!(require(officer))){ 
+  install.packages("officer") 
+  (require(officer))} 
+if(!(require(lubridate))){ 
+  install.packages("lubridate") 
+  (require(lubridate))} 
+if(!(require(dplyr))){ 
+  install.packages("dplyr") 
+  (require(dplyr))} 
+
 set_flextable_defaults(
-  font.size = 30,
+  font.size = 10,
   font.color = "black",
-  table.layout = "fixed",
-  digits = NULL,
+  digits = 2,
   theme_fun = "theme_box"
-  )
-library(dplyr)
-library(stringr)
-library(readr)
-library(ggpubr)
-library(tidyverse)
-library(rstatix)
+)
 ```
 
 ```{r}
-rdslevel0 <- readRDS("~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_firms_Old_with_step_rds_level0/Markdown/rawdata/rds.rds")
+rdslevel0 <- readRDS("~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata/rds.rds")
 
 strata_nomt <- rdslevel0 %>% filter(unit %in% c("NOMT")) #%>% select(-c(schooltype, catchtype, fishingfleet)) %>% group_by_all() %>% summarise(value = sum(value)) #%>% mutate(unit = "NO", unit_target = "MT")
 # strata_no <- rdslevel0 %>% filter(unit == "NO") %>% mutate(source= "strata_no")
@@ -53,7 +144,7 @@ conversion_factor_level0 <- rbind(inner_join(strata_nomt , strata_mtno, by = set
   )%>% distinct()%>%
   group_by(gear, time_start, time_end, geographic_identifier, species, source_authority, schooltype, catchtype ,fishingfleet) %>%
   summarise(NO = sum(NO), MT = sum(MT)) %>% mutate(conversion_factor = MT/NO) %>% distinct() #%>% select(-c(NO, MT))%>% left_join(area, by =c("geographic_identifier" = "code")) #%>% mutate(geographic_identifier2=geographic_identifier,geographic_identifier = as.character(source)) #%>% full_join(test, by = c("geographic_identifier"="code")) %>% mutate(geographic_identifier = source) 
-mapping_codelist <- readRDS("~/Documents/Tunaatlas_level1/data/reference_jobs/entities/global_catch_firms_Old_with_step_rds_level0/Markdown/mapping_codelist/rds.rds")
+mapping_codelist <-readRDS("~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/mapping_codelist/rds.rds")
 mapping_codelist <- mapping_codelist %>% filter(unit%in%c("MTNO", "NOMT"))
 data_before_raising_with_level0_raising_factor_at_the_side <- mapping_codelist %>% full_join(conversion_factor_level0)
 data_before_raising_with_rais_factor <- data_before_raising_with_level0_raising_factor_at_the_side %>% filter(!is.na(conversion_factor))
@@ -134,6 +225,7 @@ test %>%
  theme_minimal() +
  facet_wrap(vars(species), scales = "free")
 ```
+
 ```{r}
 mean_conv_by_specie <- conversion_factor_level0 %>% group_by(species) %>% summarise(conversion_factor_mean = mean(conversion_factor), conversion_factor_max = max(conversion_factor))
 ```
@@ -161,7 +253,7 @@ conversion_factor_alain <-  read_csv("data/conversion_factors_num_to_weight_ird_
 rfmo <- mean_conversion_factor%>% mutate(time_start = lubridate::year(time_start)) %>% mutate(time_end = lubridate::year(time_end)) %>% select(setdiff(colnames(conversion_factor_alain), c("unit_target","unit")))
 ird <- conversion_factor_alain %>%  mutate(geographic_identifier = as.character(geographic_identifier))%>% select(setdiff(colnames(conversion_factor_alain), c("unit_target","unit"))) 
 
-combine <- gdata::combine(rfmo,ird )%>% filter(species %in%params$species)
+combine <- gdata::combine(rfmo,ird )#%>% filter(species %in%params$species)
 combine <- combine %>% filter(species != "PBF") %>% mutate_if(is.character, as.factor)
 ggplot(combine , aes( y = conversion_factor, col = source))+geom_boxplot()+facet_wrap("species", scales="free")
 
@@ -254,6 +346,11 @@ for(i in 1:length(species)){
 }
 
 ```
+
+```{r}
+knitr::knit_exit()
+```
+
 
 ```{r}
 library(rstatix)

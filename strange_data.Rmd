@@ -1,38 +1,157 @@
 ---
-title: "strange_data"
-output: html_document
-date: '2022-05-11'
-params:
-  source_authority: 
+title: 'Comparison of two data sets at different levels/options of the tuna atlas'
+author: "IRD"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  bookdown::pdf_document2:
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+    keep_tex: true
+  bookdown::html_document2:
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+params: 
+  final: "~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2/Markdown/Level2_RF1"
+  dbname: "tunaatlas_sandbox2"
+  host: "localhost"
+  port: 5432
+  user: "tunaatlas_u"
+  password: "21c0551e7ed2911"
+  further_analysis: "FALSE"
+  filter_species: !r NULL
+  filter_source_authority: !r NULL
+  filter_gear: !r NULL
+  filter_fishingfleet: !r NULL  
+  filter_time_start: !r NULL
+  filter_time_end: !r NULL
+  filter_cat_geo: !r NULL
+  filter_catchtype: !r NULL
+  filter_schooltype: !r NULL
+  filter_species_group: !r NULL
+  titre_dataset_1: !r NULL
+  titre_dataset_2: !r NULL
+  fact: "catch"
+  colnames_to_keep: [ fishingfleet ,           species ,                  
+  unit ,                  value ,                 source_authority ]
+  columns_to_keep: [  Precision     ,                   unit      ,                     
+  "Captures table 1"      ,"Captures table 2"      ,                               "Loss / Gain",
+   Difference (in %)          ,      Dimension   ,       Difference in millions of tons/fish ]
+  con: con
+  entity: entity
+  config: config
+  action: action
+  short: FALSE
 ---
 
-```{r setup, include=FALSE}
+```{r}
 knitr::opts_chunk$set(
 	echo = FALSE,
-	message = TRUE,
-	warning = TRUE
+	message = FALSE,
+	warning = FALSE, fig.align = 'center'
 )
-library(readtext)
-library(flextable)
-set_flextable_defaults(
-  font.size = 30,
-  font.color = "black",
-  table.layout = "fixed",
-  digits = NULL,
-  theme_fun = "theme_box"
-  )
-library(dplyr)
-library(stringr)
-library(readr)
-library(webshot)
-if(require("htmltools"))
-library(ggplot2)
-library(cowplot)
-div(flextable_html_dependency())
-library(DBI)
-library(RPostgres)
-library(RPostgreSQL)
 ```
+
+
+```{r message=FALSE}
+
+knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
+
+if(!(require(base))){ 
+  install.packages("base") 
+  (require(base))} 
+if(!(require(flextable))){ 
+  install.packages("flextable") 
+  (require(flextable))} 
+if(!(require(remotes))){ 
+  install.packages("remotes") 
+  (require(remotes))} 
+if(!(require(utils))){ 
+  install.packages("utils") 
+  (require(utils))} 
+if(!(require(stringr))){ 
+  install.packages("stringr") 
+  (require(stringr))} 
+if(!(require(knitr))){ 
+  install.packages("knitr") 
+  (require(knitr))} 
+if(!(require(DBI))){ 
+  install.packages("DBI") 
+  (require(DBI))} 
+if(!(require(odbc))){ 
+  install.packages("odbc") 
+  (require(odbc))} 
+if(!(require(sf))){ 
+  install.packages("sf") 
+  (require(sf))} 
+if(!(require(dplyr))){ 
+  install.packages("dplyr") 
+  (require(dplyr))} 
+if(!(require(kableExtra))){ 
+  install.packages("kableExtra") 
+  (require(kableExtra))} 
+if(!(require(readxl))){ 
+  install.packages("readxl") 
+  (require(readxl))} 
+if(!(require(readr))){ 
+  install.packages("readr") 
+  (require(readr))} 
+if(!(require(tidyr))){ 
+  install.packages("tidyr") 
+  (require(tidyr))} 
+if(!(require(ggplot2))){ 
+  install.packages("ggplot2") 
+  (require(ggplot2))} 
+if(!(require(stats))){ 
+  install.packages("stats") 
+  (require(stats))} 
+if(!(require(RColorBrewer))){ 
+  install.packages("RColorBrewer") 
+  (require(RColorBrewer))} 
+if(!(require(cowplot))){ 
+  install.packages("cowplot") 
+  (require(cowplot))} 
+if(!require(sutdycatchesird)){
+  if(!require(remotes)){
+    install.packages("remotes")
+  }
+  require(remotes)
+  install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
+if(!(require(tmap))){ 
+  install.packages("tmap") 
+  (require(tmap))} 
+if(!(require(RPostgreSQL))){ 
+  install.packages("RPostgreSQL") 
+  (require(RPostgreSQL))} 
+if(!(require(officer))){ 
+  install.packages("officer") 
+  (require(officer))} 
+
+
+
+#set the table caption styling
+# knitr::opts_chunk$set(tab.cap.pre = "Table ", tab.cap.sep = ": ")
+
+#set the table caption styling
+if(!child){autonum <- officer::run_autonum(seq_id = "tab", bkm = "TC1", bkm_all = TRUE) # number the table, bkm (bookmark) is important as the cross-referencing is done using the bookmark
+}
+
+
+
+last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
+plotting_type <- "plot" 
+if (knitr::is_html_output()){plotting_type <- "view" }
+```
+
+
+```{r include=FALSE}
+if(!exists("child")){child = FALSE} else{child = child}
+```
+
+
+
+
 
 ```{r}
 fonction_groupement = function(x, data){
@@ -41,12 +160,79 @@ fonction_groupement = function(x, data){
   second_highest_value <- groupement_1 %>% group_by(unit) %>%   arrange(desc(value_sum1)) %>% 
   slice(seq_len(2)) %>% arrange(value_sum1) %>% slice(seq_len(1)) %>% select(unit, second_highest_value = value_sum1)
   groupement2 <- groupement_1%>%inner_join(second_highest_value) %>%  group_by(unit) %>%  mutate(mean = mean(value_sum1))
+}
+```
+
+
+```{r}
+
+fonction_filtre = function(dataframe_tot_filter) {
+  if(parameter_fact == "catch"){dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(species_group%>% dplyr::distinct(), by = c("species"))
+    dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
+  if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% dplyr::rename(Gear = Name_En)%>%dplyr::mutate(gear = as.character(gear))
+  }}
+  if (! is_null_exist(parameter_filter_species)){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      species %in% parameter_filter_species)
   }
+  if (! is_null_exist(parameter_filter_gear)){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      gear %in% parameter_filter_gear)
+  }    
+  if (! is_null_exist(parameter_filter_source_authority )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      source_authority %in% parameter_filter_source_authority)
+  }  
+  if (! is_null_exist(parameter_filter_fishingfleet )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      fishingfleet %in% parameter_filter_fishingfleet)
+  }
+  if (! is_null_exist(parameter_filter_time_start )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      time_start %in% parameter_filter_time_start)
+  }
+  if (! is_null_exist(parameter_filter_time_end )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      time_end %in% parameter_filter_time_end)
+  }
+  if (! is_null_exist(parameter_filter_schooltype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      schooltype %in% parameter_filter_schooltype)
+  }
+  if (! is_null_exist(parameter_filter_catchtype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      catchtype %in% parameter_filter_catchtype)
+  }
+  
+  if (! is_null_exist(parameter_filter_cat_geo )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      cat_geo %in% parameter_filter_cat_geo)
+  }
+  if (! is_null_exist(parameter_filter_catchtype )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      cat_geo %in% parameter_filter_catchtype)
+  }
+  
+  if (! is_null_exist(parameter_filter_species_group )){
+    dataframe_tot_filter <-  dataframe_tot_filter %>%dplyr::filter(
+      species_group %in% parameter_filter_species_group)
+    
+  }
+  dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish")) 
+  
+}
 
 
-# mapped_data<- read_csv("data/georef_dataset_after_mapping_codelist.csv") %>% filter(source_authority == params$source_authority)
-mapped_data<- readRDS("~/Documents/Tunaatlas_level1/jobs/20220511123321/entities/global_catch_firms_Bastien_rds_level2/Markdown/rawdata/rds.rds")
 
+
+
+init <- fonction_filtre(readRDS(paste0(as.character(parameter_final),"/rds.rds"))%>%dplyr::select(all_of(colnames_to_keep))) %>%   left_join(shape_without_geom, by = c("geographic_identifier"="code"))  %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end))%>%dplyr::mutate(cat_geo = as.character(cat_geo))
+
+
+```
+
+
+```{r}
 carte_init <- fonction_groupement(geographic_identifier,mapped_data%>% mutate(unit = case_when(unit == "NOMT"~ "NO", unit == "MTNO"~"MT", TRUE ~ unit))) #%>% mutate(absurd = topn(value,2))
 
 absurd = function(x){x %>% select(-value_sum_1) %>% filter(value_sum1 > 1.1 * second_highest_value & value_sum1 > 2*mean)}

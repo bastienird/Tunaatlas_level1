@@ -95,6 +95,10 @@ load_dataset <- function(action,entity, config, options){
       database_view_name = dataset_pid,
       stringsAsFactors = FALSE
     )
+    # config$logger.info("Closing input database connection to reopen it")
+    # DBI::dbDisconnect(config$software$input$dbi)
+    # config$logger.info("Closing input database connection to reopen it")
+    # DBI::dbConnect(config$software$input$dbi)
     
     InputMetadataset[is.na(InputMetadataset)] <- "NA"
     

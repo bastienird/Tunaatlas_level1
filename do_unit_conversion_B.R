@@ -8,7 +8,7 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
     config$logger.info("Downloading file using Google Drive R interface")
     drive_id <- unlist(strsplit(unit_conversion_csv_conversion_factor_url, "id="))[2]
     drive_id <- unlist(strsplit(drive_id, "&export"))[1] #control in case export param is appended
-    googledrive::drive_download(file = googledrive::as_id(drive_id), path = file.path("data", paste0(entity$identifiers[["id"]], "_conversion_factors.csv")))
+    googledrive::drive_download(file = googledrive::as_id(drive_id), path = file.path("data", paste0(entity$identifiers[["id"]], "_conversion_factors.csv")), overwrite = TRUE)
     df_conversion_factor <- as.data.frame(readr::read_csv(file.path("data", paste0(entity$identifiers[["id"]], "_conversion_factors.csv")),guess_max=0))
   }else{
     df_codelists <- as.data.frame(readr::read_csv(unit_conversion_csv_conversion_factor_url, guess_max=0))
@@ -49,65 +49,6 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
   }
   config$logger.info("'mapping_map_code_lists' option is set to FALSE")
   
-  ## For catches: Convert MTNO to MT and remove NOMT (we do not keep the data that were expressed in number with corresponding value in weight)
-  #@juldebar => see what to do with redundant action in Level 0 workflow
-  #@eblondel => to refactor to align on standard units
-  if (fact=="catch"){
-    config$logger.info("Dealing with cacth => Removing old NOMT / MTNO units if any")
-    georef_dataset$unit[which(georef_dataset$unit == "MTNO")]<-"MT"
-    georef_dataset<-georef_dataset[!(georef_dataset$unit=="NOMT"),]
-  } else if (fact=="effort"){
-    config$logger.info("Dealing with effort => harmonization of units")
-    ## For efforts: 
-    # Les strates sont potentiellement exprimées avec plusieurs unités par strates. 
-    # Si les states sont exprimées dans au moins une des unités standard, on isole l'unité standard et on supprime les autres unités.
-    # Si les strantes ne sont exprimées dans aucune des unités standard:
-    # - s'il existe un facteur de conversion pour au moins une des unités, on conserve cette unité et on supprime les autres.
-    # - sinon on conserve toutes les unités disponibles 
-    
-    column_names_df_input<-colnames(georef_dataset)
-    vector_standard_effortunits<-c("HOOKS","FDAYS")
-    
-    # get the units available in each stratum, separated by commas
-    df_units_available_in_strata<-aggregate(unit ~., georef_dataset[,setdiff(colnames(georef_dataset),c("value","schooltype","unit_src_code","gear_src_code"))], toString)
-    
-    colnames(df_units_available_in_strata)[which(names(df_units_available_in_strata) == "unit")] <- "units_available"
-    
-    # Check for each strata if it is expressed in at least 1 of the standard unit
-    df_units_available_in_strata$standard_unit_available_in_strata <- grepl(paste(vector_standard_effortunits,collapse="|"),df_units_available_in_strata$units_available)
-    
-    # Merge with dataset
-    georef_dataset<-left_join(georef_dataset,df_units_available_in_strata)
-    
-    # Check if there is a conversion factor available for the strata
-    df_conversion_factor$conversion_factor_available_in_line<-TRUE
-    georef_dataset<-left_join(georef_dataset,df_conversion_factor)
-    df_conversion_factor$conversion_factor_available_in_line<-NULL
-    
-    strata_with_conv_factor_available<-unique(georef_dataset[which(georef_dataset$conversion_factor_available_in_line==TRUE & georef_dataset$standard_unit_available_in_strata==FALSE),c("source_authority","fishingfleet","gear","schooltype","time_start","time_end","geographic_identifier","conversion_factor_available_in_line")])
-    colnames(strata_with_conv_factor_available)[which(names(strata_with_conv_factor_available) == "conversion_factor_available_in_line")] <- "conversion_factor_available_in_strata"
-    
-    georef_dataset<-left_join(georef_dataset,strata_with_conv_factor_available)
-    
-    georef_dataset$conversion_factor_available_in_line[which(is.na(georef_dataset$conversion_factor_available_in_line))]=FALSE
-    georef_dataset$conversion_factor_available_in_strata[which(is.na(georef_dataset$conversion_factor_available_in_strata))]=FALSE
-    
-    # Remove the unrelevant lines
-    # 1) lignes dont les strates équivalentes existent dans une des unités standard et dont la ligne n'est pas exprimée dans une unité standard
-    index_to_remove_1<-which(!(georef_dataset$unit %in% vector_standard_effortunits) & georef_dataset$standard_unit_available_in_strata==TRUE)
-    # 2) ignes dont les strates équivalentes existent dans aucune des unités standard mais pour lesquelles il existe un facteur de conversion, et dont la ligne n'est pas exprimée dans l'unité correspondant au facteur de conversion
-    index_to_remove_2<-which(!(georef_dataset$unit %in% vector_standard_effortunits) & georef_dataset$standard_unit_available_in_strata==FALSE & georef_dataset$conversion_factor_available_in_strata==TRUE & georef_dataset$conversion_factor_available_in_line==FALSE)
-    
-    index_rows_to_remove<-c(index_to_remove_1,index_to_remove_2)
-    
-    if (length(index_rows_to_remove)>0){
-      georef_dataset<-georef_dataset[-index_rows_to_remove,] 
-    }
-    
-    # Remove the columns added during data processing
-    georef_dataset <- georef_dataset[column_names_df_input]
-    
-  }
   
   
   config$logger.info("Execute rtunaatlas::convert_units() function")
@@ -127,15 +68,17 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
   # to get stats on the process (useful for metadata)
   stats<-georef_dataset$stats
   georef_dataset<-georef_dataset$df
+  config$logger.info(sprintf("fact is", fact))
   
   #check what species didn't get  conversion factors from IRD file
+  if(fact == "catch"){
   species_no_after <- georef_dataset %>% filter(unit=="NO") %>% distinct(species)
   cat(setdiff(species_no_before$species,species_no_after$species))
   cat(intersect(species_no_after$species,unique(df_conversion_factor$species)))
   #@juldebar => issue with SKJ and IOTC
   # test <- df_conversion_factor %>% filter(species=='SKJ')
   # df_conversion_factor %>% filter(species=='SKJ',source_authority=='IOTC')
-  
+  }
   config$logger.info(sprintf("Statitstics are : \n [%s]", georef_dataset$stats))
   config$logger.info("rtunaatlas::convert_units() function executed !")
   config$logger.info(sprintf("Gridded catch dataset after tunaatlas::convert_units() has [%s] lines", nrow(georef_dataset)))
@@ -144,6 +87,7 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
   #filter by unit MT
   #@juldebar => must be "t" now with changes on Level 0
   #@eblondel => to refactor to align on standard units
+  if(fact == "catch"){
   sum_no_after<- georef_dataset %>% filter(unit=="NO")  %>% select(value)  %>% sum()
   nrow_no <- nrow(georef_dataset %>% filter(unit=="NO")  %>% select(value))
   # sum_t <- df %>% filter(unit=="MT")  %>% select(value)  %>% sum()
@@ -152,7 +96,7 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
   georef_dataset <- georef_dataset[georef_dataset$unit == "MT", ]
   #georef_dataset <- georef_dataset[georef_dataset$unit == "t", ]
   config$logger.info(sprintf("Ratio of converted numbers is [%s] due to lack on conversion factors for some dimensions (species, time, gears..)", 1-sum_no_after/sum_no_before))
-  
+  }
   
   if (mapping_map_code_lists=="FALSE"){
     # resetting gear coding system to primary gear coding system

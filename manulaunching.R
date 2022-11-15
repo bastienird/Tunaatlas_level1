@@ -67,6 +67,8 @@ if(!require(janitor)){
 
 executeWorkflow("manulaunching/tunaatlas_qa_dbmodel+codelists.json")#works
 executeWorkflow("manulaunching/tunaatlas_qa_mappings.json")#works
+executeWorkflow("manulaunching/tunaatlas_qa_datasets_iccat.json") #do not load in db
+
 
 
 executeWorkflow("manulaunching/tunaatlas_qa_datasets_ccsbt.json")#works
@@ -75,6 +77,5 @@ executeWorkflow("manulaunching/tunaatlas_qa_datasets_iattc.json")#works
 # config <- initWorkflow("manulaunching/tunaatlas_qa_datasets_iattc.json")
 executeWorkflow("manulaunching/tunaatlas_qa_datasets_iotc.json")#works
 executeWorkflow("manulaunching/tunaatlas_qa_datasets_wcpfc.json")#works
-executeWorkflow("manulaunching/tunaatlas_qa_datasets_iccat.json") #do not load in db
 
 executeWorkflow("manulaunching/tunaatlas_qa_global_datasets_catch.json")

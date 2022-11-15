@@ -1,5 +1,7 @@
 # 
 # getwd()
+renv::restore()
+# options(encoding = "UTF-8")
 setwd("~/Documents/Tunaatlas_level1")
 if(!require(remotes)){
   install.packages("remotes")
@@ -15,7 +17,8 @@ if(!require(tinytex)){
 }
 if(!require(geoflow)){
    remotes::install_github("eblondel/geoflow")
-    require(geoflow)}
+    require(geoflow)
+  }
 
 if(!require(RSQLite)){
   install.packages("RSQLite")
@@ -54,10 +57,7 @@ if(!require(rgeos)){
   install.packages("rgeos")
   require(rgeos)
 }
-if(!require(rtunaatlas)){
-  install_github("eblondel/rtunaatlas")
-  require(rtunaatlas)
-}
+
 
 if(!require(rpostgis)){
   install_github("rpostgis")
@@ -68,30 +68,63 @@ if(!require(janitor)){
   require(janitor)
 }
 
-executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")#works
-executeWorkflow("from_scratch/json/tunaatlas_qa_mappings.json")
+if(!require(dotenv)){
+install.packages("dotenv")
+require(dotenv)
+}
+if(!require(bookdown)){
+  install.packages("bookdown")
+  require(bookdown)
+}
+if(!require(zen4R)){
+  install.packages("zen4R")
+  require(zen4R)
+}
+load_dot_env(file = "catch_local.env")
 
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_ccsbt.json") #ok
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_wcpfc.json") #ok 
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc.json") # ok
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iotc.json") # ok
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iccat.json") # ok
+load_dot_env(file = "catch_server.env")
 
 
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_ccsbt_effort.json") #ok
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_wcpfc_effort.json") #ok 
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc_effort.json") # ok
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iotc_effort.json") # ok
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iccat_effort.json") # ok
+executeWorkflow("tunaatlas_qa_dbmodel+codelists.json")#works
+executeWorkflow("tunaatlas_qa_mappings.json")
 
-executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
-executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_efforts.json")
+#to clean db if needed
+# config <- initWorkflow("tunaatlas_qa_global_datasets_effort.json") #ok
+# con <- config$software$output$dbi
+# dbGetQuery(con, statement = read_file("cleaning_db.sql"))
 
-config <- initWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json") #ok
+
+executeWorkflow("tunaatlas_qa_datasets_iccat.json") # ok careful database only work in local
+
+executeWorkflow("tunaatlas_qa_datasets_ccsbt.json") # ok
+executeWorkflow("tunaatlas_qa_datasets_wcpfc.json") # ok 
+executeWorkflow("tunaatlas_qa_datasets_iattc.json") # ok
+executeWorkflow("tunaatlas_qa_datasets_iotc.json") # ok
+executeWorkflow("tunaatlas_qa_global_datasets_catch.json")
+
+
+load_dot_env(file = "effort_local.env")
+load_dot_env(file = "effort_server.env")
+
+
+executeWorkflow("tunaatlas_qa_datasets_ccsbt_effort.json") #ok
+executeWorkflow("tunaatlas_qa_datasets_wcpfc_effort.json") #ok
+executeWorkflow("tunaatlas_qa_datasets_iattc_effort.json") # ok
+executeWorkflow("tunaatlas_qa_datasets_iotc_effort.json") # ok
+executeWorkflow("tunaatlas_qa_datasets_iccat_effort.json") # ok
+
+executeWorkflow("tunaatlas_qa_global_datasets_effort.json")
+
+
+load_dot_env("~/Documents/Tunaatlas_level1/geoserver_julien.env")
+executeWorkflow("~/Documents/geoflow-tunaatlas/tunaatlas_qa_services.json")
+executeWorkflow("~/Documents/geoflow-tunaatlas/tunaatlas_qa_services.json")
+
+config <- initWorkflow("tunaatlas_qa_global_datasets_effort.json") #ok
 # initWorkflowJob(config)
 jobdir <- initWorkflowJob(config)
-jobdir <- "~/Documents/Tunaatlas_level1/jobs/20220922194610"
-config$job <- "~/Documents/Tunaatlas_level1/jobs/20220922194610"
+jobdir <- "~/Documents/Tunaatlas_level1/jobs/20221017051232_glob_eff"
+config$job <-"~/Documents/Tunaatlas_level1/jobs/20221017051232_glob_eff"
 # config$job <- jobdir
 entities <- config$metadata$content$entities
 # entities <- config$getEntities()
@@ -179,23 +212,23 @@ con = con), output_file  = paste0("test"))
 #effort https://docs.google.com/spreadsheets/d/1F7BgP4i_BClk2slgh3ziVedWEQ_ATaGsC51NkwiD-xY/edit#gid=1994835658
 # executeWorkflow("~/Documents/Tunaatlas_level1/lancing_workflow_effort.json")
 # executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_dbmodel+codelists_d4science.json")
-# executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")
-executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")#works
-executeWorkflow("from_scratch/json/tunaatlas_qa_mappings.json")
+# executeWorkflow("tunaatlas_qa_dbmodel+codelists.json")
+executeWorkflow("tunaatlas_qa_dbmodel+codelists.json")#works
+executeWorkflow("tunaatlas_qa_mappings.json")
 
 
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_ccsbt_effort.json")
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_wcpfc_effort.json")
+executeWorkflow("tunaatlas_qa_datasets_ccsbt_effort.json")
+executeWorkflow("tunaatlas_qa_datasets_wcpfc_effort.json")
 
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc_effort.json")
-# initWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc.json")
-# config <- initWorkflow("from_scratch/json/tunaatlas_qa_datasets_iattc.json")
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iotc_effort.json")
-executeWorkflow("from_scratch/json/tunaatlas_qa_datasets_iccat.json") #fais abort la session
+executeWorkflow("tunaatlas_qa_datasets_iattc_effort.json")
+# initWorkflow("tunaatlas_qa_datasets_iattc.json")
+# config <- initWorkflow("tunaatlas_qa_datasets_iattc.json")
+executeWorkflow("tunaatlas_qa_datasets_iotc_effort.json")
+executeWorkflow("tunaatlas_qa_datasets_iccat.json") #fais abort la session
 
-executeWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
-config <- initWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
-# executeWorkflow("from_scratch/json/tunaatlas_qa_dbmodel+codelists.json")
+executeWorkflow("tunaatlas_qa_global_datasets_catch.json")
+config <- initWorkflow("tunaatlas_qa_global_datasets_catch.json")
+# executeWorkflow("tunaatlas_qa_dbmodel+codelists.json")
 # fonction_dossier("overlap_iotc_ccsbt",
 #                  georef_dataset, 
 #                  "Keeping data from CCSBT or IOTC ",
@@ -203,9 +236,9 @@ config <- initWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.jso
 #                  list( options_include_CCSBT  , 
 #                     options_include_IOTC , options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
 
-executeWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_global_L0_datasets_catch_d4science_2022.json")
+executeWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L0_datasets_catch_d4science_2022.json")
 
-# executeWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_dbmodel+codelists_d4science.json")
+# executeWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_dbmodel+codelists_d4science.json")
 # executeWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json")
 
 config <- initWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_global_L1_datasets_catch_d4science_firms.json")
@@ -225,7 +258,7 @@ if(!require(rtunaatlas)) {
   
   }
 setwd("~/Documents/Tunaatlas_level1")
-files <- "from_scratch/json/tunaatlas_qa_dbmodel+codelists.json"
+files <- "tunaatlas_qa_dbmodel+codelists.json"
 config <- initWorkflow(files)
 
 executeWorkflow("Workflow_L0_json_files/tunaatlas_qa_dbmodel+codelists_d4science.json")
@@ -269,9 +302,9 @@ jobdir <- initWorkflowJob(config)
 config$job <- jobdir
 config$job <- "~/Documents/Tunaatlas_level1/jobs/20220811131625/entities/global_nominal_catch_firms_level0"
 executeWorkflowJob(config)
-# geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/from_scratch/json/tunaatlas_qa_datasets_iattc.json")
+# geoflow::debugWorkflow("~/Documents/Tunaatlas_level1/tunaatlas_qa_datasets_iattc.json")
 
-config <- initWorkflow("from_scratch/json/tunaatlas_qa_global_datasets_catch.json")
+config <- initWorkflow("tunaatlas_qa_global_datasets_catch.json")
 
 entities <- config$metadata$content$entities
 # entities <- config$getEntities()
@@ -279,7 +312,7 @@ entities <- config$metadata$content$entities
 contacts <- config$metadata$content$contacts 
 # contacts <- config$getContacts()
 
-entity <- config$metadata$content$entities[[4]]
+entity <- config$metadata$content$entities[[1]]
 # entity <- entities[[1]]
 action <- entity$data$actions[[1]]
 setwd("~/Documents/Tunaatlas_level1/jobs/Level2FAL/entities/global_catch_1deg_level2")

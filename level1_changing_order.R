@@ -1,6 +1,7 @@
 function(action, entity, config){
   opts <- action$options
   con <- config$software$input$dbi
+  options(encoding = "UTF-8")
   ######################################################################
 ##### 52North WPS annotations ##########
 ######################################################################
@@ -99,6 +100,30 @@ if(!require(DBI)){
   
 create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con, data_to_comp = NULL, fact = "catch"){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
+  if(!(require(here))){ 
+    install.packages("here") 
+    (require(here))} 
+  if(!require(stringr)){
+    install.packages("stringr")
+    require(stringr)
+  }
+  if(!require(bookdown)){
+    install.packages("bookdown")
+    require(bookdown)
+  }
+  copyrmd <- function(x){
+    last_path = function(y){tail(str_split(y,"/")[[1]],n=1)}
+    use_github_file(repo_spec =x,
+                    save_as = paste0(gsub(as.character(here::here()),"",as.character(getwd())), paste0("/", last_path(x))),
+                    ref = NULL,
+                    ignore = FALSE,
+                    open = FALSE,
+                    host = NULL
+    ) }
+  c <- c(paste0("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/", x))
+  lapply(c,copyrmd)
+  
+  
   wd <- getwd()
   # config$logger.info(paste0("working direcotyr begining create_latex : ",wd))
   # y <- last_path(x)
@@ -113,13 +138,13 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
     # x), paste0(wd,"/",x), overwrite = TRUE)
   # config$logger.info(paste0("jsute after copying rmd"))
 
-  file.copy(paste0(wd2,"/",'data2/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = FALSE)
-  file.copy(paste0(wd2,"/",'data2/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = FALSE)
-  if(!rawdataneeded == FALSE){
-  file.copy(paste0(wd,"/","Markdown/",rawdataneeded,"/rds.rds"),paste0(wd,"/",'data/rawdata.rds') , overwrite = FALSE)
-  }
+  # file.copy(paste0(wd2,"/",'data2/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx'),paste0(wd,"/",'data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx') , overwrite = FALSE)
+  # file.copy(paste0(wd2,"/",'data2/cl_cwp_gear_level2.csv'),paste0(wd,"/",'data/cl_cwp_gear_level2.csv') , overwrite = FALSE)
+  # if(!rawdataneeded == FALSE){
+  # file.copy(paste0(wd,"/","Markdown/",rawdataneeded,"/rds.rds"),paste0(wd,"/",'data/rawdata.rds') , overwrite = FALSE)
+  # }
   setwd(wd)
-  print(getwd())
+  # print(getwd())
   list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
   details = file.info(list_dir)
   details = details[with(details, order(as.POSIXct(mtime))), ]
@@ -188,7 +213,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
 if(!is.null(opts$output_format_report)){
   formals(create_latex)$output_format <- opts$output_format_report
 }
-if (!is.null(opts$no_report)) if(opts$no_report){create_latex = function(...){}}
+# if (!is.null(opts$no_report)) if(opts$no_report){create_latex = function(...){}}
   
 
 # mapping_map_code_lists <- opts$mapping_map_code_lists
@@ -281,7 +306,7 @@ fonction_dossier("rawdata",
                                                   options_include_IATTC,options_include_WCPFC,
                                                   options_include_CCSBT))
 saveRDS(georef_dataset, "data/rawdata.rds")
-create_latex("Analyse_georeferenced_child.Rmd", unique = TRUE)
+#create_latex("Analyse_georeferenced_child.Rmd", unique = TRUE)
 
 unlink("Markdown")
 
@@ -351,6 +376,16 @@ if (opts$iccat_ps_include_type_of_school){
   georef_dataset <- georef_dataset[, columns_to_keep]
   georef_dataset <- rbind(georef_dataset %>% filter(source_authority !="ICCAT"), iccat_data)
 }
+
+fonction_dossier("Treatment ICCAT", georef_dataset, "ICCAT delivers two catch and efforts datasets for purse seiners:
+one that gives the detail of the type of school for purse seine fisheries starting in 1994 and one that
+does not give the information of the type of school and that covers all the time period (from 1950).
+These data are redundant (i.e. the data from the first dataset are also available in the second one but
+in the latter, the information on the type of school is not available. Both datasets were combined to
+produce a dataset that covers the whole time period, with fishing mode information.", "raise_datasets_by_dimension",
+                 list(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
+                      options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
+                 ) )
 
 
 
@@ -552,7 +587,7 @@ if(variable == "catch") {
 # if(!is.null(opts$species_filter)){georef_dataset <- georef_dataset %>% filter(species %in% c(options_species_filter))}
 
 
-fonction_dossier("Treatment_iattc_iccat", georef_dataset, "Concerns IATTC purse seine datasets: IATTC Purse seine
+fonction_dossier("Raising IATTC", georef_dataset, "Concerns IATTC purse seine datasets: IATTC Purse seine
 catch-and-effort are available in 3 separate files according to the group of species: tuna, billfishes,
 sharks. This is due to the fact that PS data is collected from 2 sources: observer and fishing vessel
 logbooks. Observer records are used when available, and for unobserved trips logbooks are used. Both
@@ -564,16 +599,11 @@ number of sets for tuna catch than shark or billfish. Efforts in the billfish an
 hence represent only a proportion of the total effort allocated in some strata since it is the observed
 effort, i.e. for which there was an observer onboard. As a result, catch in the billfish and shark datasets
 might represent only a proportion of the total catch allocated in some strata. Hence, shark and billfish
-catch were raised to the fishing effort reported in the tuna dataset. \n ICCAT delivers two catch and efforts datasets for purse seiners:
-one that gives the detail of the type of school for purse seine fisheries starting in 1994 and one that
-does not give the information of the type of school and that covers all the time period (from 1950).
-These data are redundant (i.e. the data from the first dataset are also available in the second one but
-in the latter, the information on the type of school is not available. Both datasets were combined to
-produce a dataset that covers the whole time period, with fishing mode information.", "raise_datasets_by_dimension",
+catch were raised to the fishing effort reported in the tuna dataset.", "raise_datasets_by_dimension",
                  list(options_iattc_ps_dimension_to_use_if_no_raising_flags_to_schooltype,
                    options_iattc_ps_raise_flags_to_schooltype, options_iattc_ps_catch_billfish_shark_raise_to_effort
                    ) )
-create_latex("comp_sans_shiny_child.Rmd")
+#create_latex("comp_sans_shiny_child.Rmd")
 ##create_latex("short_comp.Rmd")
 
 
@@ -614,7 +644,7 @@ standing for other tuna within for ICCAT). In those cases, the code was set to U
 species and gears, these codes were mapped with more aggregated code lists, i.e. resp. group of species
 and groups of gears.",
                    "map_codelists", list(options_mapping_map_code_lists))
-  create_latex("comp_sans_shiny_child.Rmd")
+  #create_latex("comp_sans_shiny_child.Rmd")
  #create_latex("short_comp.Rmd")
  # saveRDS(georef_dataset, "data/mapping_codelist.rds")
 
@@ -658,7 +688,7 @@ formals(create_latex)$data_to_comp  <- "mapping_codelist"
                             "In this step, the georeferenced data present on the overlapping zone between IATTC and WCPFC is handled. The option for the strata overlapping allow to handle the maximum similarities allowed between two data to keep both.",
                             "function_overlapped" , list(options_include_IATTC,
                                                       options_include_WCPFC , options_overlapping_zone_iattc_wcpfc_data_to_keep, options_strata_overlap_iattc_wcpfc))
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
 
@@ -688,7 +718,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                    "function_overlapped",
                    list(options_include_WCPFC,
                      options_include_IOTC, options_overlapping_zone_iotc_wcpfc_data_to_keep, options_strata_overlap_iotc_wcpfc))
-  create_latex("comp_sans_shiny_child.Rmd")
+  #create_latex("comp_sans_shiny_child.Rmd")
  #create_latex("short_comp.Rmd")
 
  }
@@ -725,7 +755,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             list( options_include_CCSBT  ,
                                options_include_WCPFC ,
                                options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
          }
@@ -757,7 +787,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             "function_overlapped",
                             list(options_include_CCSBT,
                               options_include_ICCAT, options_overlapping_zone_iccat_ccsbt_data_to_keep, options_strata_overlap_sbf))
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
 
@@ -789,15 +819,15 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
                             "function_overlapped",
                             list( options_include_CCSBT  ,
                                options_include_IOTC ,options_overlapping_zone_wcpfc_ccsbt_data_to_keep, options_overlapping_zone_iccat_ccsbt_data_to_keep,options_overlapping_zone_iotc_ccsbt_data_to_keep, options_strata_overlap_sbf ))
-           create_latex("comp_sans_shiny_child.Rmd")
+           # #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
-           create_latex("comp_sans_shiny_child.Rmd", last = TRUE)
+           # create_latex("comp_sans_shiny_child.Rmd", last = TRUE)
 
 
          }
 
 if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
-  # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+  create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
 
   config$logger.info("---------------------------------------spatial_curation_intersect_areasB--------------------------------------------------------------")
   config$logger.info(sprintf("LEVEL 1 => STEP 3/5  for file [%s] is executed: Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
@@ -828,13 +858,13 @@ if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
                    "In this step, the mislocated data is hanlded. Either removed, reallocated or let alone, the data on continent and the data outside the competent rfmo area are targeted. ",
                    "function_spatial_curation_data_mislocated",
                    list(options_spatial_curation_data_mislocated))
-  create_latex("comp_sans_shiny_child.Rmd")
-  create_latex("comp_sans_shiny_child.Rmd", last = TRUE)
+  # #create_latex("comp_sans_shiny_child.Rmd")
+  # create_latex("comp_sans_shiny_child.Rmd", last = TRUE)
 
  #create_latex("short_comp.Rmd")
- create_latex("analyse_georeferenced.Rmd", unique = TRUE)
+ # #create_latex("Analyse_georeferenced.Rmd", unique = TRUE)
 
-  # create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+  create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
   gc()
 
 }else{
@@ -864,11 +894,29 @@ if (!is.null(opts$curation_absurd_converted_data)){
   fonction_dossier("Removing_absurd_nomt",
                    georef_dataset,
                    "In this step, we target implausible data. We check data having declaration both in NOMT and MTNO and if the conversion factor is implausible.
-                   We either remove NOMT strata which corresponds to MTNO declaration implausible or me remove the corresponding MTNO data",
+                   We either remove NOMT strata which corresponds to MTNO declaration implausible or me remove the corresponding MTNO data. More details are available in the pdf file attached.",
                    "function_spatial_curation_data_mislocated",
                    list(curation_absurd_converted_data))
-  create_latex("comp_sans_shiny_child.Rmd")
+  #create_latex("comp_sans_shiny_child.Rmd")
 }
+
+
+# unit conversion already given factors -----------------------------------
+
+georef_dataset <- unit_conversion_already_given_factors(con = con, entity=entity,
+                                                        config=config,
+                                                        fact=fact,
+                                                        unit_conversion_csv_conversion_factor_url=opts$unit_conversion_csv_conversion_factor_url,
+                                                        unit_conversion_codelist_geoidentifiers_conversion_factors=opts$unit_conversion_codelist_geoidentifiers_conversion_factors,
+                                                        mapping_map_code_lists=opts$mapping_map_code_lists,
+                                                        georef_dataset=georef_dataset)
+fonction_dossier("Converting removing NOMT and converting MTNO in MT",
+                 georef_dataset,
+                 "In this step, we target the data provided in Tons and Number of fish. The data initially in MTNO will be converted in MT and the data in NTMO will be removed.",
+                 "",
+                 list(""))
+
+# unit conversion whith factors -----------------------------------
 
 
          if(!is.null(opts$unit_conversion_convert)) if (opts$unit_conversion_convert){
@@ -884,6 +932,7 @@ if (!is.null(opts$curation_absurd_converted_data)){
            config$logger.info(sprintf("STEP 2/5 : Gridded catch dataset before unit conversion has [%s] lines and total catch is [%s] Tons", nrow(georef_dataset),ntons_before_this_step))
 
            config$logger.info("STEP 2/5: BEGIN do_unit_conversion() function to convert units of georef_dataset")
+           
            georef_dataset <- do_unit_conversion_B(con = con, entity=entity,
                                                 config=config,
                                                 fact=fact,
@@ -909,7 +958,7 @@ if (!is.null(opts$curation_absurd_converted_data)){
                                options_unit_conversion_codelist_geoidentifiers_conversion_factors ,
                                options_unit_conversion_convert))
 
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
 
@@ -1089,7 +1138,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
                          fact, raising_do_not_raise_wcfpc_data, raising_raise_only_for_PS_LL
                    ))
 
-  create_latex("comp_sans_shiny_child.Rmd")
+  #create_latex("comp_sans_shiny_child.Rmd")
  #create_latex("short_comp.Rmd")
 
 
@@ -1204,7 +1253,7 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
                          fact, raising_do_not_raise_wcfpc_data, raising_raise_only_for_PS_LL
                    ))
 
-  create_latex("comp_sans_shiny_child.Rmd")
+  #create_latex("comp_sans_shiny_child.Rmd")
  #create_latex("short_comp.Rmd")
 
 
@@ -1382,7 +1431,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "function_disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg",
                             list(options_disaggregate_on_1deg_data_with_resolution_superior_to_1deg))
            gc()
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
          } else{
@@ -1408,7 +1457,7 @@ fonction_dossier("Level2_RF3without_gears",
                             georef_dataset,
                             "This step is to remove data provided by WCPFC as it is not relevant for 1° resolution data.",
                             "", list(options_filter_WCPFC_at_the_end))
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
 
@@ -1437,7 +1486,7 @@ fonction_dossier("Level2_RF3without_gears",
                             "This step is to aggregate data on resolution lower than 5° in 5°.",
                             "spatial_curation_upgrade_resolution",
                             list(options_aggregate_on_5deg_data_with_resolution_inferior_to_5deg))
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
          }
@@ -1477,7 +1526,7 @@ fonction_dossier("Level2_RF3without_gears",
                             georef_dataset,
                             "This step is to filter on the wanted resolution.",
                             "", list(options_resolution_filter))
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
          }
@@ -1497,7 +1546,7 @@ fonction_dossier("Level2_RF3without_gears",
                             georef_dataset,
                             "This step is to filter on gears if needed (for 1 deg resolution only few gears should be kept, other are irrelevant).",
                             "", list(options_gear_filter))
-           create_latex("comp_sans_shiny_child.Rmd")
+           #create_latex("comp_sans_shiny_child.Rmd")
           #create_latex("short_comp.Rmd")
 
 
@@ -1517,6 +1566,7 @@ fonction_dossier("Level2_RF3without_gears",
          #we enrich the entity with temporal coverage
          dataset_temporal_extent <- paste(as.character(min(dataset$time_start)), as.character(max(dataset$time_end)), sep = "/")
          entity$setTemporalExtent(dataset_temporal_extent)
+         
          #if there is any entity relation with name 'codelists' we read the file
          df_codelists <- NULL
          cl_relations <- entity$relations[sapply(entity$relations, function(x){x$name=="codelists"})]
