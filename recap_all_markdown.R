@@ -21,7 +21,7 @@ comparison_each_step <- function(action, entity, config, options){
     ) }
   
   c <- c("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/tableau_recap_global_action_effort.Rmd", 
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comp_sans_shiny_child_effort.Rmd")
+         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comparison.Rmd")
   lapply(c,copyrmd)
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
                     params = list(action = action,

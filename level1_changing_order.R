@@ -222,8 +222,8 @@ url_scripts_create_own_tuna_atlas <- "https://raw.githubusercontent.com/eblondel
 # source(file.path(url_scripts_create_own_tuna_atlas, "get_rfmos_datasets_level0.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "retrieve_nominal_catch.R")) #modified for geoflow
 source(file.path(url_scripts_create_own_tuna_atlas, "map_codelists.R")) #modified for geoflow
-source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
-# source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/do_unit_conversion_B.R") # 
+# source(file.path(url_scripts_create_own_tuna_atlas, "convert_units.R")) #modified for geoflow
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/do_unit_conversion_B.R") # 
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/fonction_overlap.R")
 source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/function_raising_georef_to_nominal_B.R")
 source(file.path(url_scripts_create_own_tuna_atlas, "disaggregate_on_resdeg_data_with_resolution_superior_to_resdeg.R"))
@@ -332,7 +332,7 @@ fonction_dossier("Modifying_IOTC_cwp_errors",
                  georef_dataset,
                  "This step modify the name of several cwp grid code given by the IOTC as they are mitaken. This step is aimed to be removed as the mistakes shouldn't be in the provided data.",
                  NULL,  )
-create_latex("comp_sans_shiny_child.Rmd", last = TRUE)
+create_latex("comparison.Rmd", last = TRUE)
 
 #-----------------------------------------------------------------
 
@@ -916,7 +916,35 @@ fonction_dossier("Converting removing NOMT and converting MTNO in MT",
                  "",
                  list(""))
 
-# unit conversion whith factors -----------------------------------
+
+
+# unit conversion IOTC given factors -----------------------------------
+cl_filename <- "CA_RAISED_FILTERED_NO_FLEET.csv"
+iotc_conv_fact <- as.data.frame(readr::read_csv(cl_filename, guess_max = 0, 
+                                                col_types = cols(AVG_WEIGHT = col_double())))%>%
+  mutate(geographic_identifier = FISHING_GROUND_CODE,
+         unit = "NO", unit_target = "MT", species = SPECIES_CODE, gear = GEAR_CODE,source_authority = "IOTC",
+         conversion_factor = AVG_WEIGHT/1000, time_start = lubridate::as_date(paste0(YEAR,"-",MONTH_START, "-01 ")))
+
+
+georef_dataset <- do_unit_conversion_B(con = con, entity=entity,
+                                       config=config,
+                                       fact=fact,
+                                       unit_conversion_csv_conversion_factor_url=cl_filename,
+                                       unit_conversion_codelist_geoidentifiers_conversion_factors=opts$unit_conversion_codelist_geoidentifiers_conversion_factors,
+                                       mapping_map_code_lists=opts$mapping_map_code_lists,
+                                       georef_dataset=georef_dataset)
+fonction_dossier("Raising IOTC data",
+                 georef_dataset,
+                 "In this step, we target the data provided in Tons and Number of fish provided by IOTC.
+                 As a new conversion factor dataset has been provided by Emmanuel Chassot",
+                 "",
+                 list(""))
+
+
+
+
+# unit conversion with factors -----------------------------------
 
 
          if(!is.null(opts$unit_conversion_convert)) if (opts$unit_conversion_convert){
