@@ -889,8 +889,8 @@ if (!is.null(opts$curation_absurd_converted_data)){
     dplyr::summarise(NO = sum(NO), MT = sum(MT)) %>% dplyr::mutate(conversion_factor = MT/NO) %>% dplyr::distinct()
   conversion_factor_to_keep <- conversion_factor_level0 %>% left_join(max_conversion_factor, by = "species") %>% filter((conversion_factor < max_weight | conversion_factor > min_weight | is.na(max_weight) | is.na(min_weight)))
   # conversion_factor_not_to_keep <- conversion_factor_level0 %>% left_join(max_conversion_factor, by = "species") %>% filter(conversion_factor > max_weight | conversion_factor < min_weight | conversion_factor < 0.002 | conversion_factor > 0.5)
-  georef_dataset_without_nomt <- georef_dataset %>% filter(unit%in%c("MT", "NO","MTNO"))
-  georef_dataset <- rbind(georef_dataset_without_nomt, conversion_factor_to_keep %>% mutate(unit = "NOMT") %>% rename(value = NO) %>% select(colnames(georef_dataset_without_nomt)))
+  georef_dataset_without_nomt <- georef_dataset %>% dplyr::filter(unit%in%c("MT", "NO","MTNO"))
+  georef_dataset <- rbind(georef_dataset_without_nomt, conversion_factor_to_keep %>% dplyr::mutate(unit = "NOMT") %>% dplyr::rename(value = NO) %>% dplyr::select(colnames(georef_dataset_without_nomt)))
   fonction_dossier("Removing_absurd_nomt",
                    georef_dataset,
                    "In this step, we target implausible data. We check data having declaration both in NOMT and MTNO and if the conversion factor is implausible.
