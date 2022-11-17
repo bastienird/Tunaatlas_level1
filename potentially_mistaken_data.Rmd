@@ -20,6 +20,7 @@ params:
   user: ""
   password: ""
   plotting: "plot"
+  fact: "catch"
   world_coastline: "gshhs_world_coastlines"
   con: con
   filtering: !r list(species = NULL)
