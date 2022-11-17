@@ -98,7 +98,7 @@ if(!require(DBI)){
   
   
   
-create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, con2 = con, data_to_comp = NULL, fact = "catch"){
+create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, con2 = con, output_format = "pdf_document2",  data_to_comp = NULL, fact = "catch"){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   if(!(require(here))){ 
     install.packages("here") 
