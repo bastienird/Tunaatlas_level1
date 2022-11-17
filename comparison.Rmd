@@ -564,10 +564,14 @@ cat(towrite)
 
 
 ```{r eval=!parameter_short, results='asis', eval=options_total}
-
 cat(ifelse(unique_analyse, "The options used to create the data frame are :", "The options used to create the initial data frame are :"))
 
 s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% dplyr::mutate(Options = gsub("_","-",Options))%>% dplyr::mutate(Options = gsub("=","=\n",Options))%>% dplyr::mutate(Value = gsub("_","-",Value))%>% dplyr::mutate(Value = gsub("=","=\n",Value)) %>% dplyr::mutate(Options = gsub("NONE", "", Options))
+```
+
+
+```{r eval=!parameter_short, results='asis',echo=FALSE, eval=options_total, out.width="100%"}
+
 qflextable2(s, captionn = "Options used in the treatment of the dataset")
 
 
@@ -1402,7 +1406,7 @@ if(nrow(unit != 0)){qflextable2(t3, captionn = "Difference between stratas")} el
 
 
 
-```{r eval=parameter_mapped}
+```{r eval=!parameter_mapped}
 knitr::knit_exit(fully = FALSE)
 ```
 
