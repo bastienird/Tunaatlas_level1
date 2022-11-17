@@ -461,7 +461,8 @@ filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingLi
   if(length(colnames_to_filter)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
   if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
     dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
-return(dataframe_to_filter %>% rename("geographic_identifier" := {{geo_dim}}))
+  if("geographic_identifier"%in%colnames(dataframe_to_filter)){
+return(dataframe_to_filter %>% rename("geographic_identifier" := {{geo_dim}}))}
 }
   #function to filter on all the filter_parameters
 
@@ -475,7 +476,7 @@ formals(filtering_function)$geo_dim = geographical_dimension
 formals(filtering_function)$parameter_fact = parameter_fact
 formals(filtering_function)$parameter_UNK_for_not_standards_unit = parameter_UNK_for_not_standards_unit
 
-init <- filtering_function(init, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
+init <- filtering_function(dataframe_to_filter = init, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
 
 if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, colnames_to_filter = colnames_to_filter, matchingList = matchingList)}
 
