@@ -11,7 +11,7 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
     googledrive::drive_download(file = googledrive::as_id(drive_id), path = file.path("data", paste0(entity$identifiers[["id"]], "_conversion_factors.csv")), overwrite = TRUE)
     df_conversion_factor <- as.data.frame(readr::read_csv(file.path("data", paste0(entity$identifiers[["id"]], "_conversion_factors.csv")),guess_max=0))
   }else{
-    df_codelists <- as.data.frame(readr::read_csv(unit_conversion_csv_conversion_factor_url, guess_max=0))
+    df_conversion_factor <- as.data.frame(readr::read_csv(unit_conversion_csv_conversion_factor_url, guess_max=0))
   }
   
   ## If we have not mapped the code lists (i.e. if mapping_map_code_lists==FALSE), we need to map the source gear coding system with ISSCFG coding system. In fact, the conversion factors dataset is expressed with ISSCFG coding system for gears, while the primary tRFMOs datasets are expressed with their own gear coding system.
