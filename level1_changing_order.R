@@ -98,7 +98,7 @@ if(!require(DBI)){
   
   
   
-create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, output_format = "html_document", con2 = con, data_to_comp = NULL, fact = "catch"){
+create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, config2 = config, con2 = con, data_to_comp = NULL, fact = "catch"){
   last_path = function(x){tail(str_split(x,"/")[[1]],n=1)}
   if(!(require(here))){ 
     install.packages("here") 
@@ -174,7 +174,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                                            user = config$software$input$dbi_config$parameters$user,
                                                                            dbname=config$software$input$dbi_config$parameters$dbname,
                                                      password = config$software$input$dbi_config$parameters$password, 
-                                                     con = con2,filter_species = opts$species_filter, fact = opts$fact
+                                                     con = con2,filtering = opts$filtering, fact = opts$fact
 
                                        ), output_format = output_format)
     }
@@ -186,7 +186,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                             user = config$software$input$dbi_config$parameters$user,
                                                             dbname=config$software$input$dbi_config$parameters$dbname,
                                                             password = config$software$input$dbi_config$parameters$password, con = con2,
-                                                            filter_species   = opts$species_filter, fact = opts$fact ),output_format = output_format)
+                                                            filtering   = opts$filtering, fact = opts$fact ),output_format = output_format)
       
     }
       else {
@@ -196,7 +196,7 @@ create_latex = function(x,last = FALSE,unique = FALSE, rawdataneeded = FALSE, co
                                                                                         user = config$software$input$dbi_config$parameters$user,
                                                                                         dbname=config$software$input$dbi_config$parameters$dbname,
                                                                                         password = config$software$input$dbi_config$parameters$password, con = con2,
-                                                                          filter_species   = opts$species_filter, fact = opts$fact),output_format = output_format)
+                                                              filtering   = opts$filtering, fact = opts$fact),output_format = output_format)
         
         }}#,
   
@@ -827,7 +827,7 @@ if (opts$include_IOTC && opts$include_WCPFC && !is.null(opts$overlapping_zone_io
          }
 
 if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
-  create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+  create_latex("potentially_mistaken_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
 
   config$logger.info("---------------------------------------spatial_curation_intersect_areasB--------------------------------------------------------------")
   config$logger.info(sprintf("LEVEL 1 => STEP 3/5  for file [%s] is executed: Reallocation of mislocated data  (i.e. on land areas or without any spatial information) (data with no spatial information have the dimension 'geographic_identifier' set to 'UNK/IND' or 'NA'). Option is: [%s] ",entity$data$source[[1]], opts$spatial_curation_data_mislocated))
@@ -864,7 +864,7 @@ if (opts$spatial_curation_data_mislocated %in% c("reallocate","remove")){
  #create_latex("short_comp.Rmd")
  # #create_latex("Analyse_georeferenced.Rmd", unique = TRUE)
 
-  create_latex("absurd_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
+  create_latex("potentially_mistaken_data.Rmd",unique =TRUE, rawdataneeded = "mapping_codelist")
   gc()
 
 }else{
