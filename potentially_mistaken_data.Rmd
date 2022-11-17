@@ -13,16 +13,16 @@ bookdown::html_document2:
   date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
   final: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/Modifying_IOTC_cwp_errors"
-rawdata: "data/rawdata"
-dbname: ""
-host: ""
-port: 
+  rawdata: "data/rawdata"
+  dbname: ""
+  host: ""
+  port: 
   user: ""
-password: ""
-plotting: "plot"
-world_coastline: "gshhs_world_coastlines"
-con: con
-filtering: !r list(species = NULL)
+  password: ""
+  plotting: "plot"
+  world_coastline: "gshhs_world_coastlines"
+  con: con
+  filtering: !r list(species = NULL)
 
 
 ---
