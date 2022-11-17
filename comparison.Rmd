@@ -370,8 +370,8 @@ if(parameter_fact=="catch"){
   dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = dplyr::case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ unit)) 
   
 }
-init <- function_dataframe_tot_dplyr::filter(init)
-final <- function_dataframe_tot_dplyr::filter(final)
+init <- function_dataframe_tot_filter(init)
+final <- function_dataframe_tot_filter(final)
   }
 
 
@@ -581,20 +581,20 @@ fonction_groupement = function(these_col, init, final){
 # groupement_1 <- init[, value := lapply(.SD, sum), by = these_col, .SDcols = c("value")]
 # groupement_1 <- groupement_1 %>% dplyr::mutate(number_lines1 = 0)%>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))
   # these_col <- enquo(these_col) 
-groupement_1  <-   init %>%ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
+groupement_1  <-   init %>%dplyr::ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
-  ,unit) %>% dplyr::summarise(value_sum_1 = round((sum(value, na.rm=TRUE)))) %>% ungroup() %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))%>% dplyr::mutate(number_lines1 = n())
+  ,unit) %>% dplyr::summarise(value_sum_1 = round((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup() %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))%>% dplyr::mutate(number_lines1 = n())
 
 # groupement_2 <- final[, value := lapply(.SD, sum), by = these_col, .SDcols = "value"]
 # groupement_2 <- groupement_2 %>% dplyr::mutate(number_lines2 = 0)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>% dplyr::mutate(unit = as.character(unit))
 
-groupement_2  <-   final %>%ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
+groupement_2  <-   final %>%dplyr::ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
-  ,unit) %>%  dplyr::summarise(value_sum_2 = round((sum(value, na.rm=TRUE)))) %>% ungroup()  %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% dplyr::mutate(unit = as.character(unit)) %>% dplyr::mutate(number_lines2 = n())
+  ,unit) %>%  dplyr::summarise(value_sum_2 = round((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup()  %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% dplyr::mutate(unit = as.character(unit)) %>% dplyr::mutate(number_lines2 = n())
 
 fulljoin  <-   dplyr::full_join(groupement_1, groupement_2) %>%  dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss == 0 ~ "Egal", loss > 0 ~"Loss",  loss < 0 ~"Gain")) %>%
 dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
-dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>% ungroup() %>%  dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
+dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>% dplyr::ungroup() %>%  dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
 dplyr::mutate(Loss_en_milliers_de_tonne = (value_sum_1 - value_sum_2)) %>%
 dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in value` = Loss_en_milliers_de_tonne,
 `Difference in number of lines` = loss_nb_ligne)%>%dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
@@ -1413,12 +1413,12 @@ cat2("# Annexe")
 
 ```{r eval=parameter_mapped}
 df_mapping_final_this_dimension <- read_csv("data/mapping_codelist_summary.csv")
-t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%dplyr::group_by(across(everything())) %>%  dplyr::mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% ungroup() 
+t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%dplyr::group_by(across(everything())) %>%  dplyr::mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% dplyr::ungroup() 
 
 i <-pivot_wider(t %>% dplyr::mutate(src_code = as.character(src_code)), names_from = source_authority,names_prefix = "Ancient name for ", values_from = "src_code", values_fn = list)  %>% rename("New code" = trg_code) %>% rename(Dimension = src_codingsystem)%>%
     relocate(Dimension)
-t <- as_grouped_data(i, groups = c("Dimension")) %>% as.data.frame() %>% ungroup()
-s <- t %>% rowwise() %>% dplyr::mutate(Dimension = ifelse(is.na(Dimension), " ", Dimension)) %>% ungroup() %>% as.data.frame() %>% dplyr::mutate(`New code` = ifelse(is.na(`New code`) &  (Dimension == " "), "UNK", `New code`))
+t <- as_grouped_data(i, groups = c("Dimension")) %>% as.data.frame() %>% dplyr::ungroup()
+s <- t %>% rowwise() %>% dplyr::mutate(Dimension = ifelse(is.na(Dimension), " ", Dimension)) %>% dplyr::ungroup() %>% as.data.frame() %>% dplyr::mutate(`New code` = ifelse(is.na(`New code`) &  (Dimension == " "), "UNK", `New code`))
 s[is.na(s)] <- ""
 
 ```
