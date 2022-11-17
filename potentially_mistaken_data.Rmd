@@ -298,10 +298,6 @@ try(map_unit_knit_list <- lapply(map_unit, FUN = map_unit_knit ))
 cat(unlist(map_unit_knit_list), sep = "\n")
 ```
 
-```{r}
-knitr::knit_exit()
-```
-
 
 ```{r}
 pie_chart_2_default <- studycatchesird::pie_chart_2
