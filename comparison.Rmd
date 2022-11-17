@@ -704,8 +704,8 @@ if (nrow(strates_perdues_first_10)!=0){
 
 ```{r}
 # groupe_df %>% dplyr::group_by(unit, Dimension) %>%rowwise() %>%  dplyr::summarise(value_sum1 = nrow(unique(Precision)), value_sum2 = nrow(unique(Precision)))
-number_init_column <- as.data.frame(t(init %>% select(-value) %>% summarise_all(list(~n_dplyr::distinct(.))))) %>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := V1)
-number_final_column <- as.data.frame(t(final %>% select(-value) %>% summarise_all(list(~n_dplyr::distinct(.)))))%>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := V1)
+number_init_column <- as.data.frame(t(init %>% select(-value) %>% summarise_all(list(~n_distinct(.))))) %>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := V1)
+number_final_column <- as.data.frame(t(final %>% select(-value) %>% summarise_all(list(~n_distinct(.)))))%>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := V1)
 
 
 
