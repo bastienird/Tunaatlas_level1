@@ -462,7 +462,7 @@ filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingLi
   if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
     dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
   if("geographic_identifier"%in%colnames(dataframe_to_filter)){
-return(dataframe_to_filter %>% rename("geographic_identifier" := {{geo_dim}}))}
+return(dataframe_to_filter %>% dplyr::rename("geographic_identifier" := {{geo_dim}}))}
 }
   #function to filter on all the filter_parameters
 
@@ -674,7 +674,7 @@ init_group <- init %>% group_by(unit) %>% summarise(titre_test1 = sum(value))
 final_group <- final %>% group_by(unit) %>% summarise(titre_test2 = sum(value)) 
 nrowinit <- nrow(init)
 nrowfinal <- nrow(final)
-join <- full_join(init_group, final_group) %>% arrange(unit) %>%rowwise() %>%  mutate(unit = paste0("Value in ", unit)) %>% mutate(Difference = titre_test1 - titre_test2)%>% rename(!!as.symbol(eval(parse(text = "titre_1"))) := titre_test1)%>% rename(!!as.symbol(eval(parse(text = "titre_2"))) := titre_test2)
+join <- full_join(init_group, final_group) %>% dplyr::arrange(unit) %>%dplyr::rowwise() %>%  dplyr::mutate(unit = paste0("Value in ", unit)) %>% dplyr::mutate(Difference = titre_test1 - titre_test2)%>% dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := titre_test1)%>% dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := titre_test2)
 
 
 join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)}))%>% 
