@@ -3,21 +3,21 @@ title: "Data with potential mistakes"
 always_allow_html: true
 output:
   bookdown::pdf_document2:
-  toc: !expr if(!exists('child')) {TRUE} else {child}
-  number_sections: TRUE
-  keep_tex: true
-  extra_dependencies: ["adjustbox", "subfig"]
-bookdown::html_document2:
-  toc: !expr if(!exists('child')) {TRUE} else {child}
-  number_sections: TRUE
-  date: "`r format(Sys.time(), '%d %B, %Y')`"
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+    keep_tex: true
+    extra_dependencies: ["adjustbox", "subfig"]
+  bookdown::html_document2:
+    toc: !expr if(!exists('child')) {TRUE} else {child}
+    number_sections: TRUE
+    date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
   final: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/Modifying_IOTC_cwp_errors"
   rawdata: "data/rawdata"
-  dbname: ""
-  host: ""
-  port: 
-  user: ""
+  dbname: "tunaatlas_sandbox2"
+  host: "localhost"
+  port: 5432
+  user: "tunaatlas_u"
   password: ""
   plotting: "plot"
   fact: "catch"
@@ -273,12 +273,12 @@ map_unit_knit = function(map){
   knitr::knit_child(text = c(
     '',
     '',
-    '```{r,fig.cap = paste0("Distribution of mislocated data in value")}',
+    '```{r echo = FALSE, fig.cap = paste0("Distribution of mislocated data in value")}',
     '',
     'map_for_knit_where',
     '```',
     '',
-    '```{r,fig.cap = paste0("Contributor of mislocated data")}',
+    '```{r echo = FALSE, fig.cap = paste0("Contributor of mislocated data")}',
     '',
     'map_for_knit_who',
     '```',
@@ -317,47 +317,56 @@ function_pie_chart_df <- function(dimension, ...){
   return(list(pie_chart=pie_chart,df=df, dimension=dimension_returned))
 }
 
-resume_knit_child = function(x){
-  
-  knitr::knit_child(text = c(
-    '',
-    '```{r}', 
-    'dimension_title <- gsub("_","..",x$dimension)',
-    '',
-    '```',
-    '',
-    '',
-    '',
-    '```{r results = "asis" ,fig.cap = paste0("Distribution in value for the dimension : ",(dimension_title))}',
-    '',
-    'x$pie_chart',
-    '```',
-    '',
-    '',
-    '',
-    '```{r results = "asis", eval= !is.null(x$df)}',
-    'x$df',
-    '',
-    '',
-    '```',
-    '',
-    '', 
-    ''
-    
-    
-    
-    
-  ), envir = environment(), quiet= TRUE)
-}
+# resume_knit_child = function(x){
+#   
+#   knitr::knit_child(text = c(
+#     '',
+#     '```{r}', 
+#     'dimension_title <- gsub("_","..",x$dimension)',
+#     '',
+#     '```',
+#     '',
+#     '',
+#     '',
+#     '```{r echo = FALSE ,fig.cap = paste0("Distribution in value for the dimension : ",(dimension_title))}',
+#     '',
+#     'x$pie_chart',
+#     '```',
+#     '',
+#     '',
+#     '',
+#     '```{r results = "asis", eval= !is.null(x$df)}',
+#     'x$df',
+#     '',
+#     '',
+#     '```',
+#     '',
+#     '', 
+#     ''
+#     
+#     
+#     
+#     
+#   ), envir = environment(), quiet= TRUE)
+# }
 list_pie_chart <- list("fishingfleet","source_authority")
+
 pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first= mislocated_continent %>% ungroup() %>% select(geographic_identifier) %>% inner_join(data, by = "geographic_identifier"), topn = 3, title_yes_no = FALSE, titre_1 = "Mislocated data" )
 
 figures<- lapply(pie_charts_multiple, function(x){x$pie_chart})
-dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension : ", x$dimension)})
+
+dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension ", x$dimension)})
+
+
+
+
+
 ```
 
-```{r echo=FALSE,  fig.cap='Repartition of the mislocated data for several dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
+```{r echo=FALSE, fig.cap='Repartition of the mislocated data for several dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
+
 for (i in figures){plot(i)}
+
 ```
 
 ```{r eval=FALSE}
