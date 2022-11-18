@@ -495,7 +495,7 @@ strange <- studycatchesird::pie_chart_2(fishingfleet,first=absurd_conversion_fac
 ```
 
 
-```{r results='asis', fig.cap='Repartition of fishingfleet for impossible conversion factors'}
+```{r echo=FALSE,  fig.cap='Repartition of fishingfleet for impossible conversion factors'}
 strange
 ```
 
