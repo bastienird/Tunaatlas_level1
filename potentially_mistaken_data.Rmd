@@ -220,30 +220,30 @@ FitFlextableToPage <- function(ft, pgwidth = 6){
 }
 kable2 =function(x){as_image(kable(x))}
 qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colour = FALSE){
-  y<-x
-  y <- y %>% dplyr::mutate_if(is.factor, as.character) %>% dplyr::mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
-    dplyr::mutate_if(is.character,~str_replace_all( ., "_", "-" )) %>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
+ y<-x
+ y <- y %>% dplyr::mutate_if(is.factor, as.character) %>% dplyr::mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
+  dplyr::mutate_if(is.character,~str_replace_all( ., "_", "-" )) %>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
   flextable <- flextable(y)
   if(colour){
-    flextable <- flextable %>% 
-      color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
-      color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
-      color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
-      color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)
+  flextable <- flextable %>% 
+          color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
+          color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
+          color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
+          color(~ `Difference (in % of lines)` >0, color = "red",~ `Difference (in % of lines)`)
   } 
   if(!is.null(captionn)){flextable_captionned <- set_caption(flextable, caption = captionn,  style = "Table Caption")} else {flextable_captionned <- flextable}
   ft_out <- flextable_captionned %>% autofit()
   ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
-  
+
   return(ft_out)
-  
+
 }
 
 ```
 
 ```{r}
 
-set_caption(qflextable2(mislocated_continent %>%  group_by(unit) %>% summarise(value = sum(value))), caption = "Value of data reported on continent by unit ",  style = "Table Caption")
+qflextable2(mislocated_continent %>%  group_by(unit) %>% summarise(value = sum(value)), captionn = "Value of data reported on continent by unit ")
 ```
 
 Those next maps will presents where and by who the mislocated data is reported.
