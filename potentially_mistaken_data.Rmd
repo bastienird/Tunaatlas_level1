@@ -1,6 +1,6 @@
 ---
 title: "Data with potential mistakes"
-always_allow_html: true
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   bookdown::pdf_document2:
     toc: !expr if(!exists('child')) {TRUE} else {child}
@@ -10,7 +10,6 @@ output:
   bookdown::html_document2:
     toc: !expr if(!exists('child')) {TRUE} else {child}
     number_sections: TRUE
-date: "`r format(Sys.time(), '%d %B, %Y')`"
 params:
   final: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/Modifying_IOTC_cwp_errors"
   rawdata: "data/rawdata"
@@ -99,15 +98,12 @@ if(!(require(DBI))){
   install.packages("DBI") 
   (require(DBI))} 
 
-if(require("htmltools"))
-  set_flextable_defaults(
-    font.size = 30,
-    font.color = "black",
-    table.layout = "fixed",
-    digits = NULL,
-    theme_fun = "theme_box"
-  )
-div(flextable_html_dependency())
+set_flextable_defaults(
+  font.size = 10,
+  font.color = "black",
+  digits = 2,
+  theme_fun = "theme_box"
+)
 
 
 
