@@ -467,6 +467,11 @@ conversion_factor_level0 <- rbind(dplyr::inner_join(strata_nomt , strata_mtno, b
   dplyr::summarise(NO = sum(NO), MT = sum(MT)) %>% dplyr::mutate(conversion_factor = MT/NO) %>% dplyr::distinct()
 ```
 
+```{r}
+knitr::knit_exit()
+```
+
+
 # Absurd conversion factors
 
 We analyse here the data with conversion factors "absurd", meaning being superior to the maximum catch reported for the fish of this species.
@@ -475,7 +480,10 @@ We compare the data of this conversion factors absurd, with the total data to se
 
 ```{r}
 `%notin%` <- Negate(`%in%`)
-max_conversion_factor <- read_csv("data/max_conversion_factor.csv") %>% mutate(max_weigt = as.double(max_weigt))
+max_conversion_factor <- read_csv("data/max_conversion_factor.csv", 
+    col_types = cols(max_weight = col_double(), 
+        min_weight = col_double()))
+View(max_conversion_factor)
 absurd_conversion_factor <- inner_join(conversion_factor_level0, max_conversion_factor, by= c("species"))
 # absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversion_factor>0.05 & species == "SKJ") | (conversion_factor > 0.09 & species == "ALB") |(conversion_factor>0.2 & species == "YFT") | (conversion_factor >0.5 & species =="SWO")| (conversion_factor>0.2 &species == "BET") | (species %notin% c("ALB","SKJ","SWO", "YFT", "BET")))
 ```
