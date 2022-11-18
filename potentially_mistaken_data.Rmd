@@ -475,16 +475,19 @@ We compare the data of this conversion factors absurd, with the total data to se
 
 ```{r}
 `%notin%` <- Negate(`%in%`)
-max_conversion_factor <- read_csv("data/max_conversion_factor.csv")
+max_conversion_factor <- read_csv("data/max_conversion_factor.csv") %>% mutate(max_weigt = as.double(max_weigt))
 absurd_conversion_factor <- inner_join(conversion_factor_level0, max_conversion_factor, by= c("species"))
 # absurd_conversion_factor <- conversion_factor_level0 %>% dplyr::filter((conversion_factor>0.05 & species == "SKJ") | (conversion_factor > 0.09 & species == "ALB") |(conversion_factor>0.2 & species == "YFT") | (conversion_factor >0.5 & species =="SWO")| (conversion_factor>0.2 &species == "BET") | (species %notin% c("ALB","SKJ","SWO", "YFT", "BET")))
 ```
 
 ```{r}
-
 titre_1 <- "Strange conversion factors"
 absurd_conversion_factor_tons <- absurd_conversion_factor  %>%  dplyr::rename(value=MT) %>% dplyr::mutate(unit="MT")
 strange <- studycatchesird::pie_chart_2(fishingfleet,first=absurd_conversion_factor_tons,second=rawdata )
+```
+
+
+```{r results='asis', fig.cap='Repartition of fishingfleet for impossible conversion factors'}
 strange
 ```
 
