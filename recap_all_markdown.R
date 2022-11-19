@@ -2,9 +2,17 @@ comparison_each_step <- function(action, entity, config, options){
   if(!(require(here))){ 
     install.packages("here") 
     (require(here))} 
+  if(!(require(dplyr))){ 
+    install.packages("dplyr") 
+    (require(dplyr))} 
+  
   if(!require(stringr)){
     install.packages("stringr")
     require(stringr)
+  }
+  if(!require(tibble)){
+    install.packages("tibble")
+    require(tibble)
   }
   if(!require(bookdown)){
     install.packages("bookdown")
@@ -21,11 +29,44 @@ comparison_each_step <- function(action, entity, config, options){
     ) }
   
   c <- c("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/tableau_recap_global_action_effort.Rmd", 
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comparison.Rmd")
+         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comparison.Rmd", 
+         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/strata_conversion_factor_gihtub.Rmd", 
+         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/potentially_mistaken_data.Rmd")
   lapply(c,copyrmd)
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
                     params = list(action = action,
                                   entity = entity, config = config), envir =  new.env())
+  if(dir.exists("Markdown/Realocating_removing_mislocated_data")){
+    wd <- getwd()
+    list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
+    details = file.info(list_dir)
+    details = details[with(details, order(as.POSIXct(mtime))), ]
+    details <- tibble::rownames_to_column(details, "dir_name")
+    details <- tibble::rowid_to_column(details, "ID")
+    Realocating_removing_mislocated_data_number <-details %>% filter(dir_name == "Realocating_removing_mislocated") %>% pull(ID)
+    before_Realocating_removing_mislocated_data <- details %>% filter(ID == Realocating_removing_mislocated_data_number-1) %>% pull(dir_name)
+    rmarkdown::render("potentially_mistaken_data.Rmd"  , 
+                      params = list(action = action,
+                                    entity = entity, config = config,
+    final = paste0(before_Realocating_removing_mislocated_data,"/rds.rds")), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
+    
+  }
+  if(dir.exists("Markdown/Removing_absurd_nomt")){
+    wd <- getwd()
+    list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
+    details = file.info(list_dir)
+    details = details[with(details, order(as.POSIXct(mtime))), ]
+    details <- tibble::rownames_to_column(details, "dir_name")
+    details <- tibble::rowid_to_column(details, "ID")
+    begin_conv_fact_handling_number <-details %>% filter(dir_name == "Realocating_removing_mislocated") %>% pull(ID)
+    before_begin_conv_fact_handling <- details %>% filter(ID == begin_conv_fact_handling_number-1) %>% pull(dir_name)
+    rmarkdown::render("strata_conversion_factor_gihtub.Rmd"  , 
+                      params = list(action = action,
+                                    entity = entity, config = config,
+                                    final = paste0(before_begin_conv_fact_handling,"/rds.rds")), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
+    
+  }
+  
 }
 
 
