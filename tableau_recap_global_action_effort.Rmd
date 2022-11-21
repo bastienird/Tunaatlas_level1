@@ -53,11 +53,17 @@ knitr::opts_chunk$set(
 opts <- params$action$options
 con <- params$config$software$output$dbi
 parameter_fact = params$action$options$fact
+parameter_fact = action$options$fact
 parameter_filtering <- if(!is.null(params$action$options$filtering)){params$action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
 # if(exists('params')){parameters <- params}else{
-parameters_child <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con, child = TRUE)
+parameters_child <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, 
+                                                                           parameter_port = config$software$input$dbi_config$parameters$port, 
+                                                                           parameter_user = config$software$input$dbi_config$parameters$user,
+                                                                           parameter_dbname=config$software$input$dbi_config$parameters$dbname,
+                                                     parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE)
 child_env = new.env()
-child_env <- parameters_child
+list2env(parameters_child, env = child_env)
+
 # }
 ```
 
@@ -197,11 +203,13 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 
 ```{r include=FALSE}
 if(dir.exists("Markdown")){
-
+  if(exists("parameter_fact")){
   if(parameter_fact == "catch"){
     nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}else if (parameter_fact == "effort"){
     nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))
+    } 
   }
+  else {nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}
 
 
 }
@@ -591,7 +599,8 @@ child_env$parameter_fact <- params$action$options$fact
 child_env$child <- TRUE
 child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[counting+1]
-if(readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) == readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds"))){NA}else{
+
+if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds")),readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) )){NA}else{
   
 child_env$title_1 <- "Initial_data"
 child_env$title_2 <- "Final_data"
