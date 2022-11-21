@@ -59,7 +59,8 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
   cat(species_no_before$species)
   cat(intersect(species_no_before$species,unique(df_conversion_factor$species)))
   }
-  georef_dataset<-rtunaatlas::convert_units(con = con,
+  source("https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation/convert_units.R")
+  georef_dataset<-convert_units(con = con,
                                             df_input = georef_dataset,
                                             df_conversion_factor = df_conversion_factor,
                                             codelist_geoidentifiers_df_input = "areas_tuna_rfmos_task2",
