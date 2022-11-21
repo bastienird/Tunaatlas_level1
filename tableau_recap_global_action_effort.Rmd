@@ -250,7 +250,7 @@ sub_list_dir_2 = rownames(details)
 
 ```{r echo=FALSE, results='asis'}
 child_env <- new.env()
-child_env <- parameters_child
+list2env(parameters_child, env = child_env)
 child_env$titre_1 <- params$entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$parameter_fact <- params$action$options$fact
@@ -282,7 +282,7 @@ cat(res2, sep =  "\\clearpage")
 ```{r echo=FALSE, results='asis'}
 
 child_env <- new.env()
-child_env <- parameters_child
+list2env(parameters_child, env = child_env)
 child_env$params <- params
 child_env$titre_1 <- params$entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
@@ -582,7 +582,7 @@ For each treatment on the data, we provide a report on what exactly has been cre
 
 function_all_comp <- function(counting){
 child_env <- new.env()
-child_env <- parameters_child
+list2env(parameters_child, env = child_env)
 
 child_env$params <- params
 child_env$titre_1 <- params$entity$identifiers[["id"]]
