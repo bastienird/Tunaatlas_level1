@@ -256,7 +256,7 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 
 ```{r cache=FALSE}
-out <- try((con <- config$software$output$dbi), silent = TRUE)
+out <- try((con <- params$config$software$output$dbi), silent = TRUE)
 if("try-error" %in% class(out)){con <- parameter_con}
 
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
