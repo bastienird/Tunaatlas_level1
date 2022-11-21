@@ -1,4 +1,4 @@
-do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_conversion_factor_url,unit_conversion_codelist_geoidentifiers_conversion_factors,mapping_map_code_lists = FALSE, georef_dataset){
+do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_conversion_factor_url,unit_conversion_codelist_geoidentifiers_conversion_factors,mapping_map_code_lists = FALSE, georef_dataset, removing_numberfish_final = TRUE){
   
 
   config$logger.info("Reading the conversion factors dataset")
@@ -94,7 +94,9 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
   # sum_t <- df %>% filter(unit=="MT")  %>% select(value)  %>% sum()
   config$logger.info(sprintf("Gridded catch dataset has [%s] lines using 'number' as unit of measure", nrow_no))
   config$logger.info(sprintf("Now removing all lines still using 'number' (NO) as unit of measure and still representing a total of [%s] inidviduals", sum_no_after))
-  georef_dataset <- georef_dataset[georef_dataset$unit == "MT", ]
+  if(removing_numberfish_final){
+    georef_dataset <- georef_dataset[georef_dataset$unit == "MT", ]}
+  
   #georef_dataset <- georef_dataset[georef_dataset$unit == "t", ]
   config$logger.info(sprintf("Ratio of converted numbers is [%s] due to lack on conversion factors for some dimensions (species, time, gears..)", 1-sum_no_after/sum_no_before))
   }
