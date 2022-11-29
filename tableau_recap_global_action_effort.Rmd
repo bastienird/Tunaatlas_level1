@@ -356,10 +356,10 @@ return(dataframe_to_filter)
 
 ```{r include=FALSE, eval=(parameter_fact == "catch")}
 if(!exists("nominal")){nominal <- 1}
-df <- data.frame(matrix(ncol =12, nrow = 1))
+df <- data.frame(matrix(ncol =13, nrow = 1))
       colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir_2),"/")[[1]],n=1)),
                         "Explenation", "Fonctions", 
-                        "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
+                        "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference in number of fish", "Difference (in % of lines)", "Percentage of nominal"
       )
       # if((!is.null(opts))){ #have not change for species$filter
       #   tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
@@ -390,6 +390,7 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         step <- tail(str_split(paste0(i),"/")[[1]],n=1)
         loss_percent <- 100*((tons_init - sum_t)/tons_init)
         loss_tons <- (tons_init - sum_t)
+        loss_no <- (nofish_init - sum_no)
         loss_percent_lines <- 100*((lines_init - nrow)/lines_init)
         loss_percent_no <- 100*((nofish_init - sum_no)/nofish_init)
         percentage_of_nominal <- (sum_t*100)/nominal
@@ -397,7 +398,7 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         data_i <- cbind(step,
                         Explenation, Fonctions, 
                         Options,
-                        sums, loss_percent,loss_tons,loss_percent_no, loss_percent_lines, percentage_of_nominal)
+                        sums, loss_percent,loss_tons,loss_percent_no,loss_no, loss_percent_lines, percentage_of_nominal)
         names(data_i) <- colnames(df)
         df <- rbind(df, data_i)
         tons_init <- sum_t
@@ -453,10 +454,10 @@ geom_line( aes(y=`Sum in millions of tons`,group = 1), size=0.5)+theme(axis.text
 
 ```{r include=FALSE , eval=(parameter_fact == "effort")}
 if(!exists("nominal")){nominal <- 1}
-df <- data.frame(matrix(ncol =12, nrow = 1))
+df <- data.frame(matrix(ncol =13, nrow = 1))
       colnames(df) <- c(paste0(tail(str_split(paste0(sub_list_dir_2),"/")[[1]],n=1)),
                         "Explenation", "Fonctions", 
-                        "Options", "Sum in hooks", "Sum in fishing days", "Number of lines","Difference (in % of hooks)","Difference in hooks","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
+                        "Options", "Sum in hooks", "Sum in fishing days", "Number of lines","Difference (in % of hooks)","Difference in hooks","Difference (in % of fishing days)","Difference in fishing days",  "Difference (in % of lines)", "Percentage of nominal"
       )
 
           main <- filtering_function(readRDS(paste0(sub_list_dir_2[1],"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%opts$species_filter)
@@ -478,7 +479,8 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
 
         step <- tail(str_split(paste0(i),"/")[[1]],n=1)
         loss_percent <- 100*((hooks_init - sum_hooks)/hooks_init)
-        loss_hooks <- (hooks_init - sum_hooks)
+        loss_hooks <- (hooks_init - sum_fdays)
+        loss_fdays <- (fishing_days_init - sum_hooks)
         loss_percent_lines <- 100*((lines_init - nrow)/lines_init)
         loss_percent_fdays <- 100*((fishing_days_init - sum_fdays)/fishing_days_init)
         percentage_of_nominal <- (sum_hooks*100)/nominal
@@ -486,7 +488,7 @@ df <- data.frame(matrix(ncol =12, nrow = 1))
         data_i <- cbind(step,
                         Explenation, Fonctions, 
                         Options,
-                        sums, loss_percent,loss_hooks,loss_percent_fdays, loss_percent_lines, percentage_of_nominal)
+                        sums, loss_percent,loss_hooks,loss_percent_fdays,loss_fdays, loss_percent_lines, percentage_of_nominal)
         names(data_i) <- colnames(df)
         df <- rbind(df, data_i)
         hooks_init <- sum_hooks
