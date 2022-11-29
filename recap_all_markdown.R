@@ -31,8 +31,11 @@ comparison_each_step <- function(action, entity, config, options){
   c <- c("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/tableau_recap_global_action_effort.Rmd", 
          "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comparison.Rmd", 
          "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/strata_conversion_factor_gihtub.Rmd", 
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/potentially_mistaken_data.Rmd")
+         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/potentially_mistaken_data.Rmd",
+         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/template.tex",
+         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/dmk-format.csl")
   lapply(c,copyrmd)
+
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
                     params = list(action = action,
                                   entity = entity, config = config), envir =  new.env())
