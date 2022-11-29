@@ -44,7 +44,7 @@ comparison_each_step <- function(action, entity, config, options = NULL){
     install.packages("flextable")
     require(flextable)
   }
-  if(!(is.null(opts))){nominal <- sum((nominal_dataset %>% 
+  if(!(is.null(opts$species_filter))){nominal <- sum((nominal_dataset %>% 
                                                           filter(species %in% opts$species_filter))$value)
   } else {nominal <- sum(nominal_dataset$value)}
   
@@ -68,7 +68,7 @@ comparison_each_step <- function(action, entity, config, options = NULL){
                         # "Explanation", "Fonctions", 
                         "Options", "Sum in tons", "Sum in number of fish", "Number of lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference (in % of lines)", "Percentage of nominal"
       )
-      if((!is.null(opts))){ #have not change for species$filter
+      if((is.null(opts$species_filter))){ #have not change for species$filter
         tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
         lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
         nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])} else{
