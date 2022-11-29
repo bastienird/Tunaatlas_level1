@@ -1,16 +1,68 @@
 ---
 title: 'Comparison of two data sets at different levels/options of the tuna atlas'
-author: "IRD"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+author:
+  - name: Bastien Grasset
+    email: bastien.grasset@ird.fr
+    affiliation:
+      - IRD
+      - MARBEC
+  - name: Emmanuel Blondel
+    affiliation: FAO
+  - name: Julien Barde
+    affiliation:
+      - IRD
+      - MARBEC
+  - name: Paul Taconet 
+    affiliation: IRD
+address:
+  - code: IRD
+    address: Institut de Recherche pour le Développement (IRD), av. Jean Monnet, CS 30171, 34203 Sète cédex, France
+  - code: MARBEC
+    address: MARBEC, University of Montpellier, CNRS, Ifremer, IRD, Sète, France
+bibliography: ["IOTC-2022-WPDCS18.bib"] # Replace with one or more of your own bibtex files. Better BibTeX for Zotero is your friend
+csl: dmk-format.csl # Use any CSL style. See https://www.zotero.org/styles for a good list. Ignored if citation_package: natbib
+link-citations: TRUE
 output:
   bookdown::pdf_document2:
-    toc: !expr if(!exists('child')) {TRUE} else {child}
+    extra_dependencies: ["adjustbox", "subfig", "flafter"]
+    toc: FALSE
+    keep_tex: TRUE
+    template: template.tex
+    #md_extensions: "-autolink_bare_uris"
     number_sections: TRUE
-    keep_tex: true
-    extra_dependencies: ["adjustbox", "subfig"]
-  bookdown::html_document2:
-    toc: !expr if(!exists('child')) {TRUE} else {child}
-    number_sections: TRUE
+    citation_package: default # Can also be "natbib"
+  bookdown::word_document2: 
+    # Produces largely readable output, though some cross-referencing may fail. Useful for collaboration.
+    toc: TRUE
+lang: en # Main document language in BCP47 format
+geometry: "margin=25mm"
+papersize: a4
+#linestretch: 2 # for double spacing
+endfloat: FALSE # Set to TRUE to turn on latex endfloat package to place figures and tables at end of document
+# endfloatoption: # See endfloat documentation for more possibilities
+#   - tablesfirst # Default
+#   - nomarkers # Default
+numberlines: FALSE
+authblk: FALSE # FALSE = author affiliations in footnotes; TRUE = author affiliations in a block below author names
+footnotehyper: FALSE # TRUE will give you enhanced table footnote capabilities. Set to FALSE to be able to use French blocks. Needed due to what appears to be a latex bug.
+urlcolor: blue
+linkcolor: blue
+citecolor: blue
+graphics: TRUE # Needed to be able to include images
+tables: TRUE # Needed to be able to include tables
+fancyhdr:
+  first:
+    headleft: "Global Tuna Atlas comparison between two datasets"
+    headright: "GTA"
+    headrulewidth: 0pt
+    #footleft: A left foot
+    footrulewidth: 0pt
+  subsequent:
+    headleft: "Global Tuna Atlas comparison between two datasets"
+    headright: "GTA"
+    headrulewidth: 1pt
+    footrulewidth: 0pt
 params: 
   init: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata"
   final: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/Treatment_iattc_iccat"
@@ -253,11 +305,29 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 ```
 
+```{r justtolaunchinknittingnotoutside, include=FALSE}
+if(!require(dotenv)){
+  install.packages("dotenv")
+  require(dotenv)
+}
+if(!require(geoflow)){
+  install.packages("geoflow")
+  require(geoflow)
+}
+load_dot_env(file = "catch_server.env")
+config <- initWorkflow("tunaatlas_qa_global_datasets_catch.json") #ok
+entity <- config$metadata$content$entities[[1]]
+action <- entity$data$actions[[1]]
+opts <- action$options
+con <- config$software$input$dbi
+
+```
 
 
 ```{r cache=FALSE}
+if(!exists("con")){
 out <- try((con <- params$config$software$output$dbi), silent = TRUE)
-if("try-error" %in% class(out)){con <- parameter_con}
+if("try-error" %in% class(out)){con <- parameter_con}}
 
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
