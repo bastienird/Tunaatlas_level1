@@ -20,7 +20,7 @@ address:
     address: Institut de Recherche pour le Développement (IRD), av. Jean Monnet, CS 30171, 34203 Sète cédex, France
   - code: MARBEC
     address: MARBEC, University of Montpellier, CNRS, Ifremer, IRD, Sète, France
-bibliography: ["IOTC-2022-WPDCS18.bib"] # Replace with one or more of your own bibtex files. Better BibTeX for Zotero is your friend
+# bibliography: ["IOTC-2022-WPDCS18.bib"] # Replace with one or more of your own bibtex files. Better BibTeX for Zotero is your friend
 csl: dmk-format.csl # Use any CSL style. See https://www.zotero.org/styles for a good list. Ignored if citation_package: natbib
 link-citations: TRUE
 output:
@@ -86,6 +86,7 @@ params:
   action: action
   short: FALSE
   mapped: FALSE
+  debugging: FALSE
 ---
 
 ```{r cache=FALSE, include=FALSE}
@@ -305,29 +306,29 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 ```
 
-```{r justtolaunchinknittingnotoutside, include=FALSE}
-if(!require(dotenv)){
-  install.packages("dotenv")
-  require(dotenv)
-}
-if(!require(geoflow)){
-  install.packages("geoflow")
-  require(geoflow)
-}
-load_dot_env(file = "catch_server.env")
-config <- initWorkflow("tunaatlas_qa_global_datasets_catch.json") #ok
-entity <- config$metadata$content$entities[[1]]
-action <- entity$data$actions[[1]]
-opts <- action$options
-con <- config$software$input$dbi
-
-```
+<!-- # ```{r justtolaunchinknittingnotoutside, include=FALSE} -->
+<!-- # if(!require(dotenv)){ -->
+<!-- #   install.packages("dotenv") -->
+<!-- #   require(dotenv) -->
+<!-- # } -->
+<!-- # if(!require(geoflow)){ -->
+<!-- #   install.packages("geoflow") -->
+<!-- #   require(geoflow) -->
+<!-- # } -->
+<!-- # load_dot_env(file = "catch_server.env") -->
+<!-- # config <- initWorkflow("tunaatlas_qa_global_datasets_catch.json") #ok -->
+<!-- # entity <- config$metadata$content$entities[[1]] -->
+<!-- # action <- entity$data$actions[[1]] -->
+<!-- # opts <- action$options -->
+<!-- # con <- config$software$input$dbi -->
+<!-- #  -->
+<!-- # ``` -->
 
 
 ```{r cache=FALSE}
-if(!exists("con")){
-out <- try((con <- params$config$software$output$dbi), silent = TRUE)
-if("try-error" %in% class(out)){con <- parameter_con}}
+
+out <- try((con <- config$software$output$dbi), silent = TRUE)
+if("try-error" %in% class(out)){con <- parameter_con}
 
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
@@ -556,7 +557,7 @@ if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, c
 ```
 
 
-```{r}
+```{r include=FALSE}
 errorfinal <- try(differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
 errorinit <- try(differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
 
@@ -754,13 +755,16 @@ join <- dplyr::full_join(init_group, final_group) %>% dplyr::arrange(unit) %>%dp
 
 join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)}))%>% 
           color(~ `Difference` < 0, color = "green",~ `Difference`) %>% 
-          color(~ `Difference` >0, color = "red",~ `Difference`)
+          color(~ `Difference` >0, color = "red",~ `Difference`)%>% autofit()
+join <- width(join, width = dim(join)$widths*6 /(flextable_dim(join)$widths))
+set_caption(join, caption = "Summary of the difference between the two datasets",  style = "Table Caption")
+
 ```
 
 
 ```{r  eval=!unique_analyse,echo=FALSE, results='asis', out.width="100%"}
 
-set_caption(join, caption = "Summary of the difference between the two datasets",  style = "Table Caption")
+join
 
 ```
 
@@ -786,6 +790,7 @@ number_final_column <- as.data.frame(t(final %>% select(-value) %>% summarise_al
 s <- cbind(number_init_column , number_final_column )
 
 rownames(s) <- paste0("Number of ", rownames(s))
+
 ```
 
 ```{r}
@@ -819,7 +824,7 @@ cat2("## Time coverage")
 We present the evolution of value in every unit available.
 
 ```{r}
-if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start", "time_end")}
+if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start")}
 time_dimension_list_groupped <- lapply(time_dimension, fonction_groupement, init = init, final = final)
 
 time_dimension_list_groupped_diff <- lapply(time_dimension_list_groupped, function(x){x %>%dplyr::mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% pivot_longer(cols = c(`Values dataset 1`, `Values dataset 2`), names_to = "Dataset", values_to ="Values") %>%dplyr::mutate(Dataset = dplyr::case_when(Dataset == "Values dataset 1" ~ titre_1 , TRUE ~ titre_2))%>% dplyr::filter(Values!=0) %>% dplyr::distinct()})
@@ -1476,7 +1481,7 @@ if(nrow(unit != 0)){qflextable2(t3, captionn = "Difference between stratas")} el
 
 
 
-```{r eval=!parameter_mapped}
+```{r eval=!parameter_mapped || child}
 knitr::knit_exit(fully = FALSE)
 ```
 
