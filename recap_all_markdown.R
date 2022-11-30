@@ -1,4 +1,4 @@
-comparison_each_step <- function(action, entity, config, options){
+comparison_each_step <- function(action, entity, config, options, debugging = FALSE){
   if(!(require(here))){ 
     install.packages("here") 
     (require(here))} 
@@ -18,27 +18,45 @@ comparison_each_step <- function(action, entity, config, options){
     install.packages("bookdown")
     require(bookdown)
   }
-  copyrmd <- function(x){
-    last_path = function(y){tail(str_split(y,"/")[[1]],n=1)}
-    use_github_file(repo_spec =x,
-                    save_as = paste0(gsub(as.character(here::here()),"",as.character(getwd())), paste0("/", last_path(x))),
-                    ref = NULL,
-                    ignore = FALSE,
-                    open = FALSE,
-                    host = NULL
-    ) }
-  
-  c <- c("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/tableau_recap_global_action_effort.Rmd", 
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comparison.Rmd", 
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/strata_conversion_factor_gihtub.Rmd", 
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/potentially_mistaken_data.Rmd",
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/template.tex",
-         "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/dmk-format.csl")
-  lapply(c,copyrmd)
 
+  
+  if(debugging == TRUE){
+    c <- c("~/Documents/Tunaatlas_level1/tableau_recap_global_action_effort.Rmd", 
+           "~/Documents/Tunaatlas_level1/comparison.Rmd", 
+           "~/Documents/Tunaatlas_level1/strata_conversion_factor_gihtub.Rmd", 
+           "~/Documents/Tunaatlas_level1/potentially_mistaken_data.Rmd",
+           "~/Documents/Tunaatlas_level1/template.tex",
+           "~/Documents/Tunaatlas_level1/dmk-format.csl")
+    copyfiles <- function(x){
+      last_path = function(y){tail(str_split(y,"/")[[1]],n=1)}
+      file.copy(from =x,
+                    to = paste0(getwd(), paste0("/", last_path(x))),, overwrite = TRUE
+      )
+     }
+    lapply(c,copyfiles)
+  } else {
+    copyrmd <- function(x){
+      last_path = function(y){tail(str_split(y,"/")[[1]],n=1)}
+      use_github_file(repo_spec =x,
+                      save_as = paste0(gsub(as.character(here::here()),"",as.character(getwd())), paste0("/", last_path(x))),
+                      ref = NULL,
+                      ignore = FALSE,
+                      open = FALSE,
+                      host = NULL
+      ) }
+    
+    c <- c("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/tableau_recap_global_action_effort.Rmd", 
+           "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/comparison.Rmd", 
+           "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/strata_conversion_factor_gihtub.Rmd", 
+           "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/potentially_mistaken_data.Rmd",
+           "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/template.tex",
+           "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/dmk-format.csl")
+    lapply(c,copyrmd)
+  }
+  
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
                     params = list(action = action,
-                                  entity = entity, config = config), envir =  new.env())
+                                  entity = entity, config = config, debugging = debugging), envir =  new.env())
   if(dir.exists("Markdown/Realocating_removing_mislocated_data")){
     wd <- getwd()
     list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
