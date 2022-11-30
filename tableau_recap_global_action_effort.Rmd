@@ -1,39 +1,77 @@
 ---
 title: "Summary of the treatment for a specific entity of the global tuna atlas"
-eval.expr: TRUE
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author:
+  - name: Bastien Grasset
+    email: bastien.grasset@ird.fr
+    affiliation:
+      - IRD
+      - MARBEC
+  - name: Emmanuel Blondel
+    affiliation: FAO
+  - name: Julien Barde
+    affiliation:
+      - IRD
+      - MARBEC
+  - name: Paul Taconet 
+    affiliation: IRD
+address:
+  - code: IRD
+    address: Institut de Recherche pour le Développement (IRD), av. Jean Monnet, CS 30171, 34203 Sète cédex, France
+  - code: MARBEC
+    address: MARBEC, University of Montpellier, CNRS, Ifremer, IRD, Sète, France
+# bibliography: ["IOTC-2022-WPDCS18.bib"] # Replace with one or more of your own bibtex files. Better BibTeX for Zotero is your friend
+csl: dmk-format.csl # Use any CSL style. See https://www.zotero.org/styles for a good list. Ignored if citation_package: natbib
+link-citations: TRUE
 output:
   bookdown::pdf_document2:
-    toc: true
-    toc_depth: 3
-    number_sections: true
-    always_allow_html: true
-    extra_dependencies: ["adjustbox", "subfig"]
-    fig_caption: true
-    tab_caption: true
-    lof: true
-    lot: true   
-    alternative-title-page: front-and-back-matter/alt-title-page-example.tex
-    header-includes:
-    - \usepackage{booktabs}
-    - \usepackage[T1]{fontenc}
-  bookdown::html_document2:
-    toc: true
-    toc_depth: 3
-    number_sections: true
-    global_numbering: true
-    toc_float: true
-    toc_collapsed: true
-    fig_caption: yes
-    tab_caption: yes
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+    extra_dependencies: ["adjustbox", "subfig", "flafter"]
+    toc: FALSE
+    keep_tex: TRUE
+    template: template.tex
+    #md_extensions: "-autolink_bare_uris"
+    number_sections: TRUE
+    citation_package: default # Can also be "natbib"
+  bookdown::word_document2: 
+    # Produces largely readable output, though some cross-referencing may fail. Useful for collaboration.
+    toc: TRUE
+lang: en # Main document language in BCP47 format
+geometry: "margin=25mm"
+papersize: a4
+#linestretch: 2 # for double spacing
+endfloat: FALSE # Set to TRUE to turn on latex endfloat package to place figures and tables at end of document
+# endfloatoption: # See endfloat documentation for more possibilities
+#   - tablesfirst # Default
+#   - nomarkers # Default
+numberlines: FALSE
+authblk: FALSE # FALSE = author affiliations in footnotes; TRUE = author affiliations in a block below author names
+footnotehyper: FALSE # TRUE will give you enhanced table footnote capabilities. Set to FALSE to be able to use French blocks. Needed due to what appears to be a latex bug.
+urlcolor: blue
+linkcolor: blue
+citecolor: blue
+graphics: TRUE # Needed to be able to include images
+tables: TRUE # Needed to be able to include tables
+fancyhdr:
+  first:
+    headleft: "Global Tuna Atlas comparison between two datasets"
+    headright: "GTA"
+    headrulewidth: 0pt
+    #footleft: A left foot
+    footrulewidth: 0pt
+  subsequent:
+    headleft: "Global Tuna Atlas comparison between two datasets"
+    headright: "GTA"
+    headrulewidth: 1pt
+    footrulewidth: 0pt
 params:
   action: action
   entity: entity
   config: config
   filtering: NULL
+  debugging: FALSE
 ---
 
- \clearpage
+\clearpage
 
 
 This document is aimed to recap the impact on the data of the different treatment of the Global Tuna Atlas. 
@@ -157,16 +195,14 @@ set_flextable_defaults(
   digits = 2,
   theme_fun = "theme_box"
 )
-qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colour = FALSE){
-  if("Captures table 1" %in% colnames(x)){
-    y <-x %>% dplyr::mutate(`Captures table 1` = round(`Captures table 1`)) } 
+qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colour = FALSE, coloured_columns = NULL){
 
-  else {y <- x}
-  y <- y %>% dplyr::mutate_if(is.factor, as.character) %>% dplyr::mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
+  y <- x %>% dplyr::mutate_if(is.factor, as.character) %>% dplyr::mutate_if(is.character, ~str_replace_all( ., ",", ", \n" )) %>% 
   dplyr::mutate_if(is.character,~str_replace_all( ., "_", "-" )) %>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
   flextable <- flextable(y)
   if(colour){
-  flextable <- flextable %>% 
+    flextable <- flextable %>% color()
+  flextable <- flextable %>% color(j = coloured_columns )
           color(~ `Difference (in % of tons)` < 0, color = "green",~ `Difference (in % of tons)`) %>% 
           color(~ `Difference (in % of tons)` >0, color = "red",~ `Difference (in % of tons)`)%>%   color(~ `Difference (in % of fish)` < 0, color = "green",~ `Difference (in % of fish)`) %>% 
           color(~ `Difference (in % of fish)` >0, color = "red",~ `Difference (in % of fish)`)%>%color(~ `Difference (in % of lines)` < 0, color = "green",~ `Difference (in % of lines)`) %>% 
@@ -174,10 +210,13 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
   } 
   if(!is.null(captionn)){flextable_captionned <- set_caption(flextable, caption = captionn,
   style = "Table Caption")} else {flextable_captionned <- flextable}
-  ft_out <- flextable_captionned %>% autofit()
-  ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
+  flextable_captionned <- flextable_captionned%>%
+  align(align = "left", part = "all") %>%
+  set_table_properties(layout = "autofit")
+  # ft_out <- flextable_captionned %>% autofit()
+  # ft_out <- width(ft_out, width = dim(ft_out)$widths*pgwidth /(flextable_dim(ft_out)$widths))
 
-  return(ft_out)
+  knitr::knit_print(ft_out)
 
 }
 base::options(knitr.duplicate.label = "allow")#for duplicate chunk names
@@ -247,7 +286,7 @@ In a second time we will present the process of the GlobalTuna Atlas in order to
 
 # Summary of the entity : `r entity$identifiers[["id"]]` 
 
-```{r include=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 sub_list_dir_2 <- paste0("Markdown/",list.dirs(path =paste0(getwd(),"/Markdown"), full.names = FALSE, recursive = FALSE))
 details = file.info(paste0(sub_list_dir_2,"/Markdown"))
 details = file.info(sub_list_dir_2)
@@ -256,14 +295,17 @@ sub_list_dir_2 = rownames(details)
 ```
 
 
-```{r echo=FALSE, results='asis'}
+```{r include=FALSE, results='asis'}
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
 child_env$titre_1 <- params$entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$parameter_fact <- params$action$options$fact
 child_env$child <- TRUE
-# child_env$parameter_con <- con
+if(params$debugging == TRUE){
+  child_env$debugging <- TRUE
+  } else {child_env$debugging <- FALSE}
+child_env$parameter_con <- con
 
 
   # assign("parameter_init", sub_list_dir_2[1], pos = environment())
@@ -287,7 +329,7 @@ cat(res2, sep =  "\\clearpage")
 
 # Summary of the treatment done on the data (comparison between the first to the last)
 
-```{r echo=FALSE, results='asis'}
+```{r include=FALSE, results='asis'}
 
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
@@ -329,6 +371,11 @@ cat(res, sep =  "\\clearpage")
 
 
 \clearpage
+
+
+```{r eval=debugging}
+knitr::knit_exit()
+```
 
 # Analyse of the processing of the data
 
@@ -548,7 +595,9 @@ qflextable2(reduced, colour = FALSE, captionn ="Evolution of Sum in tons and Sum
 ```
 
 ```{r echo=FALSE, results='asis', eval=(parameter_fact == "effort")}
+
 qflextable2(reduced, colour = FALSE, captionn ="Evolution of Sum in hooks and Sum in fishing days and lines along the steps")
+
 ```
 
 
