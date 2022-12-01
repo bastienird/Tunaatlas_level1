@@ -87,25 +87,6 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
-
-opts <- params$action$options
-con <- params$config$software$output$dbi
-parameter_fact = params$action$options$fact
-parameter_fact = action$options$fact
-parameter_filtering <- if(!is.null(params$action$options$filtering)){params$action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
-# if(exists('params')){parameters <- params}else{
-parameters_child <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, 
-                                                                           parameter_port = config$software$input$dbi_config$parameters$port, 
-                                                                           parameter_user = config$software$input$dbi_config$parameters$user,
-                                                                           parameter_dbname=config$software$input$dbi_config$parameters$dbname,
-                                                     parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE)
-child_env = new.env()
-list2env(parameters_child, env = child_env)
-
-# }
-```
-
-```{r}
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
 if(!(require(base))){ 
   install.packages("base") 
@@ -183,6 +164,27 @@ if(!(require(readtext))){
   (require(readtext))} 
 ```
 
+```{r}
+
+opts <- params$action$options
+con <- params$config$software$output$dbi
+parameter_fact = params$action$options$fact
+parameter_fact = action$options$fact
+parameter_filtering <- if(!is.null(params$action$options$filtering)){params$action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
+# if(exists('params')){parameters <- params}else{
+parameters_child <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, 
+                                                                           parameter_port = config$software$input$dbi_config$parameters$port, 
+                                                                           parameter_user = config$software$input$dbi_config$parameters$user,
+                                                                           parameter_dbname=config$software$input$dbi_config$parameters$dbname,
+                                                     parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE)
+child_env = new.env()
+list2env(parameters_child, env = child_env)
+
+# }
+```
+
+
+
 
 ```{r}
 # knitr::opts_chunk$set(tab.cap.pre = "Table ", tab.cap.sep = ": ")
@@ -242,6 +244,8 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 
 ```{r include=FALSE}
 if(dir.exists("Markdown")){
+if(!exists("parameter_fact")){browser()}
+
   if(exists("parameter_fact")){
   if(parameter_fact == "catch"){
     nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}else if (parameter_fact == "effort"){
@@ -373,9 +377,6 @@ cat(res, sep =  "\\clearpage")
 \clearpage
 
 
-```{r eval=debugging}
-knitr::knit_exit()
-```
 
 # Analyse of the processing of the data
 
