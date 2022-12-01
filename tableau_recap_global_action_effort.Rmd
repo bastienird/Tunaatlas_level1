@@ -212,7 +212,7 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
   } 
   if(!is.null(captionn)){flextable_captionned <- set_caption(flextable, caption = captionn,
   style = "Table Caption")} else {flextable_captionned <- flextable}
-  flextable_captionned <- flextable_captionned%>%
+  ft_out <- flextable_captionned%>%
   align(align = "left", part = "all") %>%
   set_table_properties(layout = "autofit")
   # ft_out <- flextable_captionned %>% autofit()
