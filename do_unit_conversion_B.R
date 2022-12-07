@@ -24,12 +24,14 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
     mapping_dataset<-data.frame(source_authority,db_mapping_dataset_name)
     df_mapping_final_this_dimension<-NULL
     for (j in 1:nrow(mapping_dataset)){ 
-      df_mapping<-rtunaatlas::extract_dataset(con,list_metadata_datasets(con,identifier=mapping_dataset$db_mapping_dataset_name[j]))  # Extract the code list mapping dataset from the DB
+      source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/extract_dataset.R")
+      df_mapping<-extract_dataset(con,list_metadata_datasets(con,identifier=mapping_dataset$db_mapping_dataset_name[j]))  # Extract the code list mapping dataset from the DB
       df_mapping$source_authority<-as.character(mapping_dataset$source_authority[j])  # Add the dimension "source_authority" to the mapping dataset. That dimension is not included in the code list mapping datasets. However, it is necessary to map the code list.
       df_mapping_final_this_dimension<-rbind(df_mapping_final_this_dimension,df_mapping)
     }
     #georef_dataset with source coding system for gears mapped with isscfg codes:
-    georef_dataset<-rtunaatlas::map_codelist(georef_dataset,df_mapping_final_this_dimension,"gear",TRUE)$df
+    source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/map_codelist.R")
+    georef_dataset<-map_codelist(georef_dataset,df_mapping_final_this_dimension,"gear",TRUE)$df
     
     if (fact=="effort"){
       ## If we have not mapped the code lists (i.e. if mapping_map_code_lists==FALSE), we need to map the source unit coding system with tuna atlas coding system. In fact, the conversion factors dataset is expressed with tuna atlas coding system for units, while the primary tRFMOs datasets are expressed with their own unit coding system.
@@ -38,12 +40,16 @@ do_unit_conversion_B = function(con, entity, config,fact,unit_conversion_csv_con
       mapping_dataset<-data.frame(source_authority,db_mapping_dataset_name)
       df_mapping_final_this_dimension<-NULL
       for (j in 1:nrow(mapping_dataset)){ 
-        df_mapping<-rtunaatlas::extract_dataset(con,list_metadata_datasets(con,identifier=mapping_dataset$db_mapping_dataset_name[j]))  # Extract the code list mapping dataset from the DB
+        source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/extract_dataset.R")
+        
+        df_mapping<-extract_dataset(con,list_metadata_datasets(con,identifier=mapping_dataset$db_mapping_dataset_name[j]))  # Extract the code list mapping dataset from the DB
         df_mapping$source_authority<-as.character(mapping_dataset$source_authority[j])  # Add the dimension "source_authority" to the mapping dataset. That dimension is not included in the code list mapping datasets. However, it is necessary to map the code list.
         df_mapping_final_this_dimension<-rbind(df_mapping_final_this_dimension,df_mapping)
       }
       #georef_dataset with source coding system for units mapped with tuna atlas codes:
-      georef_dataset<-rtunaatlas::map_codelist(georef_dataset,df_mapping_final_this_dimension,"unit",TRUE)$df
+      source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/map_codelist.R")
+      
+      georef_dataset<-map_codelist(georef_dataset,df_mapping_final_this_dimension,"unit",TRUE)$df
     }
     
   }
