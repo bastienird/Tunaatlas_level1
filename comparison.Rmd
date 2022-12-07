@@ -65,7 +65,7 @@ fancyhdr:
     footrulewidth: 0pt
 params: 
   init: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata"
-  final: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/Treatment_iattc_iccat"
+  final: "~/Documents/Tunaatlas_level1/jobs/20221201182627/entities/global_catch_1deg_level0__final_test_new_dcmi_test23/Markdown/Level2_RF3without_gears"
   dbname: ""
   host: ""
   port: 
@@ -256,8 +256,18 @@ if(!require(sutdycatchesird)){
     install.packages("remotes")
   }
   require(remotes)
-  remotes::install_github("BastienIRD/sutdycatchesird")
+  if(!require(devtools)){
+    install.packages("devtools")
+  }
+  require(devtools)
+  out <- try(devtools::install_local("~/Documents/studycatchesird"))
+  try(require(studycatchesird))
+  if("try-error" %in% class(out)){
+
+  install_github("BastienIRD/sutdycatchesird")
   require(sutdycatchesird)
+
+}
 }
 if(!(require(tmap))){ 
   install.packages("tmap") 
@@ -470,8 +480,20 @@ titre_1 <- gsub("_","-",titre_1)
 ```
 
 
+```{r eval=parameter_mapped}
 
-```{r results='asis', eval=!parameter_short & !unique_analyse}
+  mapping_csv_mapping_datasets_url <- entity$getJobDataResource(config, entity$data$source[[2]])
+  mapping_dataset<- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
+  mapping_keep_src_code <- FALSE
+  if(!is.null(opts$mapping_keep_src_code)) mapping_keep_src_code = opts$mapping_keep_src_code
+
+  source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
+  init <- map_codelistsB(con, opts$fact, mapping_dataset, init, mapping_keep_src_code, summary_mapping = FALSE) #this map condelist function is to retrieve the mapping dataset used
+
+```
+
+
+```{r results='asis', eval=(!parameter_short && !unique_analyse)}
 try(knit_child_attention <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
@@ -490,11 +512,11 @@ try(knit_child_attention <- knitr::knit_child(text =c(
 ''), envir = environment(), quiet= TRUE))
 ```
 
-```{r results='asis', eval=!parameter_short & !unique_analyse}
+```{r results='asis', eval=(!parameter_short && !unique_analyse)}
 try(cat(knit_child_attention))
 ```
 
-```{r results='asis', eval=parameter_mapped }
+```{r results='asis', eval=(parameter_mapped &&  !unique_analyse) }
 try(knit_mapped <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
@@ -563,6 +585,8 @@ errorinit <- try(differences_in_optionsinit <- readr::read_delim(paste0(paramete
 
 if(!("try-error" %in% class(errorfinal))){treatment <- TRUE} else {treatment <- FALSE}
 if(!("try-error" %in% class(errorinit))){options_total <- TRUE} else {options_total <- FALSE}
+
+if(exists("no_recap_options") && no_recap_options == TRUE){options_total <- FALSE}
 ```
 
 
@@ -612,14 +636,14 @@ if(!exists("last_to_first")){last_to_first <- FALSE}
 ```
 
 
-```{r results='asis', eval=treatment & !last_to_first}
+```{r results='asis', eval=(treatment & !last_to_first)}
 cat("Summary of this treatment : ")
 cat(explenation_step$X1)
 ```
 
 
 
-```{r, eval= !unique_analyse}
+```{r eval= !unique_analyse}
 if (nrow(differences_between_options2) == 0){
   towrite ="There are no differences between the options to create the two datasets. They are created by the same workflow."
 } else { towrite ="The differences in options choosen between the two dataframes are : "
@@ -627,21 +651,21 @@ qflextable2(differences_between_options2, "Differences between the options of th
 ```
 
 
-```{r results='asis', eval=!parameter_short & !unique_analyse}
+```{r results='asis', eval=(!parameter_short && !unique_analyse)}
 cat(towrite)
 ```
 
 
 
 
-```{r eval=!parameter_short, results='asis', eval=options_total}
+```{r eval=(!parameter_short & options_total), results='asis'}
 cat(ifelse(unique_analyse, "The options used to create the data frame are :", "The options used to create the initial data frame are :"))
 
 s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% dplyr::mutate(Options = gsub("_","-",Options))%>% dplyr::mutate(Options = gsub("=","=\n",Options))%>% dplyr::mutate(Value = gsub("_","-",Value))%>% dplyr::mutate(Value = gsub("=","=\n",Value)) %>% dplyr::mutate(Options = gsub("NONE", "", Options))
 ```
 
 
-```{r eval=!parameter_short, results='asis',echo=FALSE, eval=options_total, out.width="100%"}
+```{r eval=(!parameter_short & options_total), results='asis',echo=FALSE, out.width="100%"}
 
 qflextable2(s, captionn = "Options used in the treatment of the dataset")
 
@@ -721,9 +745,11 @@ pourcentage_strates_perdues <- 100-(100*((nombres_de_strates_totales-nombre_stra
 rm(init_no, init_t, final_no, final_t)
 gc()
 
-strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension,unit)%>% slice(1:10) %>%dplyr::select(Dimension, everything())
+strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension,unit)%>%# slice(1:10) %>%
+  dplyr::select(Dimension, everything())
 
-if (nrow(strates_perdues_first_10)== 0){strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension,unit)%>% slice(1:10) %>%dplyr::select(Dimension, everything()) }
+if (nrow(strates_perdues_first_10)== 0){strates_perdues_first_10 <- rbind(strates_perdues,strates_gagnees) %>%dplyr::filter(`Loss / Gain` != 'Egal')%>%ungroup %>%dplyr::filter(Dimension!="geographic_identifier") %>%dplyr::group_by(`Loss / Gain`,Dimension,unit)%>% #slice(1:10) %>%
+  dplyr::select(Dimension, everything()) }
 
 strates_perdues_first_10[strates_perdues_first_10==""] <- "NA"
 strates_perdues_first_10[is.na(strates_perdues_first_10)] <- "NA"
@@ -750,14 +776,15 @@ init_group <- init %>% dplyr::group_by(unit) %>% dplyr::summarise(titre_test1 = 
 final_group <- final %>% dplyr::group_by(unit) %>% dplyr::summarise(titre_test2 = sum(value)) 
 nrowinit <- nrow(init)
 nrowfinal <- nrow(final)
-join <- dplyr::full_join(init_group, final_group) %>% dplyr::arrange(unit) %>%dplyr::rowwise() %>%  dplyr::mutate(unit = paste0("Value in ", unit)) %>% dplyr::mutate(Difference = titre_test1 - titre_test2)%>% dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := titre_test1)%>% dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := titre_test2)
+join <- dplyr::full_join(init_group, final_group) %>% mutate(across(where(is.numeric), ~replace(., is.na(.), 0))) %>% dplyr::arrange(unit) %>%dplyr::rowwise() %>%  dplyr::mutate(unit = paste0(unit)) %>% dplyr::mutate(Difference = titre_test1 - titre_test2)%>%mutate("Difference (in %)" = 100*(Difference /titre_test1)) %>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := titre_test1)%>% dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := titre_test2)
 
 
 join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)}))%>% 
           color(~ `Difference` < 0, color = "green",~ `Difference`) %>% 
           color(~ `Difference` >0, color = "red",~ `Difference`)%>% autofit()
 join <- width(join, width = dim(join)$widths*6 /(flextable_dim(join)$widths))
-set_caption(join, caption = "Summary of the difference between the two datasets",  style = "Table Caption")
+
+join <- set_caption(join, "Summary of the difference between the two datasets")
 
 ```
 
@@ -773,7 +800,7 @@ join
 
 if (nrow(strates_perdues_first_10)!=0){
   groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% dplyr::filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Los<- / Gain` = dplyr::case_when(loss > 0~ "Loss", loss == 0 ~ "No differences", loss < 0~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
-  cat("The stratas differences (completely lost or appearing) between the first one and the second one are (only first 10 per dimension showed if more) :\n")
+  cat("The stratas differences (completely lost or appearing) between the first one and the second one are:\n")
   cat(knit_print(qflextable2(groupe_df%>% select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))
 } else {towrite =("No strata is gain nor lost")}
@@ -787,27 +814,30 @@ number_final_column <- as.data.frame(t(final %>% select(-value) %>% summarise_al
 
 
 
-s <- cbind(number_init_column , number_final_column )
+s <- cbind(number_init_column , number_final_column ) %>% mutate_all(as.numeric)
+s$Difference <- s[,2]-s[,1]
 
 rownames(s) <- paste0("Number of ", rownames(s))
 
 ```
 
-```{r}
-if(!(require(tibble))){ 
-  install.packages("tibble") 
-  (require(tibble))} 
-set_caption(qflextable2(s %>% tibble::rownames_to_column(" ")), caption = "Comparison of number of stratas between the two datasets",  style = "Table Caption")
-```
 
 
-```{r results='asis', eval=!unique_analyse}
-exit <- "This document only present the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter"
+```{r results='asis', eval=parameter_short}
+exit <- "This document only presents the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter"
 if(child){exit <- ""}
 if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
 
 
 ```
+
+```{r eval=!unique_analyse}
+if(!(require(tibble))){ 
+  install.packages("tibble") 
+  (require(tibble))} 
+qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Comparison of number of stratas between the two datasets")
+```
+
 
 ```{r results='asis'}
 title_introduction <- "# Introduction to the two datasets"
@@ -823,15 +853,20 @@ cat2("## Time coverage")
 
 We present the evolution of value in every unit available.
 
-```{r}
+```{r include=FALSE}
 if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start")}
 time_dimension_list_groupped <- lapply(time_dimension, fonction_groupement, init = init, final = final)
 
-time_dimension_list_groupped_diff <- lapply(time_dimension_list_groupped, function(x){x %>%dplyr::mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% pivot_longer(cols = c(`Values dataset 1`, `Values dataset 2`), names_to = "Dataset", values_to ="Values") %>%dplyr::mutate(Dataset = dplyr::case_when(Dataset == "Values dataset 1" ~ titre_1 , TRUE ~ titre_2))%>% dplyr::filter(Values!=0) %>% dplyr::distinct()})
+time_dimension_list_groupped_diff <- lapply(time_dimension_list_groupped, function(x){x %>%dplyr::mutate(Time = as.Date(Precision))%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% pivot_longer(cols = c(`Values dataset 1`, `Values dataset 2`), names_to = "Dataset", values_to ="Values") %>%dplyr::mutate(Dataset = dplyr::case_when(Dataset == "Values dataset 1" ~ titre_1 , TRUE ~ titre_2)) %>% dplyr::distinct()})
 ```
 
 
 ```{r}
+
+if(unique_analyse){
+  time_dimension_list_groupped_diff <- lapply(time_dimension_list_groupped_diff, function(x){x %>% filter(Values!=0)})
+}
+
 map <- lapply(time_dimension_list_groupped_diff, function(x){ggplot(x) +
 aes(
 x = Time,
@@ -858,7 +893,7 @@ assign("Dimension2", gsub("_", "", unique(x$data$Dimension)), envir = environmen
 assign("y", x, envir = environment())
 title_knit <- paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " and ",`titre_2`, " dataset ")
 if(nrow(final)==0){title_knit = paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " dataset ")}
-knitr::knit_child(text =c('```{r fig.cap=`title_knit`}',
+knitr::knit_child(text =c('```{r fig.cap=`title_knit`, fig.align = "center", out.widht = "100%"}',
 '',
 '',
 '(y)',
@@ -878,7 +913,7 @@ cat(unlist(map_unit_knit_list), sep = "\n")
 
 time_dimension_list_groupped_diff_cumulated <- lapply(time_dimension_list_groupped_diff, 
                                                       function(x){
-x <- x %>%dplyr::mutate(Time = as.Date(Precision))%>% arrange(Precision) %>%dplyr::group_by(unit, Dataset) %>% dplyr::mutate(`Cumulated values` = cumsum(`Values`)) %>% dplyr::distinct()%>% dplyr::filter(`Cumulated values`!=0)
+x <- x %>%dplyr::mutate(Time = as.Date(Precision))%>% arrange(Precision) %>%dplyr::group_by(unit, Dataset) %>% dplyr::mutate(`Cumulated values` = cumsum(`Values`)) %>% dplyr::distinct()
 })
 
 time_dimension_list_groupped_diff_cumulated <- lapply(time_dimension_list_groupped_diff_cumulated, function(x){
@@ -951,7 +986,7 @@ map_unit_knit = function(map){
     'dimension_title <- gsub("_","..",unit_name_map)',
     '```',
     '',
-    '```{r,fig.cap = paste0("Distribution in value for the unit : ",(unit_name_map))}',
+    '```{r,fig.cap = paste0("Distribution in value for the unit : ",(unit_name_map)), out.width = "100%"}',
     '',
     'map_for_knit',
     '```',
@@ -1395,11 +1430,15 @@ try(cat(unlist(map_plotted_percent), sep = "\\clearpage"))
 
 Here is represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information. 
 
-
 ```{r}
 breaks <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = dplyr::case_when(`Difference (in %)` == -Inf ~"Appearing data", -Inf<`Difference (in %)`  & `Difference (in %)`<= -100 ~"Gain (more than double)" ,  -100<`Difference (in %)`  & `Difference (in %)`<0 ~ "Gain",`Difference (in %)`==0~"No differences" ,0<`Difference (in %)`  & `Difference (in %)`<100 ~ "Loss",`Difference (in %)` ==100 ~  "All data lost" ))
 
- image <- tm_shape(breaks)+tm_fill( "Impact on the data", palette="-PiYG",  id="name", midpoint = 0)+tm_borders(lwd = 0.05)+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE, drop.units = FALSE)+    tm_layout(legend.outside = TRUE)
+breaks <- breaks %>% ungroup()
+
+
+breaks$`Impact on the data` <- factor(breaks$`Impact on the data`, levels = c("Appearing data", "Gain (more than double)","Gain", "No differences", "Loss", "All data lost"))
+
+ image <- tm_shape(breaks)+tm_fill("Impact on the data", palette="-PiYG",  id="name")+ tm_facets(by = c("unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+    tm_layout(legend.outside = TRUE)
 
 if(plotting_type == "plot"){image <- image  +tm_shape(continent)+tm_borders()}
 
