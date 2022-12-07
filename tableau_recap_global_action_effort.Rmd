@@ -179,9 +179,8 @@ if(!(require(readtext))){
 
 opts <- params$action$options
 con <- params$config$software$output$dbi
-parameter_fact = params$action$options$fact
-parameter_fact = action$options$fact
-if(!is.null(params$action$options$filtering)){parameter_filtering <-params$action$options$filtering} else{ parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
+parameter_fact = opts$fact
+if(!is.null(opts$filtering)){parameter_filtering <-opts$filtering} else{ parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
 # if(exists('params')){parameters <- params}else{
 parameters_child <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = action$options$fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, 
                                                                            parameter_port = config$software$input$dbi_config$parameters$port, 
