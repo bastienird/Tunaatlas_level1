@@ -304,8 +304,7 @@ rm(dataset)
 
 fonction_dossier("rawdata",
                  georef_dataset,
-                 "Retrieve georeferenced catch or effort : In this step, the georeference data of the included (in options) rfmos, 
-                 are binded.",
+                 "Retrieve georeferenced catch or effort : In this step, the georeference data of the included (in options) rfmos, are binded.",
                  "get_rfmos_datasets_level0"  , list(options_include_IOTC,options_include_ICCAT,
                                                   options_include_IATTC,options_include_WCPFC,
                                                   options_include_CCSBT))
@@ -1011,8 +1010,8 @@ fonction_dossier("Raising IOTC data",
            fonction_dossier("raising",
                             georef_dataset,
                             "In this step, we harmonise the data declared in NO, converting it in Tons using the by using A. Fonteneau file. The file used for the conversion can also be a parameter.", fonctions =
-                            "do_unit_conversion \n unit_conversion_csv_conversion_factor_url \n rtunaatlas::extract_dataset \n
-                            rtunaatlas::map_codelist \n rtunaatlas::convert_units",
+                            "do_unit_conversion, unit_conversion_csv_conversion_factor_url, rtunaatlas::extract_dataset,
+                            rtunaatlas::map_codelist, rtunaatlas::convert_units",
                             list( options_mapping_map_code_lists ,
                                options_unit_conversion_csv_conversion_factor_url ,
                                options_unit_conversion_codelist_geoidentifiers_conversion_factors ,
