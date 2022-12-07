@@ -482,8 +482,8 @@ titre_1 <- gsub("_","-",titre_1)
 
 ```{r eval=parameter_mapped}
 
-  mapping_csv_mapping_datasets_url <- entity$getJobDataResource(config, entity$data$source[[2]])
-  mapping_dataset<- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
+
+mapping_dataset <- read_csv(paste0("data/", entity$data$source[[2]])) #bof mais pour l'instant comme ça 
   mapping_keep_src_code <- FALSE
   if(!is.null(opts$mapping_keep_src_code)) mapping_keep_src_code = opts$mapping_keep_src_code
 
