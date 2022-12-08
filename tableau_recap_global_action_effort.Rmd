@@ -573,6 +573,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
       reduced <- df2 %>% mutate(`Sum in millions of hooks` = `Sum in hooks` / 1000000, `Sum in millions of days` = `Sum in fishing days` / 1000000)%>% select(Step, `Sum in millions of hooks`, `Sum in millions of days`, `Lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
       
+      reduced <- ungroup()
+      
 
 coeff <- 3
 temperatureColor <- "#69b3a2"
@@ -610,12 +612,12 @@ geom_line( aes(y=`Sum in millions of hooks`,group = 1), size=0.5)+theme(axis.tex
 
 
 ```{r echo=FALSE, results='asis', eval=(parameter_fact == "catch")}
-qflextable2(reduced, colour = FALSE, captionn ="Evolution of Tons and Number of fish and lines along the steps")
+qflextable2(reduced, captionn ="Evolution of Tons and Number of fish and lines along the steps")
 ```
 
 ```{r echo=FALSE, results='asis', eval=(parameter_fact == "effort")}
 
-qflextable2(reduced, colour = FALSE, captionn ="Evolution of Sum in hooks and Sum in fishing days and lines along the steps")
+qflextable2(reduced,captionn ="Evolution of Sum in hooks and Sum in fishing days and lines along the steps")
 
 ```
 

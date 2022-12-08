@@ -72,21 +72,21 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     final = paste0(before_Realocating_removing_mislocated_data)), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
     
   }
-  if(dir.exists("Markdown/Removing_absurd_nomt")){
-    wd <- getwd()
-    list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
-    details = file.info(list_dir)
-    details = details[with(details, order(as.POSIXct(mtime))), ]
-    details <- tibble::rownames_to_column(details, "dir_name")
-    details <- tibble::rowid_to_column(details, "ID")
-    begin_conv_fact_handling_number <-details %>% filter(str_detect(dir_name,"Removing_absurd_nomt")) %>% pull(ID)
-    before_begin_conv_fact_handling <- details %>% filter(ID == begin_conv_fact_handling_number-1) %>% pull(dir_name)
-    rmarkdown::render("strata_conversion_factor_gihtub.Rmd"  , 
-                      params = list(action = action,
-                                    entity = entity, config = config,
-                                    final = paste0(before_begin_conv_fact_handling)), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
-    
-  }
+  # if(dir.exists("Markdown/Removing_absurd_nomt")){
+  #   wd <- getwd()
+  #   list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
+  #   details = file.info(list_dir)
+  #   details = details[with(details, order(as.POSIXct(mtime))), ]
+  #   details <- tibble::rownames_to_column(details, "dir_name")
+  #   details <- tibble::rowid_to_column(details, "ID")
+  #   begin_conv_fact_handling_number <-details %>% filter(str_detect(dir_name,"Removing_absurd_nomt")) %>% pull(ID)
+  #   before_begin_conv_fact_handling <- details %>% filter(ID == begin_conv_fact_handling_number-1) %>% pull(dir_name)
+  #   rmarkdown::render("strata_conversion_factor_gihtub.Rmd"  , 
+  #                     params = list(action = action,
+  #                                   entity = entity, config = config,
+  #                                   final = paste0(before_begin_conv_fact_handling)), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
+  #   
+  # }
   
 }
 
