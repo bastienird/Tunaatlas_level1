@@ -21,7 +21,11 @@ params:
   plotting: "plot"
   world_coastline: "gshhs_world_coastlines"
   con: con
-  filtering: !r list(species = c("ALB", "BET", "BFT", "SKJ", "YFT"))
+  action: action
+  entity: entity
+  config: config
+  filtering: NULL
+  debugging: FALSE
 
 ---
 

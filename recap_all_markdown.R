@@ -30,7 +30,7 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     copyfiles <- function(x){
       last_path = function(y){tail(str_split(y,"/")[[1]],n=1)}
       file.copy(from =x,
-                    to = paste0(getwd(), paste0("/", last_path(x))),, overwrite = TRUE
+                    to = paste0(getwd(), paste0("/", last_path(x))), overwrite = TRUE
       )
      }
     lapply(c,copyfiles)
@@ -64,12 +64,12 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     details = details[with(details, order(as.POSIXct(mtime))), ]
     details <- tibble::rownames_to_column(details, "dir_name")
     details <- tibble::rowid_to_column(details, "ID")
-    Realocating_removing_mislocated_data_number <-details %>% filter(dir_name == "Realocating_removing_mislocated") %>% pull(ID)
+    Realocating_removing_mislocated_data_number <-details %>% filter(str_detect(dir_name,"Realocating_removing_mislocated")) %>% pull(ID)
     before_Realocating_removing_mislocated_data <- details %>% filter(ID == Realocating_removing_mislocated_data_number-1) %>% pull(dir_name)
     rmarkdown::render("potentially_mistaken_data.Rmd"  , 
                       params = list(action = action,
                                     entity = entity, config = config,
-    final = paste0(before_Realocating_removing_mislocated_data,"/rds.rds")), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
+    final = paste0(before_Realocating_removing_mislocated_data)), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
     
   }
   if(dir.exists("Markdown/Removing_absurd_nomt")){
@@ -79,12 +79,12 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     details = details[with(details, order(as.POSIXct(mtime))), ]
     details <- tibble::rownames_to_column(details, "dir_name")
     details <- tibble::rowid_to_column(details, "ID")
-    begin_conv_fact_handling_number <-details %>% filter(dir_name == "Realocating_removing_mislocated") %>% pull(ID)
+    begin_conv_fact_handling_number <-details %>% filter(str_detect(dir_name,"Removing_absurd_nomt")) %>% pull(ID)
     before_begin_conv_fact_handling <- details %>% filter(ID == begin_conv_fact_handling_number-1) %>% pull(dir_name)
     rmarkdown::render("strata_conversion_factor_gihtub.Rmd"  , 
                       params = list(action = action,
                                     entity = entity, config = config,
-                                    final = paste0(before_begin_conv_fact_handling,"/rds.rds")), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
+                                    final = paste0(before_begin_conv_fact_handling)), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
     
   }
   
