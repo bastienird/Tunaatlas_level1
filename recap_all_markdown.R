@@ -53,10 +53,13 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
            "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/dmk-format.csl")
     lapply(c,copyrmd)
   }
+  parameters_child_global <- list(action = action,
+                           entity = entity, config = config, debugging = debugging)
+  child_env_global = new.env()
+  list2env(parameters_child_global, env = child_env_global)
   
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
-                    params = list(action = action,
-                                  entity = entity, config = config, debugging = debugging), envir =  new.env())
+                    envir =  parameters_child_global)
   if(dir.exists("Markdown/Realocating_removing_mislocated_data")){
     wd <- getwd()
     list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
@@ -66,10 +69,12 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     details <- tibble::rowid_to_column(details, "ID")
     Realocating_removing_mislocated_data_number <-details %>% filter(str_detect(dir_name,"Realocating_removing_mislocated")) %>% pull(ID)
     before_Realocating_removing_mislocated_data <- details %>% filter(ID == Realocating_removing_mislocated_data_number-1) %>% pull(dir_name)
-    rmarkdown::render("potentially_mistaken_data.Rmd"  , 
-                      params = list(action = action,
-                                    entity = entity, config = config,
-    final = paste0(before_Realocating_removing_mislocated_data)), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
+    parameters_child_mistaken <- list(action = action,
+                                    entity = entity, config = config, debugging = debugging, final = paste0(before_Realocating_removing_mislocated_data))
+    child_env_mistaken = new.env()
+    list2env(parameters_child_mistaken, env = child_env_mistaken)
+    
+    rmarkdown::render("potentially_mistaken_data.Rmd"  , envir =  parameters_child_mistaken, output_file = "Analyse_mislocated_before_treatment")
     
   }
   # if(dir.exists("Markdown/Removing_absurd_nomt")){
