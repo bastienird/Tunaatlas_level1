@@ -258,14 +258,16 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 
 ```{r include=FALSE}
 if(dir.exists("Markdown")){
-if(!exists("parameter_fact")){browser()}
 
-  if(exists("parameter_fact")){
+out <-  try(parameter_fact=="catch")
+out2 <-  try(a <- summary(con))
+if("try-error" %in% class(out)){browser()}
+
   if(parameter_fact == "catch"){
     nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}else if (parameter_fact == "effort"){
     nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))
     } 
-  }
+  
   else {nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}
 
 
