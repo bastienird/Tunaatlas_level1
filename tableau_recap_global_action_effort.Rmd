@@ -259,9 +259,7 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 ```{r include=FALSE}
 if(dir.exists("Markdown")){
 
-out <-  try(parameter_fact=="catch")
-out2 <-  try(a <- summary(con))
-if("try-error" %in% class(out)){browser()}
+parameter_fact <- "catch"
 
   if(parameter_fact == "catch"){
     nominal_dataset <- readr::read_csv(paste0(getwd(),"/data/global_nominal_catch_firms_level0.csv"))}else if (parameter_fact == "effort"){
