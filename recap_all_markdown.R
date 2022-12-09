@@ -59,7 +59,7 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
   list2env(parameters_child_global, env = child_env_global)
   
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
-                    envir =  parameters_child_global)
+                    envir =  child_env_global)
   if(dir.exists("Markdown/Realocating_removing_mislocated_data")){
     wd <- getwd()
     list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
@@ -74,7 +74,7 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     child_env_mistaken = new.env()
     list2env(parameters_child_mistaken, env = child_env_mistaken)
     
-    rmarkdown::render("potentially_mistaken_data.Rmd"  , envir =  parameters_child_mistaken, output_file = "Analyse_mislocated_before_treatment")
+    rmarkdown::render("potentially_mistaken_data.Rmd"  , envir =  child_env_mistaken, output_file = "Analyse_mislocated_before_treatment")
     
   }
   # if(dir.exists("Markdown/Removing_absurd_nomt")){
