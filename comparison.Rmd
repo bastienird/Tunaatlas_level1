@@ -485,10 +485,9 @@ titre_1 <- gsub("_","-",titre_1)
 
 mapping_dataset <- read_csv(paste0("data/", entity$data$source[[2]])) #bof mais pour l'instant comme ça 
   mapping_keep_src_code <- FALSE
-  if(!is.null(opts$mapping_keep_src_code)) mapping_keep_src_code = opts$mapping_keep_src_code
 
   source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
-  init <- map_codelistsB(con, opts$fact, mapping_dataset, init, mapping_keep_src_code, summary_mapping = FALSE) #this map condelist function is to retrieve the mapping dataset used
+  init <- map_codelistsB(con, parameter_fact, mapping_dataset, init, mapping_keep_src_code = FALSE, summary_mapping = FALSE) #this map condelist function is to retrieve the mapping dataset used
 
 ```
 
