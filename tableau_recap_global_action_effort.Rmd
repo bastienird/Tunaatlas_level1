@@ -177,8 +177,7 @@ if(!(require(readtext))){
 
 ```{r include=FALSE}
 
-opts <- action$options
-action <- action
+opts <- entity$data$actions[[1]]$options
 con <- config$software$output$dbi
 parameter_fact <-  opts$fact
 if(!is.null(opts$filtering)){parameter_filtering <-opts$filtering} else{ parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
