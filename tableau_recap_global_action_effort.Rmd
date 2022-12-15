@@ -177,13 +177,13 @@ if(!(require(readtext))){
 
 ```{r include=FALSE}
 
-opts <- params$action$options
-action <- params$action
-con <- params$config$software$output$dbi
+opts <- action$options
+action <- action
+con <- config$software$output$dbi
 parameter_fact <-  opts$fact
 if(!is.null(opts$filtering)){parameter_filtering <-opts$filtering} else{ parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
 # if(exists('params')){parameters <- params}else{
-parameters_child <- list(config = params$config, entity = params$entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, 
+parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, 
                                                                            parameter_port = config$software$input$dbi_config$parameters$port, 
                                                                            parameter_user = config$software$input$dbi_config$parameters$user,
                                                                            parameter_dbname=config$software$input$dbi_config$parameters$dbname,
@@ -315,20 +315,20 @@ sub_list_dir_2 = rownames(details)
 ```{r include=FALSE, results='asis'}
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
-child_env$titre_1 <- params$entity$identifiers[["id"]]
+child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$parameter_final <- NULL
-child_env$parameter_fact <- params$action$options$fact
+child_env$parameter_fact <- action$options$fact
 child_env$child <- TRUE
 child_env$no_recap_options <- FALSE
-if(params$debugging == TRUE){
+if(debugging == TRUE){
   child_env$debugging <- TRUE
   } else {child_env$debugging <- FALSE}
 child_env$parameter_con <- con
 
 
   # assign("parameter_init", sub_list_dir_2[1], pos = environment())
-  # assign("parameter_fact", params$action$options$fact, pos = environment())
+  # assign("parameter_fact", action$options$fact, pos = environment())
   # assign("child", TRUE, pos = environment())
   # assign("parameter_con", con, pos = environment())
 res2 <- knitr::knit_child("comparison.Rmd", envir = child_env, quiet = TRUE)
@@ -353,9 +353,9 @@ cat(res2, sep =  "\\clearpage")
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
 child_env$params <- params
-child_env$titre_1 <- params$entity$identifiers[["id"]]
+child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
-child_env$parameter_fact <- params$action$options$fact
+child_env$parameter_fact <- action$options$fact
 child_env$child <- TRUE
 child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
@@ -441,8 +441,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
         Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
-        # if(!is.null(params$filter_species)){
-          main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%params$filter_species)
+        # if(!is.null(filter_species)){
+          main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%filter_species)
           sum_t <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT")))$value)
           sum_no <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO")))$value)
           nrow <- nrow(main)
@@ -535,7 +535,7 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
         Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
-          main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%params$filter_species)
+          main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%filter_species)
           sum_hooks <- sum((main %>% dplyr::filter(unit%in%c("HOOKS", "HOOKS")))$value)
           sum_fdays <- sum((main %>% dplyr::filter(unit%in%c("FDAYS", "FDAYS")))$value)
           nrow <- nrow(main)
@@ -664,9 +664,9 @@ child_env <- new.env()
 list2env(parameters_child, env = child_env)
 
 child_env$params <- params
-child_env$titre_1 <- params$entity$identifiers[["id"]]
+child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[counting]
-child_env$parameter_fact <- params$action$options$fact
+child_env$parameter_fact <- action$options$fact
 child_env$child <- TRUE
 child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[counting+1]

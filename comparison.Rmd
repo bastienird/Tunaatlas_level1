@@ -116,7 +116,7 @@ if(exists("params")){for (i in 1:length(params)){assign(paste0("parameter_",name
 
 
 <!-- ```{r include=FALSE} -->
-<!-- if(!exists("params$fact") || is.null(params$fact)){params$fact <-  "effort"} -->
+<!-- if(!exists("fact") || is.null(fact)){fact <-  "effort"} -->
 <!-- ``` -->
 
 
@@ -134,7 +134,7 @@ if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
 }
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- FALSE}
-parameter_filtering <- if(!is_null_or_not_exist(params$action$options$filtering)){params$action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
+parameter_filtering <- if(!is_null_or_not_exist(action$options$filtering)){action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
 
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
 ```
@@ -456,8 +456,8 @@ final <- function_dataframe_tot_filter(final)
   }
 
 
-# if(!exists("params$titre_dataset_1")){params$titre_dataset_1 <- NULL}
-# if(!exists("params$titre_dataset_2")){params$titre_dataset_2 <- NULL}
+# if(!exists("titre_dataset_1")){titre_dataset_1 <- NULL}
+# if(!exists("titre_dataset_2")){titre_dataset_2 <- NULL}
 
 if (is_null_or_not_exist(parameter_titre_dataset_1)){
   titre_1 <- last_path_reduced(as.character(parameter_init))
