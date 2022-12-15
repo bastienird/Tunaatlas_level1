@@ -16,3 +16,5 @@ sql/
 paper_iotc2/
 paper_iotc*
 json/
+catch_server.env
+effort_server.env
