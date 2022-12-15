@@ -317,7 +317,6 @@ list2env(parameters_child, env = child_env)
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$parameter_final <- NULL
-child_env$parameter_fact <- action$options$fact
 child_env$child <- TRUE
 child_env$no_recap_options <- FALSE
 if(debugging == TRUE){
@@ -354,7 +353,6 @@ list2env(parameters_child, env = child_env)
 child_env$params <- params
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
-child_env$parameter_fact <- action$options$fact
 child_env$child <- TRUE
 child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
@@ -665,7 +663,6 @@ list2env(parameters_child, env = child_env)
 child_env$params <- params
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[counting]
-child_env$parameter_fact <- action$options$fact
 child_env$child <- TRUE
 child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[counting+1]
