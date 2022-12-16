@@ -741,6 +741,7 @@ ster <- i %>% dplyr::group_by(Dimension, `New code`) %>% dplyr::summarise_at(var
 
 
 t <- flextable::as_grouped_data(ster, groups = c("Dimension"))
+t <- t %>% dplyr::select(-`...1`)
 t <- flextable(t)
 t <- set_caption(t, caption =  "Replacement code during the mapping codelist treatment")
 ```
