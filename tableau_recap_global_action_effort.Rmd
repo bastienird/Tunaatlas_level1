@@ -741,12 +741,12 @@ ster <- i %>% group_by(Dimension, `New code`) %>% summarise_at(vars(-group_cols(
 
 
 t <- flextable::as_grouped_data(ster, groups = c("Dimension"))
-
+t <- flextable(t)
 t <- set_caption(t, caption =  "Replacement code during the mapping codelist treatment")
 ```
 
 ```{r echo=FALSE, results='asis'}
-knit_print(flextable(t))
+knit_print(t)
 ```
 
 

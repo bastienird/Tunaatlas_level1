@@ -617,6 +617,7 @@ catch were raised to the fishing effort reported in the tuna dataset.", "raise_d
 ##create_latex("short_comp.Rmd")
 
 
+source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
 
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -632,7 +633,6 @@ if (!is.null(opts$mapping_map_code_lists)) if(opts$mapping_map_code_lists){
   if(!is.null(opts$mapping_keep_src_code)) mapping_keep_src_code = opts$mapping_keep_src_code
 
   config$logger.info("Mapping code lists of georeferenced datasets...")
-  source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
   mapping_codelistB <- map_codelistsB(con, opts$fact, mapping_dataset, georef_dataset, mapping_keep_src_code, summary_mapping = TRUE) #this map condelist function is to retrieve the mapping dataset used
   georef_dataset <- mapping_codelistB$dataset_mapped
   mapping_codelist_summary <- mapping_codelistB$summary_mapping
@@ -945,7 +945,6 @@ iotc_conv_fact <- as.data.frame(readr::read_csv(cl_filename, guess_max = 0,
   mapping_dataset<- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
   mapping_keep_src_code <- FALSE
   if(!is.null(opts$mapping_keep_src_code)) mapping_keep_src_code = opts$mapping_keep_src_code
-  source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
   iotc_conv_fact_mapped <- map_codelistsB(con, opts$fact, mapping_dataset, iotc_conv_fact, mapping_keep_src_code) #this map condelist function is to retieve the mapping dataset used
   iotc_conv_fact_mapped <- iotc_conv_fact_mapped %>% select(-value)
   # output_mapping_codelist_name <- file.path("data", "mapping_codelist_summary.csv")
