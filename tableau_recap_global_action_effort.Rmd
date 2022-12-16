@@ -210,7 +210,7 @@ set_flextable_defaults(
 qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 4, colour = FALSE, coloured_columns = NULL){
 
   y <- x %>% dplyr::mutate_if(is.factor, as.character) %>% 
-  dplyr::mutate_if(is.character,~str_replace_all( ., "_", "-" ))  %>%  dplyr::mutate_if(is.character,~str_replace_all( ., "\n", " " )) %>%  dplyr::mutate_if(is.character,~str_replace_all( ., "  ", " " ))%>%mutate_if(is.character, toString)%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
+  dplyr::mutate_if(is.character,~str_replace_all( ., "_", "-" ))  %>%  dplyr::mutate_if(is.character,~str_replace_all( ., "\n", " " )) %>%  dplyr::mutate_if(is.character,~str_replace_all( ., "  ", " " ))%>%rowwise() %>% mutate_if(is.character, toString)%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})
   flextable <- flextable(y)
   if(colour){
     flextable <- flextable %>% color()
@@ -733,11 +733,11 @@ if("try-error" %in% class(errormapping)){knitr::knit_exit(fully = FALSE)}
 
 
 ```{r}
-t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%group_by(across(everything())) %>%  mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% ungroup() %>% mutate(src_code = as.character(src_code)) %>% ungroup() %>%  group_by(source_authority) %>%  mutate(row = row_number()) %>% filter(src_code != trg_code)
+t <- df_mapping_final_this_dimension %>% dplyr::select(-trg_codingsystem)%>%dplyr::group_by(across(everything())) %>%  dplyr::mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% ungroup() %>% dplyr::mutate(src_code = as.character(src_code)) %>% dplyr::ungroup() %>%  dplyr::group_by(source_authority) %>%  dplyr::mutate(row = row_number()) %>% dplyr::filter(src_code != trg_code)
 
-i <-pivot_wider(t %>% group_by(source_authority) , names_from = source_authority, names_prefix = "Ancient name for ", values_from = "src_code")  %>% rename("New code" = trg_code) %>% rename(Dimension = src_codingsystem)%>%
-    relocate(Dimension) %>% select(-row)
-ster <- i %>% group_by(Dimension, `New code`) %>% summarise_at(vars(-group_cols()),.funs = function(x){toString(x[!duplicated(x)])}) %>% mutate_all(.funs = function(x){gsub(",$", "",gsub(c("NA", ",NA", " NA"), "", gsub("  ","",gsub("NA,", "", x))))})
+i <-pivot_wider(t %>% dplyr::group_by(source_authority) , names_from = source_authority, names_prefix = "Ancient name for ", values_from = "src_code")  %>% dplyr::rename("New code" = trg_code) %>% dplyr::rename(Dimension = src_codingsystem)%>%
+    dplyr::relocate(Dimension) %>% dplyr::select(-row)
+ster <- i %>% dplyr::group_by(Dimension, `New code`) %>% dplyr::summarise_at(vars(-group_cols()),.funs = function(x){toString(x[!duplicated(x)])}) %>% mutate_all(.funs = function(x){gsub(",$", "",gsub(c("NA", ",NA", " NA"), "", gsub("  ","",gsub("NA,", "", x))))})
 
 
 t <- flextable::as_grouped_data(ster, groups = c("Dimension"))
