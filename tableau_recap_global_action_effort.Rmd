@@ -476,8 +476,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
 
      
 
-      reduced <- df2 %>% mutate(`Millions of tons` = `Tons` / 1000000, `Millions of fish` = `Number of fish` / 1000000)%>% select(Step, `Millions of tons`, `Millions of fish`, `Lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
-      reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
+      reduced <- df2 %>% mutate(`Millions of tons` = `Tons` / 1000000, `Millions of fish` = `Number of fish` / 1000000)%>% select(Step, `Millions of tons`, `Millions of fish`, `Lines`)%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
+      reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(`Step number`))$Step)
       
 
 coeff <- 3
@@ -566,8 +566,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
 
      
 
-      reduced <- df2 %>% mutate(`Sum in millions of hooks` = `Sum in hooks` / 1000000, `Sum in millions of days` = `Sum in fishing days` / 1000000)%>% select(Step, `Sum in millions of hooks`, `Sum in millions of days`, `Lines`)%>% dplyr::mutate(Step_number = as.numeric(row_number()))
-      reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(Step_number))$Step)
+      reduced <- df2 %>% mutate(`Sum in millions of hooks` = `Sum in hooks` / 1000000, `Sum in millions of days` = `Sum in fishing days` / 1000000)%>% select(Step, `Sum in millions of hooks`, `Sum in millions of days`, `Lines`)%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
+      reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(`Step number`))$Step)
       
       reduced <- ungroup()
       
