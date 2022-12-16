@@ -16,5 +16,13 @@ sql/
 paper_iotc2/
 paper_iotc*
 json/
-catch_server.env
-effort_server.env
+*.env
+*.Rdata
+jobs/
+*test*
+*cache*
+*files*
+*.csv
+*comp_sans_shiny*
+*.log*
+*Global_rmd*
