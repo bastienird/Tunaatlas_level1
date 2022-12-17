@@ -90,7 +90,7 @@ params:
 ---
 
 ```{r cache=FALSE, include=FALSE}
-last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
+last_path_reduced = function(x){base::gsub("georef_dataset","",last_path(x))}
 
 is_null_or_not_exist <- function(x) {
   if (!exists(deparse(substitute(x))) || is.null(x)) {
@@ -168,6 +168,7 @@ cat2 <- cat
 ```{r results='asis', eval=step_title_t_f}
 
 try(cat2(step_title))
+
 ```
 
 ```{r}
@@ -471,8 +472,8 @@ if (is_null_or_not_exist(parameter_titre_dataset_2) & !unique_analyse){
 } else if (unique_analyse) {
   titre_2 <- "NONE"
 }
-titre_2 <- gsub("_","-",titre_2)
-titre_1 <- gsub("_","-",titre_1)
+titre_2 <- base::gsub("_","-",titre_2)
+titre_1 <- base::gsub("_","-",titre_1)
 
 # if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0 | nrow(final%>% dplyr::filter(unit=="Number of fish"))!=0){is_there_no <- TRUE} else{is_there_no <- FALSE}
 # if(nrow(<- %>% dplyr::filter(unit=="Number of fish"))!=0 & nrow(final%>% dplyr::filter(unit=="Number of fish"))==0){all_no_lost <- TRUE} else{all_no_lost <- FALSE}
@@ -591,10 +592,10 @@ if(exists("no_recap_options") && no_recap_options == TRUE){options_total <- FALS
 
 ```{r eval=options_total}
 differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
-differences_in_optionsinit$X1 <- gsub(" ","",differences_in_optionsinit$X1)
-differences_in_optionsinit$X1 <- gsub("options_","",differences_in_optionsinit$X1) 
-differences_in_optionsinit$X2 <- gsub(" ","",differences_in_optionsinit$X2)
-differences_in_optionsinit$X2 <- gsub("options_","",differences_in_optionsinit$X2) 
+differences_in_optionsinit$X1 <- base::gsub(" ","",differences_in_optionsinit$X1)
+differences_in_optionsinit$X1 <- base::gsub("options_","",differences_in_optionsinit$X1) 
+differences_in_optionsinit$X2 <- base::gsub(" ","",differences_in_optionsinit$X2)
+differences_in_optionsinit$X2 <- base::gsub("options_","",differences_in_optionsinit$X2) 
 
 differences_in_optionsinit_base <- differences_in_optionsinit %>% dplyr::distinct()
 ```
@@ -604,10 +605,10 @@ differences_in_optionsinit_base <- differences_in_optionsinit %>% dplyr::distinc
 differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
 
 
-differences_in_optionsfinal$X1 <- gsub(" ","",differences_in_optionsfinal$X1)
-differences_in_optionsfinal$X1 <- gsub("options_","",differences_in_optionsfinal$X1)
-differences_in_optionsfinal$X2 <- gsub(" ","",differences_in_optionsfinal$X2)
-differences_in_optionsfinal$X2 <- gsub("options_","",differences_in_optionsfinal$X2)
+differences_in_optionsfinal$X1 <- base::gsub(" ","",differences_in_optionsfinal$X1)
+differences_in_optionsfinal$X1 <- base::gsub("options_","",differences_in_optionsfinal$X1)
+differences_in_optionsfinal$X2 <- base::gsub(" ","",differences_in_optionsfinal$X2)
+differences_in_optionsfinal$X2 <- base::gsub("options_","",differences_in_optionsfinal$X2)
 
 differences_in_optionsfinal_base <- differences_in_optionsfinal %>% dplyr::distinct()
 
@@ -660,7 +661,7 @@ cat(towrite)
 ```{r eval=(!parameter_short & options_total), results='asis'}
 cat(ifelse(unique_analyse, "The options used to create the data frame are :", "The options used to create the initial data frame are :"))
 
-s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% dplyr::mutate(Options = gsub("_","-",Options))%>% dplyr::mutate(Options = gsub("=","=\n",Options))%>% dplyr::mutate(Value = gsub("_","-",Value))%>% dplyr::mutate(Value = gsub("=","=\n",Value)) %>% dplyr::mutate(Options = gsub("NONE", "", Options))
+s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% dplyr::mutate(Options = base::gsub("_","-",Options))%>% dplyr::mutate(Options = base::gsub("=","=\n",Options))%>% dplyr::mutate(Value = base::gsub("_","-",Value))%>% dplyr::mutate(Value = base::gsub("=","=\n",Value)) %>% dplyr::mutate(Options = base::gsub("NONE", "", Options))
 ```
 
 
@@ -892,7 +893,7 @@ facet_grid("unit", scales = "free_y")})
 
 ```{r}
 function_knitting <- function(x){
-assign("Dimension2", gsub("_", "", unique(x$data$Dimension)), envir = environment())
+assign("Dimension2", base::gsub("_", "", unique(x$data$Dimension)), envir = environment())
 assign("y", x, envir = environment())
 title_knit <- paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " and ",`titre_2`, " dataset ")
 if(nrow(final)==0){title_knit = paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " dataset ")}
@@ -986,7 +987,7 @@ map_unit_knit = function(map){
     '',
     '',
     '```{r}', 
-    'dimension_title <- gsub("_","..",unit_name_map)',
+    'dimension_title <- base::gsub("_","..",unit_name_map)',
     '```',
     '',
     '```{r,fig.cap = paste0("Distribution in value for the unit : ",(unit_name_map)), out.width = "100%"}',
@@ -1126,7 +1127,7 @@ resume_knit_child = function(x){
   knitr::knit_child(text = c(
     '',
     '```{r}', 
-    'dimension_title <- gsub("_","..",x$dimension)',
+    'dimension_title <- base::gsub("_","..",x$dimension)',
     '',
     '```',
     '',
@@ -1172,7 +1173,7 @@ dimension_title_subfigures <- c("","")
 ```
 
 
-```{r echo=FALSE, eval=unique_analyse, fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
+```{r echo=FALSE, eval=unique_analyse, fig.cap='Other dimensions', fig.subcap=c(unlist(base::gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
 for (i in figures){plot(i)}
 ```
 
@@ -1222,7 +1223,7 @@ facet_grid("unit", scales = "free_y")}, dataframe = t)
 
 ```{r}
 function_knitting_difference <- function(x){
-assign("Dimension2", gsub("_", "", unique(x$data$Dimension)), envir = environment())
+assign("Dimension2", base::gsub("_", "", unique(x$data$Dimension)), envir = environment())
 assign("y", x, envir = environment())
 knitr::knit_child(text =c('```{r fig.cap=paste0("Differences in percent of value for temporal dimension :  ", Dimension2, " between ", `titre_1`, " and ",`titre_2`, " dataset ")}',
 '',
@@ -1368,7 +1369,7 @@ knit_child_map =function(list_map_unit){
   knit_child(text = c(
     '```{r results = "asis"}',
     '',
-    'unit_title <- gsub("_","..",unit_name_map)',
+    'unit_title <- base::gsub("_","..",unit_name_map)',
     '```',
     '',
     '',
