@@ -18,6 +18,7 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     install.packages("bookdown")
     require(bookdown)
   }
+  save.image("config.Rdata")
 
   
   if(debugging == TRUE){
@@ -77,6 +78,9 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     rmarkdown::render("potentially_mistaken_data.Rmd"  , envir =  child_env_mistaken, output_file = "Analyse_mislocated_before_treatment")
     
   }
+  rm(list = ls())
+  load("config.Rdata")
+  gc()
   # if(dir.exists("Markdown/Removing_absurd_nomt")){
   #   wd <- getwd()
   #   list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
