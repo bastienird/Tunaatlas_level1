@@ -841,12 +841,10 @@ qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Comparison of num
 
 ```{r results='asis'}
 title_introduction <- "# Introduction to the two datasets"
-if(unique_analyse){
-  title_introduction <- ""
-  cat2 <- function(x){
-    y <- gsub("#", "", x)
-    return(cat(y))}}
-cat2(title_introduction)
+if(!unique_analyse){
+  cat2(title_introduction)
+  }
+
 ```
 
 We first present the main characteristics of each dimension.
