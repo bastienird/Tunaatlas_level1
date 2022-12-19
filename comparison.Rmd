@@ -99,6 +99,7 @@ is_null_or_not_exist <- function(x) {
     return(FALSE)
   }
 }
+base::options(scipen=999)
 
 ```
 
@@ -168,6 +169,7 @@ cat2 <- cat
 ```{r results='asis', eval=step_title_t_f}
 
 try(cat2(step_title))
+
 ```
 
 ```{r}
@@ -350,7 +352,6 @@ world_sf <- st_read(con, query = query)
 
 shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
-base::options(scipen=999)
 
 
 
