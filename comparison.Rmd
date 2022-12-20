@@ -337,17 +337,11 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 <!-- # ``` -->
 
 
-```{r cache=FALSE, include=FALSE}
+```{r include=FALSE}
 
-out <- try((con <- config$software$output$dbi), silent = TRUE)
-if("try-error" %in% class(out)){con <- parameter_con}
+con <- config$software$output$dbi
 
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
-if("try-error" %in% class(out)){con <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port,
-                                                       user = parameter_user,
-                                                       password = parameter_password)}
-
 world_sf <- st_read(con, query = query)
 
 shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))

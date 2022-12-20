@@ -317,7 +317,7 @@ if(debugging == TRUE){
   child_env$debugging <- TRUE
   } else {child_env$debugging <- FALSE}
 child_env$parameter_con <- con
-child_env$child_header <- ""
+child_env$child_header <- "#"
 
 
   # assign("parameter_init", sub_list_dir_2[1], pos = environment())
