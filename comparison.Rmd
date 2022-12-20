@@ -339,7 +339,7 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 ```{r include=FALSE}
 
-con <- config$software$output$dbi
+con <- parameter_con
 
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
 world_sf <- st_read(con, query = query)
