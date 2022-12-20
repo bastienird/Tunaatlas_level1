@@ -339,10 +339,12 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 ```{r include=FALSE}
 
-con <- parameter_con
+conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port,
+                                                       user = parameter_user,
+                                                       password = parameter_password)
 
-query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-world_sf <- st_read(con, query = query)
+world_sf <- st_read(conn, query = query)
+DBI::dbDisconnect(conn)
 
 shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
@@ -1540,4 +1542,6 @@ s[is.na(s)] <- ""
 ```{r}
 kable(s, caption = "Replacement code during the mapping codelist treatment")
 ```
+
+
 
