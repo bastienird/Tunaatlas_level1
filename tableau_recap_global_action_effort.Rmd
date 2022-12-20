@@ -75,19 +75,18 @@ params:
 \clearpage
 
 
-This document is aimed to recap the impact on the data of the different treatment of the Global Tuna Atlas. 
 
 ```{r include=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE, fig.align = 'center'
+	warning = FALSE, include = FALSE, fig.align = 'center'
 )
 
 
 ```
 
-```{r}
+```{r include=FALSE}
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
 if(!(require(base))){ 
   install.packages("base") 
@@ -196,7 +195,7 @@ list2env(parameters_child, env = child_env)
 
 
 
-```{r}
+```{r include=FALSE}
 # knitr::opts_chunk$set(tab.cap.pre = "Table ", tab.cap.sep = ": ")
 
 #set the table caption styling
@@ -293,11 +292,6 @@ nominal_dataset <- filtering_function(nominal_dataset)
 
 ```
 
-
-First we present the data created by the GlobalTuna Atlas, as well as the comparison between this data and the rawdata provided by the RFMO's before the global Tuna Atlas treatment.
-
-In a second time we will present the process of the GlobalTuna Atlas in order to reference exactly the choices made.
-
 \clearpage
 
 # Summary of the entity : `r entity$identifiers[["id"]]` 
@@ -323,7 +317,7 @@ if(debugging == TRUE){
   child_env$debugging <- TRUE
   } else {child_env$debugging <- FALSE}
 child_env$parameter_con <- con
-child_env$child_header <- ""
+child_env$child_header <- "#"
 
 
   # assign("parameter_init", sub_list_dir_2[1], pos = environment())
@@ -331,6 +325,7 @@ child_env$child_header <- ""
   # assign("child", TRUE, pos = environment())
   # assign("parameter_con", con, pos = environment())
 res2 <- knitr::knit_child("comparison.Rmd", envir = child_env, quiet = TRUE)
+
 ```
 
 
@@ -477,7 +472,7 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
 
      
 
-      reduced <- df2 %>% mutate(`Millions of tons` = `Tons` / 1000000, `Millions of fish` = `Number of fish` / 1000000)%>% select(Step, `Millions of tons`, `Millions of fish`, `Lines`)%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
+      reduced <- df2 %>% mutate(`Millions of tons` = `Tons` / 1000000, `Millions of fish` = `Number of fish` / 1000000)%>% select(Step, `Millions of tons`, `Millions of fish`, `Lines`, "Difference (in % of tons)","Difference (in % of fish)")%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(`Step number`))$Step)
       
 
@@ -567,7 +562,7 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
 
      
 
-      reduced <- df2 %>% mutate(`Sum in millions of hooks` = `Sum in hooks` / 1000000, `Sum in millions of days` = `Sum in fishing days` / 1000000)%>% select(Step, `Sum in millions of hooks`, `Sum in millions of days`, `Lines`)%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
+      reduced <- df2 %>% mutate(`Sum in millions of hooks` = `Sum in hooks` / 1000000, `Sum in millions of days` = `Sum in fishing days` / 1000000)%>% select(Step, `Sum in millions of hooks`, `Sum in millions of days`, `Lines`, "Difference (in % of hooks)","Difference (in % of fishing days)")%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(`Step number`))$Step)
       
       reduced <- ungroup()
@@ -609,12 +604,12 @@ geom_line( aes(y=`Sum in millions of hooks`,group = 1), size=0.5)+theme(axis.tex
 
 
 ```{r echo=FALSE, results='asis', eval=(parameter_fact == "catch")}
-qflextable2(reduced, captionn ="Evolution of Tons and Number of fish and lines along the steps")
+qflextable2(reduced, captionn ="Evolution of Tons and Number of fish and lines along the steps", pgwidth = 6)
 ```
 
 ```{r echo=FALSE, results='asis', eval=(parameter_fact == "effort")}
 
-qflextable2(reduced,captionn ="Evolution of Sum in hooks and Sum in fishing days and lines along the steps")
+qflextable2(reduced,captionn ="Evolution of Sum in hooks and Sum in fishing days and lines along the steps",  pgwidth = 6)
 
 ```
 

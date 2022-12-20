@@ -18,9 +18,7 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     install.packages("bookdown")
     require(bookdown)
   }
-  save.image("config.Rdata")
 
-  
   if(debugging == TRUE){
     c <- c("~/Documents/Tunaatlas_level1/tableau_recap_global_action_effort.Rmd", 
            "~/Documents/Tunaatlas_level1/comparison.Rmd", 
@@ -78,8 +76,6 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     rmarkdown::render("potentially_mistaken_data.Rmd"  , envir =  child_env_mistaken, output_file = "Analyse_mislocated_before_treatment")
     
   }
-  rm(list = ls())
-  load("config.Rdata")
   gc()
   # if(dir.exists("Markdown/Removing_absurd_nomt")){
   #   wd <- getwd()
