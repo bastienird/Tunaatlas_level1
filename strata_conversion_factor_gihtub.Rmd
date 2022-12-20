@@ -41,6 +41,7 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+base::options(scipen=999)
 
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
 
@@ -150,21 +151,35 @@ SPECIES_COL    = data.frame(SPECIES_CODE = SPECIES_LEVELS,
 
 if(exists("params")){for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
 }
+# 
+# out <- try((con <- config$software$output$dbi), silent = TRUE)
+# if("try-error" %in% class(out)){con <- parameter_con}
+# 
+# query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+# out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
+# if("try-error" %in% class(out)){con <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port,
+#                                                        user = parameter_user,
+#                                                        password = parameter_password)}
+# 
+# world_sf <- st_read(con, query = query)
+# 
+# shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
+# shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
 
-out <- try((con <- config$software$output$dbi), silent = TRUE)
-if("try-error" %in% class(out)){con <- parameter_con}
+shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% rename(geom = geometry)
 
-query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
-if("try-error" %in% class(out)){con <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port,
-                                                       user = parameter_user,
-                                                       password = parameter_password)}
 
-world_sf <- st_read(con, query = query)
-
-shapefile.fix <- st_make_valid(world_sf)%>% filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
+# shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
-base::options(scipen=999)
+
+
+
+# query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+# continent <- fSpatPlan_Convert2PacificRobinson(st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
+
+continent <- st_read("data/continent.csv")%>% select(-WKT) %>% rename(geom = geometry)
+
+
 
 ```
 
@@ -534,8 +549,8 @@ mean_conv_by_specie <- conversion_factor_level0 %>% group_by(species) %>% summar
 shapefile.fix <- shapefile.fix %>% dplyr::rename(geographic_identifier = code)
 mapping_non_conform_conv_factor <- outside_limit_conv_factor %>% filter(conform %in% c("Too low", "Too high")) %>% mutate(unit = "Number of lines", value = 1) %>% group_by(geographic_identifier, species, conform) %>% summarise(conversion_factor = mean(conversion_factor))%>% inner_join(shapefile.fix)
 
-query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
-continent <- (st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
+# query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
+# continent <- (st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
 
 tm_shape(st_as_sf(mapping_non_conform_conv_factor))+
       tm_fill("conversion_factor", palette="RdYlGn", style="cont", n=8,
@@ -599,25 +614,24 @@ conversion_factors_num_to_weight_ird_2021 <- full_join(allcombs2,conversion_fact
 #   complete(year2, month = 1:12) %>%
 #   fill(species,gear, conversion_factor)
 
-out <- try((con <- config$software$output$dbi), silent = TRUE)
-if("try-error" %in% class(out)){con <- params$con}
+# out <- try((con <- config$software$output$dbi), silent = TRUE)
+# if("try-error" %in% class(out)){con <- params$con}
+# 
+# query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+# out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
+# if("try-error" %in% class(out)){con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
+#                                                        user = params$user,
+#                                                        password = params$password)}
 
-query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
-if("try-error" %in% class(out)){con <- DBI::dbConnect(RPostgres::Postgres() , dbname = params$dbname, host = params$host,   port = params$port,
-                                                       user = params$user,
-                                                       password = params$password)}
+areas_conversion_factors_numtoweigth_ird <- st_read("data/areas_conversion_factors_numtoweigth_ird.csv")%>% select(-WKT) %>% rename(geom = geometry)
 
-    query <- "SELECT  * from area.areas_conversion_factors_numtoweigth_ird"
-        areas_conversion_factors_numtoweigth_ird <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
 
 
 # geom_ird <- con %>% tbl(in_schema("area", "areas_conversion_factors_numtoweigth_ird")) %>% collect()
 
 
-query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
-world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
-world_sf <- world_sf[sf::st_is_valid(world_sf),]
+# query <- "SELECT  code,st_area(geom), geom from area.cwp_grid"
+# world_sf <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
 
 JOINED_DATA <- st_join(world_sf, areas_conversion_factors_numtoweigth_ird) %>% dplyr::rename(GTA = code.x, IRD = code.y) %>% select(GTA, IRD) %>% mutate(IRD = ifelse(is.na(IRD), 0, IRD))
     
