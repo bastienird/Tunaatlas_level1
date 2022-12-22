@@ -1467,7 +1467,11 @@ image
 
 ```{r}
 init <- init%>% mutate(value=as.numeric(value))
-spatial_coverage_init <- sum((init %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)
+out <- try(spatial_coverage_init <- sum((init %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE))
+
+if("try-error" %in% class(out)){knitr::knit_exit(paste0(nrow(init)))}
+
+
 final <- final%>% mutate(value=as.numeric(value))
 
 spatial_coverage_final <- sum((final %>% dplyr::filter(value > 0)%>% select(geographic_identifier) %>%dplyr::distinct() %>% dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% distinct)$st_area, na.rm = TRUE)
