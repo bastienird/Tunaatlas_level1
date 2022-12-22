@@ -488,7 +488,7 @@ titre_1 <- gsub("_","-",titre_1)
 
 ```{r include=FALSE}
 
-mapping_dataset <- read_csv(paste0("data/codelist_mapping_rfmos_to_global.csv"), stringsAsFactors = F,colClasses = "character")#, entity$data$source[[2]])) #bof mais pour l'instant comme ça 
+mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"), stringsAsFactors = F,colClasses = "character"))#, entity$data$source[[2]])) #bof mais pour l'instant comme ça 
   mapping_keep_src_code <- FALSE
 
   source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
