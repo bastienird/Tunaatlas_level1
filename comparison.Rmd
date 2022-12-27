@@ -64,13 +64,8 @@ fancyhdr:
     headrulewidth: 1pt
     footrulewidth: 0pt
 params: 
-  init: "~/Documents/Tunaatlas_level1/jobs/20220927110301_global_catch/entities/global_catch_1deg_level1_final/Markdown/rawdata"
-  final: "~/Documents/Tunaatlas_level1/jobs/20221201182627/entities/global_catch_1deg_level0__final_test_new_dcmi_test23/Markdown/Level2_RF3without_gears"
-  dbname: ""
-  host: ""
-  port: 
-  user: ""
-  password: ""
+  init: "~/Documents/Tunaatlas_level1/jobs/20221222150426/entities/IRD_level2/Markdown/rawdata"
+  final: "~/Documents/Tunaatlas_level1/jobs/20221222150426/entities/IRD_level2/Markdown/Level2_RF3without_gears"
   further_analysis: "FALSE"
   time_dimension:
   geographical_dimension:
@@ -80,14 +75,19 @@ params:
   columns_to_keep: [  Precision     ,                   unit      ,                     
   "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
    Difference (in %)          ,      Dimension   ,       Difference in value ]
-  con: con
-  entity: entity
-  config: config
-  action: action
   short: FALSE
-  mapped: FALSE
+  mapped: TRUE
   debugging: FALSE
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE, fig.align = 'center'
+)
+```
+
 
 ```{r cache=FALSE, include=FALSE}
 last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
@@ -149,17 +149,6 @@ cat2 <- function(x){cat(paste0(child_header, x, " \n"))}
 
 ```
 
-
-
-
-```{r include=FALSE}
-knitr::opts_chunk$set(
-	echo = FALSE,
-	message = FALSE,
-	warning = FALSE, fig.align = 'center'
-)
-
-```
 
 
 ```{r eval=!child, include=FALSE}
@@ -440,12 +429,37 @@ if (!exists("parameter_final")) {parameter_final <- NULL}
 
 
 ```{r}
-init <- readRDS(paste0(as.character(parameter_init),"/rds.rds")) %>%dplyr::select(all_of(colnames_to_keep))%>%  dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end)) %>%dplyr::mutate(cat_geo = as.character(cat_geo)) 
+init <- readRDS(paste0(as.character(parameter_init),"/rds.rds"))
 if(is_null_or_not_exist(parameter_final)){final <- init[0,] 
  unique_analyse <-  TRUE} else{
-final <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))%>%dplyr::select(all_of(colnames_to_keep)) %>%   dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code"))  %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end))%>%dplyr::mutate(cat_geo = as.character(cat_geo))
+final <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))
 unique_analyse <- FALSE}
+```
 
+
+```{r include=FALSE}
+if(length(setdiff(unique(init$gear), unique(final$gear)))!=0){
+  parameter_mapped <- FALSE
+try(conn <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port, user = parameter_user,password = parameter_password))
+
+
+mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"), stringsAsFactors = F,colClasses = "character")#, entity$data$source[[2]])) #bof mais pour l'instant comme ça 
+  mapping_keep_src_code <- FALSE
+
+  source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
+  init <- map_codelistsB(conn, parameter_fact, mapping_dataset, init, mapping_keep_src_code = FALSE, summary_mapping = FALSE) #this map condelist function is to retrieve the mapping dataset used
+DBI::dbDisconnect(conn)
+}
+```
+
+```{r}
+init <- init%>%dplyr::select(all_of(colnames_to_keep))%>%  dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end)) %>%dplyr::mutate(cat_geo = as.character(cat_geo)) 
+
+final <- final%>%dplyr::select(all_of(colnames_to_keep)) %>%   dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code"))  %>%dplyr::mutate(time_start =as.character(time_start))%>%dplyr::mutate(time_end =as.character(time_end))%>%dplyr::mutate(cat_geo = as.character(cat_geo))
+```
+
+
+```{r}
 if(parameter_fact=="catch"){
   function_dataframe_tot_filter =function(dataframe_tot_filter){
   dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(species_group%>% dplyr::distinct(), by = c("species"))
@@ -486,16 +500,6 @@ titre_1 <- gsub("_","-",titre_1)
 ```
 
 
-```{r include=FALSE}
-
-mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"), stringsAsFactors = F,colClasses = "character")#, entity$data$source[[2]])) #bof mais pour l'instant comme ça 
-  mapping_keep_src_code <- FALSE
-
-  source("https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/map_codelists_Bastien.R")
-  init <- map_codelistsB(con, parameter_fact, mapping_dataset, init, mapping_keep_src_code = FALSE, summary_mapping = FALSE) #this map condelist function is to retrieve the mapping dataset used
-
-```
-
 
 ```{r results='asis', eval=(!parameter_short && !unique_analyse)}
 try(knit_child_attention <- knitr::knit_child(text =c(
@@ -520,7 +524,7 @@ try(knit_child_attention <- knitr::knit_child(text =c(
 try(cat(knit_child_attention))
 ```
 
-```{r results='asis', eval=(parameter_mapped &&  !unique_analyse) }
+```{r results='asis', eval=(!parameter_mapped &&  !unique_analyse) }
 try(knit_mapped <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
@@ -533,7 +537,7 @@ try(knit_mapped <- knitr::knit_child(text =c(
 ''), envir = environment(), quiet= TRUE))
 ```
 
-```{r results='asis', eval=(parameter_mapped  & !unique_analyse)}
+```{r results='asis', eval=(!parameter_mapped  & !unique_analyse)}
 try(cat(knit_mapped))
 ```
 
@@ -1466,17 +1470,17 @@ image
 
 
 ```{r}
-init <- init%>% mutate(value=as.numeric(value))
-out <- try(spatial_coverage_init <- sum((init %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE))
+init <- init%>% mutate(st_area=as.numeric(st_area))
+out <- try(spatial_coverage_init <-sum((init %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct()%>%dplyr::left_join(shape_without_geom %>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct())$st_area, na.rm = TRUE))
 
-if("try-error" %in% class(out)){knitr::knit_exit(paste0(nrow(init)))}
+if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow init = ", nrow(init)))}
 ```
 
 
 ```{r}
 final <- final%>% mutate(value=as.numeric(value))
-
-spatial_coverage_final <- sum((final %>% dplyr::filter(value > 0)%>% select(geographic_identifier) %>%dplyr::distinct() %>% dplyr::left_join(shape_without_geom, by = c("geographic_identifier"="code"))%>% distinct)$st_area, na.rm = TRUE)
+out <- try(spatial_coverage_final <- as.numeric(sum((final %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom%>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)))
+if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow_final= ",nrow(final)))}
 
 difference_coverage <- spatial_coverage_init - spatial_coverage_final
 gain_loss <- ifelse(difference_coverage >0, "Loss" ,"Gain")
@@ -1534,16 +1538,16 @@ if(nrow(unit != 0)){qflextable2(t3, captionn = "Difference between stratas")} el
 
 
 
-```{r eval=!parameter_mapped || child}
+```{r eval=parameter_mapped || child}
 knitr::knit_exit(fully = FALSE)
 ```
 
 
-```{r eval=parameter_mapped, results='asis'}
+```{r eval=!parameter_mapped, results='asis'}
 cat2("# Annexe")
 ```
 
-```{r eval=parameter_mapped}
+```{r eval=!parameter_mapped}
 df_mapping_final_this_dimension <- read_csv("data/mapping_codelist_summary.csv")
 t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%dplyr::group_by(across(everything())) %>%  dplyr::mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% dplyr::ungroup() 
 

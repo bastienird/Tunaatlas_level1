@@ -76,11 +76,11 @@ params:
 
 
 
-```{r include=FALSE}
+```{r setupmain, include=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE, include = FALSE, fig.align = 'center'
+	warning = FALSE, fig.align = 'center'
 )
 
 
@@ -290,7 +290,7 @@ nominal_dataset <- filtering_function(nominal_dataset)
 
 \clearpage
 
-# Summary of the entity : `r entity$identifiers[["id"]]` 
+# Summary of the final provided data : `r entity$identifiers[["id"]]` 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 sub_list_dir_2 <- paste0("Markdown/",list.dirs(path =paste0(getwd(),"/Markdown"), full.names = FALSE, recursive = FALSE))
@@ -350,7 +350,7 @@ child_env$parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
 child_env$title_1 <- "Initial_data"
 child_env$title_2 <- "Final_data"
 child_env$last_to_first <- TRUE
-child_env$parameter_mapped <- TRUE
+child_env$parameter_mapped <- FALSE
 
   # assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)] , pos = environment())
   # assign("child", TRUE, pos = environment())
@@ -643,19 +643,19 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 
 # Detail of all the steps of treatment of the data
 
-For each treatment on the data, we provide a report on what exactly has been created, disappeared or has been transformed.
+For each treatment on the data, we provide a report on what has been created, disappeared or has been transformed. This allows to see where major changes occurs for specific data needs. 
 
 ```{r}
 
 function_all_comp <- function(counting){
-child_env <- new.env()
-list2env(parameters_child, env = child_env)
-
-child_env$params <- params
+# child_env <- new.env()
+# list2env(parameters_child, env = child_env)
+# 
+# child_env$params <- params
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[counting]
 child_env$child <- TRUE
-child_env$parameter_con <- con
+# child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[counting+1]
 
 if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds")),readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) )){NA}else{
