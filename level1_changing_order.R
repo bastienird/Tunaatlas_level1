@@ -1663,6 +1663,37 @@ fonction_dossier("Level2_RF3without_gears",
 
          create_latex("comp_sans_shiny_child.Rmd", last = TRUE)
 
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         config$logger.info("Last step/8: Apply filters if filter needed ed (Filter data by groups of everything) ")
+         #-----------------------------------------------------------------------------------------------------------------------------------------------------------
+         
+         
+         if(!is.null(opts$filtering)){parameter_filtering <-opts$filtering} else{ parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
+         if(is.character(parameter_filtering)){
+           parameter_filtering <- eval(parse(text=toString(parameter_filtering)))
+         }
+         
+         matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
+         
+         filtering_function = function(dataframe_to_filter, filtering_params = matchingList){
+           colnames_to_filter <- colnames(dataframe_to_filter %>% select(names(filtering_params)))
+           names(filtering_params) <- colnames_to_filter
+           
+           filtering_params <- lapply(filtering_params, function(x){ #handling single filter
+             if(length(x) == 1){
+               x <- c(x, x) }else {
+                 x
+               }
+           }
+           )
+           
+           if(length(matchingList)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))} else{dataframe_to_filter}
+           
+         }
+         
+         georef_dataset <- filtering_function(georef_dataset)
+         
+
 
 
          dataset<-georef_dataset %>% group_by(.dots = setdiff(colnames(georef_dataset),"value")) %>% dplyr::summarise(value=sum(value))
