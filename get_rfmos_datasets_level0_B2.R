@@ -97,8 +97,9 @@ get_rfmos_datasets_level0_B2 = function(rfmo, entity, config, options){
                           cl_id <- googledrive::drive_get(cl_filename)$id
                           googledrive::drive_download(googledrive::as_id(cl_id), cl_filename, overwrite = TRUE)
                           flag_mapping_flag_iccat_from_ncandcas_to_flag_iccat <- as.data.frame(readr::read_csv(cl_filename, guess_max = 0))
+                          source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/map_codelist.R")
                           
-                          iccat_ce_WithSchooltypeInfo <- rtunaatlas::map_codelist(iccat_ce_WithSchooltypeInfo, flag_mapping_flag_iccat_from_ncandcas_to_flag_iccat, "fishingfleet")[[1]]
+                          iccat_ce_WithSchooltypeInfo <- map_codelist(iccat_ce_WithSchooltypeInfo, flag_mapping_flag_iccat_from_ncandcas_to_flag_iccat, "fishingfleet")[[1]]
                           
                           strata_in_withoutschooltype_and_not_in_withshooltype <- dplyr::anti_join (iccat_data, iccat_ce_WithSchooltypeInfo, by=setdiff(columns_to_keep,c("value","schooltype")))
                           strata_in_withoutschooltype_and_not_in_withshooltype <- strata_in_withoutschooltype_and_not_in_withshooltype[, columns_to_keep]
@@ -174,7 +175,9 @@ get_rfmos_datasets_level0_B2 = function(rfmo, entity, config, options){
                           
                           if (options$iattc_ps_raise_flags_to_schooltype){
                             #Get Tuna effort by raising flags to schooltype
-                            df <- rtunaatlas::raise_datasets_by_dimension(df1=df_iattc_effort_PSFlag,
+                            source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/raise_datasets_by_dimension.R")
+                            
+                            df <- raise_datasets_by_dimension(df1=df_iattc_effort_PSFlag,
                                                                           df2=df_iattc_effort_PSSetType,
                                                                           dimension_missing_df1="schooltype",
                                                                           dimension_missing_df2="fishingfleet")$df
