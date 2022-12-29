@@ -48,7 +48,7 @@ function_spatial_curation_data_mislocatedB = function(con, entity,config,df,spat
   config$logger.info("Reallocating data that are in land areas")
   
   #all the data that are inland or do not have any spatial stratification ("UNK/IND",NA) are dealt (either removed - spatial_curation_data_mislocated=="remove" - or reallocated - spatial_curation_data_mislocated=="reallocate" )
-  config$logger.info("Executing rtunaatlas::spatial_curation_intersect_areas")
+  config$logger.info("Executing spatial_curation_intersect_areas")
   #@juldebar => georef_dataset was not set
   georef_dataset <- df
   areas_in_land<-spatial_curation_intersect_areasB(con , entity, config, georef_dataset ,"areas_tuna_rfmos_task2","gshhs_world_coastlines")
@@ -75,7 +75,9 @@ function_spatial_curation_data_mislocatedB = function(con, entity,config,df,spat
   
   if (spatial_curation_data_mislocated=="reallocate"){   # We reallocate data that ispatial_curation_intersect_areass mislocated (they will be equally distributed on areas with same reallocation_dimensions (month|year|gear|flag|species|schooltype).
     cat("Reallocating data that are in land areas...\n")
-    catch_curate_data_mislocated<-rtunaatlas::spatial_curation_function_reallocate_data(df_input = georef_dataset,
+    source("https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation/spatial_curation_function_reallocate_data.R")
+    
+    catch_curate_data_mislocated<-spatial_curation_function_reallocate_data(df_input = georef_dataset,
                                                                                         dimension_reallocation = "geographic_identifier",
                                                                                         vector_to_reallocate = c(areas_in_land,areas_with_no_spatial_information),
                                                                                         reallocation_dimensions = setdiff(colnames(georef_dataset),c("value","geographic_identifier")))
