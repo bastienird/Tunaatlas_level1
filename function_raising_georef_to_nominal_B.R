@@ -40,8 +40,9 @@ function_raising_georef_to_nominal_B =function(con, opts,entity,
     
     # calculate raising factor dataset
     cat("calculate raising factor dataset\n")
+    source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/raise_get_rf.R")
     
-    df_rf <- rtunaatlas::raise_get_rf(df_input_incomplete = dataset_to_compute_rf,
+    df_rf <- raise_get_rf(df_input_incomplete = dataset_to_compute_rf,
                                       df_input_total = nominal_dataset_df,
                                       x_raising_dimensions = c(x_raising_dimensions,"unit")
     )
@@ -51,7 +52,7 @@ function_raising_georef_to_nominal_B =function(con, opts,entity,
     filename <- paste0("/tmp/DFPartialInfo_rf_",gsub(Sys.time(),pattern = " ", replacement = "_"),".csv")
     write.csv(x = df_rf, file = filename)
     
-    cat("function rtunaatlas::raise_get_rf has been executed ! \n")
+    cat("function raise_get_rf has been executed ! \n")
     config$logger.info(paste0("Rows number in df_rf ",nrow(df_rf),"  \n"))
     
     
@@ -63,15 +64,16 @@ function_raising_georef_to_nominal_B =function(con, opts,entity,
     }
     
     # raise dataset
-    cat("Executing rtunaatlas::raise_incomplete_dataset_to_total_dataset \n")
+    cat("Executing raise_incomplete_dataset_to_total_dataset \n")
+    source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/raise_incomplete_dataset_to_total_dataset.R")
     
-    data_raised<-rtunaatlas::raise_incomplete_dataset_to_total_dataset(df_input_incomplete = dataset_to_raise,
+    data_raised<-raise_incomplete_dataset_to_total_dataset(df_input_incomplete = dataset_to_raise,
                                                                        df_input_total = nominal_dataset_df,
                                                                        df_rf = df_rf,
                                                                        x_raising_dimensions = raising_dimensions,
                                                                        threshold_rf = NULL)
     
-    cat("function rtunaatlas::raise_incomplete_dataset_to_total_dataset has been executed ! \n")
+    cat("function raise_incomplete_dataset_to_total_dataset has been executed ! \n")
     thisdf <- data_raised$df
     config$logger.info(paste0("Total catch for data_raised  is ",sum(thisdf$value),"  \n"))
     
