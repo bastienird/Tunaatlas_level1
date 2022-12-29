@@ -180,6 +180,9 @@ opts <- entity$data$actions[[1]]$options
 con <- config$software$output$dbi
 parameter_fact <-  opts$fact
 if(!is.null(opts$filtering)){parameter_filtering <-opts$filtering} else{ parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
+if(is.character(parameter_filtering)){
+  parameter_filtering <- eval(parse(text=toString(parameter_filtering)))
+}
 # if(exists('params')){parameters <- params}else{
 parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, parameter_port = config$software$input$dbi_config$parameters$port,  parameter_user = config$software$input$dbi_config$parameters$user,parameter_dbname=config$software$input$dbi_config$parameters$dbname, parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE, no_recap_options = TRUE)
 child_env = new.env()
