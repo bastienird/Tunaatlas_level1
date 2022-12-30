@@ -238,7 +238,7 @@ base::options(knitr.duplicate.label = "allow")#for duplicate chunk names
 
 
 
-```{r include=FALSE, results='asis'}
+```{r include=FALSE,echo=FALSE, results='asis'}
 
 isNullList <- function(x) all(!lengths(x))
 if (isNullList(parameter_filtering)){cat("There are no filter on this data")} else {
@@ -307,15 +307,15 @@ sub_list_dir_2 = rownames(details)
 ```{r include=FALSE, results='asis'}
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
-child_env$titre_1 <- entity$identifiers[["id"]]
+child_env$parameter_titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$parameter_final <- NULL
 child_env$child <- TRUE
-child_env$no_recap_options <- FALSE
+child_env$no_recap_options <- TRUE
 if(debugging == TRUE){
   child_env$debugging <- TRUE
   } else {child_env$debugging <- FALSE}
-child_env$child_header <- "#"
+# child_env$child_header <- "#"
 
 
   # assign("parameter_init", sub_list_dir_2[1], pos = environment())
@@ -338,7 +338,7 @@ cat(res2, sep =  "\\clearpage")
 \clearpage
 
 
-# Summary of the treatment done on the data (comparison between the first to the last)
+# Summary of the treatment done on the data (comparison between the Initial data and the data resulting from treatments)
 
 ```{r include=FALSE, results='asis'}
 
@@ -350,8 +350,8 @@ child_env$parameter_init <- sub_list_dir_2[1]
 child_env$child <- TRUE
 child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
-child_env$title_1 <- "Initial_data"
-child_env$title_2 <- "Final_data"
+child_env$parameter_titre_dataset_1 <- "Initial_data"
+child_env$parameter_titre_dataset_2 <- entity$identifiers[["id"]]
 child_env$last_to_first <- TRUE
 child_env$parameter_mapped <- FALSE
 
@@ -378,14 +378,12 @@ cat(res, sep =  "\\clearpage")
 ```
 
 
-
-
-
 \clearpage
 
 
-
 # Analyse of the processing of the data
+
+The following table recap all the treatment done on the data provided by tRFMOs.
 
 ```{r}
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
@@ -646,7 +644,7 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 
 # Detail of all the steps of treatment of the data
 
-For each treatment on the data, we provide a report on what has been created, disappeared or has been transformed. This allows to see where major changes occurs for specific data needs. 
+For each treatment on the data, we provide a summary of what has been added, removed or transformed. This allows to see where major changes occurs for specific data needs. 
 
 ```{r}
 
