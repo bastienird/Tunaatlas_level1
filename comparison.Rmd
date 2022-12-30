@@ -487,10 +487,12 @@ if (is_null_or_not_exist(parameter_titre_dataset_1)){
 
 
 if (is_null_or_not_exist(parameter_titre_dataset_2) & !unique_analyse){
-  titre_2 <- last_path_reduced(as.character(parameter_final))
+  titre_2 <- last_path_reduced(as.character(parameter_final)) else {parameter_titre_dataset}
 } else if (unique_analyse) {
   titre_2 <- "NONE"
-}
+} else {
+    titre_2 <- parameter_titre_dataset_2
+    }
 titre_2 <- gsub("_","-",titre_2)
 titre_1 <- gsub("_","-",titre_1)
 
