@@ -1120,7 +1120,11 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   config$logger.info("Extract and load FIRMS Level 0 nominal catch data input (required if raising process is asked) ")
   	nominal_catch <- readr::read_csv(entity$getJobDataResource(config, entity$data$source[[1]]), guess_max = 0)
   	class(nominal_catch$value) <- "numeric"
-  	nominal_catch <- map_codelistsB(con, "catch", mapping_dataset, nominal_catch, mapping_keep_src_code)
+  	mapping_dataset<- read.csv(mapping_csv_mapping_datasets_url, stringsAsFactors = F,colClasses = "character")
+  	mapping_keep_src_code <- FALSE
+  	
+  	#no need to map it is already mapped
+  	# nominal_catch2 <- map_codelistsB(con, "catch", mapping_dataset, nominal_catch, mapping_keep_src_code)
   	# nominal_catch <- read.csv2("entities/global_catch_1deg_1m_ps_bb_firms_Bastien_with_step_rds__level2/data/nominal_catch_mapped.csv", sep = ";")
   #         #@juldebar keep same units for all datatets
   	if(any(nominal_catch$unit == "t")) nominal_catch[nominal_catch$unit == "t", ]$unit <- "MT"
@@ -1336,7 +1340,8 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
                                                      # dataset_to_compute_rf=nominal_catch,
                                                      dataset_to_compute_rf=dataset_to_compute_rf,
                                                      x_raising_dimensions=x_raising_dimensions)
-
+  georef_dataset<-georef_dataset$dataset
+  
   rm(dataset_to_compute_rf)
 
   #@juldebar: pending => metadata elements below to be managed (commented for now)
@@ -1344,7 +1349,6 @@ if(!is.null(opts$raising_georef_to_nominal)) if (opts$raising_georef_to_nominal)
   # metadata$lineage<-c(metadata$lineage,georef_dataset$lineage)
   # metadata$supplemental_information<-paste0(metadata$supplemental_information,georef_dataset$supplemental_information)
 
-  georef_dataset<-georef_dataset$dataset
   config$logger.info(paste0("Total ",fact," after raising is now: ",sum(georef_dataset$value),"\n"))
   config$logger.info(sprintf("Gridded catch dataset has [%s] lines", nrow(georef_dataset)))
   config$logger.info(paste0("Total catch for data after raising is ",sum(georef_dataset$value),"  \n"))
