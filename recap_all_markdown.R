@@ -1,4 +1,4 @@
-comparison_each_step <- function(action, entity, config, options, debugging = FALSE){
+comparison_each_step <- function(action, entity, config, options){
   if(!(require(here))){ 
     install.packages("here") 
     (require(here))} 
@@ -21,7 +21,8 @@ comparison_each_step <- function(action, entity, config, options, debugging = FA
     install.packages("bookdown")
     require(bookdown)
   }
-
+  opts <- action$options
+  debugging <- if(!is.null(opts$debugging)) opts$debugging else FALSE
   if(debugging == TRUE){
     c <- c("~/Documents/Tunaatlas_level1/tableau_recap_global_action_effort.Rmd", 
            "~/Documents/Tunaatlas_level1/comparison.Rmd", 
