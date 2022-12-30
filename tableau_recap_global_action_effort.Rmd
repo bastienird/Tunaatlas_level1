@@ -441,17 +441,17 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
         # nrow <- pull(sums[3])}
         
         step <- tail(str_split(paste0(i),"/")[[1]],n=1)
-        loss_percent <- 100*((tons_init - sum_t)/tons_init)
-        loss_tons <- (tons_init - sum_t)
-        loss_no <- (nofish_init - sum_no)
-        loss_percent_lines <- 100*((lines_init - nrow)/lines_init)
-        loss_percent_no <- 100*((nofish_init - sum_no)/nofish_init)
+        Difference_percent <- -100*((tons_init - sum_t)/tons_init)
+        Difference_tons <- -(tons_init - sum_t)
+        Difference_no <- -(nofish_init - sum_no)
+        Difference_percent_lines <- -100*((lines_init - nrow)/lines_init)
+        Difference_percent_no <- -100*((nofish_init - sum_no)/nofish_init)
         percentage_of_nominal <- (sum_t*100)/nominal
         sums <- as.data.frame(data.frame(sum_t, sum_no, nrow))
         data_i <- cbind(step,
                         Explenation, Fonctions, 
                         Options,
-                        sums, loss_percent,loss_tons,loss_percent_no,loss_no, loss_percent_lines, percentage_of_nominal)
+                        sums, Difference_percent,Difference_tons,Difference_percent_no,Difference_no, Difference_percent_lines, percentage_of_nominal)
         names(data_i) <- colnames(df)
         df <- rbind(df, data_i)
         tons_init <- sum_t
@@ -531,17 +531,17 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
           
 
         step <- tail(str_split(paste0(i),"/")[[1]],n=1)
-        loss_percent <- 100*((hooks_init - sum_hooks)/hooks_init)
-        loss_hooks <- (hooks_init - sum_fdays)
-        loss_fdays <- (fishing_days_init - sum_hooks)
-        loss_percent_lines <- 100*((lines_init - nrow)/lines_init)
-        loss_percent_fdays <- 100*((fishing_days_init - sum_fdays)/fishing_days_init)
+        Difference_percent <- -100*((hooks_init - sum_hooks)/hooks_init)
+        Difference_hooks <- -(hooks_init - sum_fdays)
+        Difference_fdays <- -(fishing_days_init - sum_hooks)
+        Difference_percent_lines <- -100*((lines_init - nrow)/lines_init)
+        Difference_percent_fdays <- -100*((fishing_days_init - sum_fdays)/fishing_days_init)
         percentage_of_nominal <- (sum_hooks*100)/nominal
         sums <- as.data.frame(data.frame(sum_hooks, sum_fdays, nrow))
         data_i <- cbind(step,
                         Explenation, Fonctions, 
                         Options,
-                        sums, loss_percent,loss_hooks,loss_percent_fdays,loss_fdays, loss_percent_lines, percentage_of_nominal)
+                        sums, Difference_percent,Difference_hooks,Difference_percent_fdays,Difference_fdays, Difference_percent_lines, percentage_of_nominal)
         names(data_i) <- colnames(df)
         df <- rbind(df, data_i)
         hooks_init <- sum_hooks
