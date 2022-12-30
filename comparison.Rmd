@@ -135,7 +135,7 @@ if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
 }
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- FALSE}
-parameter_filtering <- if(!is_null_or_not_exist(action$options$filtering)){action$options$filtering} else{ list(species = NULL, fishingfleet = NULL)}
+parameter_filtering <- if(!is_null_or_not_exist(parameter_filtering)){parameter_filtering} else{ list(species = NULL, fishingfleet = NULL)}
 
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
 ```
@@ -789,7 +789,7 @@ join <- dplyr::full_join(init_group, final_group) %>% mutate(across(where(is.num
 
 join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)}))%>% 
           color(~ `Difference` < 0, color = "green",~ `Difference`) %>% 
-          color(~ `Difference` >0, color = "red",~ `Difference`)%>% autofit()
+          color(~ `Difference` >0, color = "red",~ `Difference`) %>% mutate(Difference= round(Difference))%>% autofit()
 join <- width(join, width = dim(join)$widths*6 /(flextable_dim(join)$widths))
 
 join <- set_caption(join, "Summary of the difference between the two datasets")
@@ -1083,7 +1083,7 @@ formals(pie_chart_2_default)$titre_2 <- titre_2
 # formals(pie_chart_2_default)$second <- final
 # if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
   # list_pie_chart <- list("fishingfleet","source_authority","Gear")} else {
-    list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value"))))[[1]]
+    list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value", "time_end"))))[[1]]
     # }
 
 # t <- pie_chart_2_default(fishingfleet, init, final, topn = 1)
@@ -1438,7 +1438,7 @@ try(cat(unlist(map_plotted_percent), sep = "\\clearpage"))
 
 ```
 
-Here is represented for each area the polygons keeping all the initial information, the one losing a part and the one losing all the information. 
+Here is represented for each area the polygons keeping all the initial information, the ones losing a part and the ones losing all the information. 
 
 ```{r}
 breaks <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = dplyr::case_when(`Difference (in %)` == -Inf ~"Appearing data", -Inf<`Difference (in %)`  & `Difference (in %)`<= -100 ~"Gain (more than double)" ,  -100<`Difference (in %)`  & `Difference (in %)`<0 ~ "Gain",`Difference (in %)`==0~"No differences" ,0<`Difference (in %)`  & `Difference (in %)`<100 ~ "Loss",`Difference (in %)` ==100 ~  "All data lost" ))
@@ -1522,8 +1522,8 @@ ligne_totale <- nrow(init)
 unit <- t  %>% dplyr::filter(`Difference (in %)` %notin% c(0,100, -Inf) & (value_sum_1!=0 )& value_sum_2!=0 ) 
 
 
-if(nrow(unit != 0)){unit <- unit%>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain", value_sum_1 == value_sum_2 ~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(base::ifelse(id>(topn-1),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in value`/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`))
-t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(parameter_columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
+if(nrow(unit != 0)){unit <- unit%>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain", value_sum_1 == value_sum_2 ~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(base::ifelse(id>(topn),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in value`/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`)) %>% mutate(Other_column = ifelse(Precision == "Others", 1, 0))
+t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(parameter_columns_to_keep)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(abs(`Difference in value`)), Other_columns ),groups = c("Dimension","unit","Loss / Gain"))
 } else {to_cat <- "There are no differences between stratas aside the appearing and disappearing ones"}
 
 ```
@@ -1532,13 +1532,36 @@ t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values datase
 
 
 
-if(nrow(unit != 0)){qflextable2(t3, captionn = "Difference between stratas")} else{cat(to_cat)}
+if(nrow(unit != 0)){qflextable2(t3, captionn = "Difference between stratas of the two datasets")} else{cat(to_cat)}
 
 ```
 
+```{r numberstrataswithtoutmapping}
+initnotmapped <- readRDS(paste0(as.character(parameter_init),"/rds.rds"))
+finalnotmapped <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))
+
+number_init_column <- as.data.frame(t(initnotmapped %>% select(-value) %>% summarise_all(list(~n_distinct(.))))) %>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := V1)
+number_final_column <- as.data.frame(t(finalnotmapped %>% select(-value) %>% summarise_all(list(~n_distinct(.)))))%>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := V1)
+
+rm(initnotmapped)
+rm(finalnotmapped)
+
+s <- cbind(number_init_column , number_final_column ) %>% mutate_all(as.numeric)
+s$Difference <- s[,2]-s[,1]
+
+rownames(s) <- paste0("Number of ", rownames(s))
+
+```
+
+```{r eval=!unique_analyse}
+if(!(require(tibble))){ 
+  install.packages("tibble") 
+  (require(tibble))} 
+qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Comparison of number of stratas between the two datasets with including the differences due to the mapping of codelist")
+```
 
 
-```{r eval=parameter_mapped || child}
+```{r eval=!parameter_mapped || child}
 knitr::knit_exit(fully = FALSE)
 ```
 
@@ -1562,4 +1585,15 @@ s[is.na(s)] <- ""
 ```{r}
 kable(s, caption = "Replacement code during the mapping codelist treatment")
 ```
+
+
+
+```{r eval=!unique_analyse}
+if(!(require(tibble))){ 
+  install.packages("tibble") 
+  (require(tibble))} 
+qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Comparison of number of stratas between the two datasets")
+```
+
+
 
