@@ -1509,14 +1509,18 @@ disappearing_strates <- t %>%dplyr::filter(value_sum_2 == 0)
 ```
 
 ```{r}
+
 topn <- 6
+
 ```
 
 
 ```{r}
+
 if(length(unique(init$species) < 8)){
-topn <- length
+topn <- (length(unique(init$species)))
 }
+
 ```
 
 
