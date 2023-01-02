@@ -155,6 +155,11 @@ cat2 <- function(x){cat(paste0(child_header, x, " \n"))}
 cat2 <- cat
 ```
 
+```{r testboowkdown}
+cat2 <- cat
+```
+
+
 ```{r results='asis', eval=step_title_t_f}
 
 try(cat2(step_title))
@@ -403,7 +408,7 @@ if(parameter_fact == "catch"){colnames_to_keep <- c("fishingfleet",         "gea
 
 
 
-```{r results='asis', cache=FALSE, eval=!child}
+```{r eval=!child, results='asis'}
 
 isNullList <- function(x) all(!lengths(x))
 if (isNullList(parameter_filtering)){cat("There are no filter on this data")} else {
@@ -515,9 +520,9 @@ try(knit_child_attention <- knitr::knit_child(text =c(
   '*Attention ! In the following document :* \n ',
   '-***All the differences inferior to 0 corresponds to gain in captures.***', 
   '\n',
-  '-***The initial dataset, refered as, dataset 1 is `r last_path(parameter_init)`***',
+  '-***The initial dataset, refered as, dataset 1 is `r titre_1`***',
   '\n',
-'-***The final dataset, refered as, dataset 2 is `r last_path(parameter_final)`***', 
+'-***The final dataset, refered as, dataset 2 is `r titre_2`***', 
   '\n',
 '', 
 ''), envir = environment(), quiet= TRUE))
@@ -1508,6 +1513,11 @@ topn <- 6
 ```
 
 
+```{r}
+if(length(unique(init$species) < 8)){
+topn <- length
+}
+```
 
 
 ```{r results='asis'}
@@ -1526,7 +1536,7 @@ unit <- t  %>% dplyr::filter(`Difference (in %)` %notin% c(0,100, -Inf) & (value
 
 
 if(nrow(unit != 0)){unit <- unit%>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain", value_sum_1 == value_sum_2 ~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(base::ifelse(id>(topn),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in value`/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`)) %>% mutate(Other_column = ifelse(Precision == "Others", 1, 0))
-t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(parameter_columns_to_keep,Other_column)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(abs(`Difference in value`)), Other_column ) %>% dplyr::select(-Other_column),groups = c("Dimension","unit","Loss / Gain"))
+t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(parameter_columns_to_keep,Other_column)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`, Other_column,desc(abs(`Difference in value`)) ) %>% dplyr::select(-Other_column),groups = c("Dimension","unit","Loss / Gain"))
 } else {to_cat <- "There are no differences between stratas aside the appearing and disappearing ones"}
 
 ```
