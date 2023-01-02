@@ -790,9 +790,9 @@ nrowfinal <- nrow(final)
 join <- dplyr::full_join(init_group, final_group) %>% mutate(across(where(is.numeric), ~replace(., is.na(.), 0))) %>% dplyr::arrange(unit) %>%dplyr::rowwise() %>%  dplyr::mutate(unit = paste0(unit)) %>% dplyr::mutate(Difference = -titre_test1 + titre_test2)%>%mutate("Difference (in %)" = 100*(Difference /titre_test1)) %>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := titre_test1)%>% dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := titre_test2)
 
 
-join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)}))%>% 
+join <- qflextable(join%>% dplyr::mutate_if(is.numeric, function(.){round(.,2)})%>% dplyr::mutate(Difference= round(Difference)))%>% 
           color(~ `Difference` > 0, color = "green",~ `Difference`) %>% 
-          color(~ `Difference` < 0, color = "red",~ `Difference`) %>% mutate(Difference= round(Difference))%>% autofit()
+          color(~ `Difference` < 0, color = "red",~ `Difference`) %>% autofit()
 join <- width(join, width = dim(join)$widths*6 /(flextable_dim(join)$widths))
 
 join <- set_caption(join, "Summary of the difference between the two datasets")
