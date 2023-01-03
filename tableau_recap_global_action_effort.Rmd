@@ -238,7 +238,7 @@ base::options(knitr.duplicate.label = "allow")#for duplicate chunk names
 
 
 
-```{r include=FALSE,echo=FALSE, results='asis'}
+```{r include=FALSE, results='asis'}
 
 isNullList <- function(x) all(!lengths(x))
 if (isNullList(parameter_filtering)){cat("There are no filter on this data")} else {
@@ -281,7 +281,7 @@ filtering_function = function(dataframe_to_filter, filtering_params = matchingLi
   }
     )
   
-  if(length(matchingList)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))} else{dataframe_to_filter}
+  if(length(filtering_params)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, filtering_params, sep = '%in%', collapse="&")))} else{dataframe_to_filter}
 
 }
 
@@ -307,7 +307,7 @@ sub_list_dir_2 = rownames(details)
 ```{r include=FALSE, results='asis'}
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
-child_env$parameter_titre_1 <- entity$identifiers[["id"]]
+child_env$parameter_titre_dataset_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$parameter_final <- NULL
 child_env$child <- TRUE
@@ -315,7 +315,7 @@ child_env$no_recap_options <- TRUE
 if(debugging == TRUE){
   child_env$debugging <- TRUE
   } else {child_env$debugging <- FALSE}
-# child_env$child_header <- "#"
+child_env$child_header <- "#"
 
 
   # assign("parameter_init", sub_list_dir_2[1], pos = environment())
