@@ -183,6 +183,8 @@ if(!is.null(opts$filtering)){parameter_filtering <-opts$filtering} else{ paramet
 if(is.character(parameter_filtering)){
   parameter_filtering <- eval(parse(text=toString(parameter_filtering)))
 }
+
+
 # if(exists('params')){parameters <- params}else{
 parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, parameter_port = config$software$input$dbi_config$parameters$port,  parameter_user = config$software$input$dbi_config$parameters$user,parameter_dbname=config$software$input$dbi_config$parameters$dbname, parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE, no_recap_options = TRUE)
 child_env = new.env()
@@ -238,12 +240,12 @@ base::options(knitr.duplicate.label = "allow")#for duplicate chunk names
 
 
 
-```{r include=FALSE, results='asis'}
+```{r echo=FALSE, results='asis'}
 
 isNullList <- function(x) all(!lengths(x))
-if (isNullList(parameter_filtering)){cat("There are no filter on this data")} else {
+if (isNullList(parameter_filtering)){cat("There are no filter on this data in the following report.")} else {
   
-  cat (paste0("The filter used on this data are:  \n "))
+  cat (paste0("The filter used on the data in the following report are:  \n "))
   for (i in 1:length(parameter_filtering)){
     if (!is.null(parameter_filtering[[i]])){
       cat(paste0("***- On ", names((parameter_filtering)[i]), " : ", paste((parameter_filtering)[[i]], collapse = " ; "),"*** \n"))
@@ -267,6 +269,7 @@ if(dir.exists("Markdown")){
 
 }
 
+
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
 
 filtering_function = function(dataframe_to_filter, filtering_params = matchingList){
@@ -284,6 +287,7 @@ filtering_function = function(dataframe_to_filter, filtering_params = matchingLi
   if(length(filtering_params)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% filter(!! rlang::parse_expr(str_c(colnames_to_filter, filtering_params, sep = '%in%', collapse="&")))} else{dataframe_to_filter}
 
 }
+
 
 nominal_dataset <- filtering_function(nominal_dataset)
 
