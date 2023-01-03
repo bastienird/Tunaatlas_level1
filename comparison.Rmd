@@ -151,11 +151,7 @@ cat2 <- function(x){cat(paste0(child_header, x, " \n"))}
 
 
 
-```{r eval=!child, include=FALSE}
-cat2 <- cat
-```
-
-```{r testboowkdown}
+```{r eval=!child|!step_title_t_f, include=FALSE}
 cat2 <- cat
 ```
 
