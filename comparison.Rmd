@@ -109,7 +109,12 @@ if(!exists("step_title")){step_title_t_f = FALSE} else{step_title_t_f = TRUE}
 ```
 
 ```{r include=FALSE}
-if(exists("params")){for (i in 1:length(params)){assign(paste0("parameter_",names(params)[i]), params[i][[1]])}
+if(exists("params")){
+  for (i in 1:length(params)){
+  if(!exists(paste0("parameter_",names(params)[i]))){
+    assign(paste0("parameter_",names(params)[i]), params[i][[1]])
+    }
+}
 }
 
 ```
@@ -814,7 +819,7 @@ join
 ```{r echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
 
 if (nrow(strates_perdues_first_10)!=0){
-  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% dplyr::filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Los<- / Gain` = dplyr::case_when(loss > 0~ "Loss", loss == 0 ~ "No differences", loss < 0~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>% dplyr::filter(Dimension %notin%c("time_start", "time_end"))%>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 0~ "Loss", loss == 0 ~ "No differences", loss < 0~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
   cat("The stratas differences (completely lost or appearing) between the first one and the second one are:\n")
   cat(knit_print(qflextable2(groupe_df%>% select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))

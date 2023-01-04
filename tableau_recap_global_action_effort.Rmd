@@ -64,12 +64,6 @@ fancyhdr:
     headright: "GTA"
     headrulewidth: 1pt
     footrulewidth: 0pt
-params:
-  action: action
-  entity: entity
-  config: config
-  filtering: NULL
-  debugging: FALSE
 ---
 
 \clearpage
@@ -348,7 +342,6 @@ cat(res2, sep =  "\\clearpage")
 
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
-child_env$params <- params
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$child <- TRUE
@@ -652,26 +645,29 @@ For each treatment on the data, we provide a summary of what has been added, rem
 
 ```{r}
 
-function_all_comp <- function(counting){
-# child_env <- new.env()
-# list2env(parameters_child, env = child_env)
-# 
-# child_env$params <- params
+function_all_comp <- function(counting, parameters = parameters_child, parameter_short = TRUE){
+step_mapping <- which(sub_list_dir_2=="Markdown/mapping_codelist")
+parameter_mapped <- ifelse(counting>=step_mapping, FALSE, TRUE)
+child_env <- new.env()
+list2env(parameters, env = child_env)
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[counting]
 child_env$child <- TRUE
-# child_env$parameter_con <- con
+child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[counting+1]
-
-if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds")),readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) )){NA}else{
-  
-child_env$title_1 <- "Initial_data"
-child_env$title_2 <- "Final_data"
-child_env$last_to_first <- TRUE
-child_env$parameter_short <- TRUE
+child_env$parameter_mapped <- parameter_mapped
+child_env$parameter_short <- parameter_short
 child_env$child_header <- "##"
 child_env$step <- counting
 child_env$step_title <- paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1]))
+
+
+if(sub_list_dir_2[counting] == "Markdown/mapping_codelist"){
+  assign(TRUE, sub_list_dir_2[counting], pos = environment())
+}
+
+if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds")),readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) )){NA}else{
+  
 
   #   assign("parameter_init", sub_list_dir_2[counting], pos = environment())
   # assign("parameter_final", sub_list_dir_2[counting+1], pos = environment())
