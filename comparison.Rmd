@@ -69,7 +69,6 @@ params:
   further_analysis: "FALSE"
   time_dimension:
   geographical_dimension:
-  filtering: !r list(species = NULL)
   fact: "catch"
   colnames_to_keep: !r list("fishingfleet" ,    "unit" ,     "gear", "geographic_identifier", "time_start" , "time_end",             "value" ,                 "source_authority") 
   columns_to_keep: [  Precision     ,                   unit      ,                     
@@ -135,9 +134,13 @@ if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
 }
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- FALSE}
-parameter_filtering <- if(!is_null_or_not_exist(parameter_filtering)){parameter_filtering} else{ list(species = NULL, fishingfleet = NULL)}
+if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
 
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
+```
+
+```{r}
+
 ```
 
 
@@ -1513,7 +1516,7 @@ topn <- 6
 
 ```{r}
 
-if(length(unique(init$species) < 8)){
+if(length(unique(init$species)) < 8){
 topn <- (length(unique(init$species)))
 }
 
