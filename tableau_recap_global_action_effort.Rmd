@@ -661,11 +661,6 @@ child_env$child_header <- "##"
 child_env$step <- counting
 child_env$step_title <- paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1]))
 
-
-if(sub_list_dir_2[counting] == "Markdown/mapping_codelist"){
-  assign(TRUE, sub_list_dir_2[counting], pos = environment())
-}
-
 if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds")),readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) )){NA}else{
   
 
