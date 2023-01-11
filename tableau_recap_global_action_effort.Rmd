@@ -74,7 +74,7 @@ fancyhdr:
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE, fig.align = 'center', error = FALSE
+	warning = FALSE, fig.align = 'center', error = ifelse(exists("debugging"), debugging, FALSE)
 )
 
 
@@ -645,22 +645,22 @@ For each treatment on the data, we provide a summary of what has been added, rem
 
 ```{r}
 
-function_all_comp <- function(counting, parameters = parameters_child, parameter_short = TRUE){
+function_all_comp <- function(counting, parameters = parameters_child, parameter_short = TRUE, sub_list_dir = sub_list_dir_2){
 last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
-step_mapping <- which(sub_list_dir_2=="Markdown/mapping_codelist")
+step_mapping <- which(sub_list_dir=="Markdown/mapping_codelist")
 parameter_mapped <- ifelse(counting>=step_mapping, TRUE, FALSE)
 child_env <- new.env()
 list2env(parameters, env = child_env)
 child_env$titre_1 <- entity$identifiers[["id"]]
-child_env$parameter_init <- sub_list_dir_2[counting]
+child_env$parameter_init <- sub_list_dir[counting]
 child_env$child <- TRUE
 # child_env$parameter_con <- con
-child_env$parameter_final <- sub_list_dir_2[counting+1]
+child_env$parameter_final <- sub_list_dir[counting+1]
 child_env$parameter_mapped <- parameter_mapped
 child_env$parameter_short <- parameter_short
 child_env$child_header <- "##"
 child_env$step <- counting
-child_env$step_title <- paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1]))
+child_env$step_title <- paste0(" Treatment : " ,last_path(sub_list_dir[counting+1]))
 
 if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds")),readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) )){NA}else{
   
@@ -678,7 +678,7 @@ if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds"))
   res <- knitr::knit_child("comparison.Rmd", envir = child_env, quiet = TRUE)
 }
 }
-
+formals(function_all_comp)$sub_list_dir <- sub_list_dir_2
 all <- lapply(1:(length(sub_list_dir_2)-1), function_all_comp)
 all <- all[!is.na(all)]
 ```
