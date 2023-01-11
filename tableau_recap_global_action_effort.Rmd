@@ -74,7 +74,7 @@ fancyhdr:
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE, fig.align = 'center'
+	warning = FALSE, fig.align = 'center', error = FALSE
 )
 
 
@@ -345,7 +345,7 @@ list2env(parameters_child, env = child_env)
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[1]
 child_env$child <- TRUE
-child_env$parameter_con <- con
+# child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
 child_env$parameter_titre_dataset_1 <- "Initial_data"
 child_env$parameter_titre_dataset_2 <- entity$identifiers[["id"]]
@@ -646,14 +646,15 @@ For each treatment on the data, we provide a summary of what has been added, rem
 ```{r}
 
 function_all_comp <- function(counting, parameters = parameters_child, parameter_short = TRUE){
+last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 step_mapping <- which(sub_list_dir_2=="Markdown/mapping_codelist")
-parameter_mapped <- ifelse(counting>=step_mapping, FALSE, TRUE)
+parameter_mapped <- ifelse(counting>=step_mapping, TRUE, FALSE)
 child_env <- new.env()
 list2env(parameters, env = child_env)
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir_2[counting]
 child_env$child <- TRUE
-child_env$parameter_con <- con
+# child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir_2[counting+1]
 child_env$parameter_mapped <- parameter_mapped
 child_env$parameter_short <- parameter_short
