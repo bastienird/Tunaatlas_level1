@@ -70,9 +70,9 @@ params:
   geographical_dimension:
   fact: "catch"
   colnames_to_keep: 
-  columns_to_keep: [  Precision     ,                   unit      ,                     
+  columns_to_keep: [  "Precision"     ,                   "unit"      ,                     
   "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
-   Difference (in %)          ,      Dimension   ,       Difference in value ]
+   "Difference (in %)"          ,     " Dimension"   ,       "Difference in value" ]
   short: FALSE
 ---
 
@@ -130,7 +130,7 @@ if(!(require(dplyr))){
 
 if(!exists("parameter_short") || is.null(parameter_short)){parameter_short <-  FALSE}
 if(is_null_or_not_exist(columns_to_keep)){parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,                      "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
-   "Difference (in %)"          ,      "Dimension"   ,       "Difference in value")}
+   "Difference (in %)"          ,      "Dimension"   ,       "Difference in value")} else {parameter_columns_to_keep <- columns_to_keep}
 
 if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
