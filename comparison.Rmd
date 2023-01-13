@@ -1070,6 +1070,12 @@ cat_geo <- paste(as.list(unique(testcat_geo$Precision)), collapse = " ; ")
 ```{r eval=print_map,results='asis'}
 
 try(knit_child_map_printing <- knitr::knit_child(text =c(
+    '',
+      '```{r results="asis"}', 
+  '',
+  '```',
+  '',
+
   'We represent spatial coverage, faceted by geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).'), envir = environment(), quiet= TRUE))
 
 
