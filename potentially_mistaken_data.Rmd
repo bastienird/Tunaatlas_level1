@@ -173,6 +173,24 @@ Among the declaration by tRFMOs, some data is located on land. The shapefile use
 
 Only the squares where the integrity of the area is located on land are considered in the analysis.
 
+```{r include=FALSE, results='asis'}
+parameter_filtering <- if(!is_null_or_not_exist(parameter_filtering)){parameter_filtering} else{ list(species = NULL, fishingfleet = NULL)}
+
+isNullList <- function(x) all(!lengths(x))
+if (isNullList(parameter_filtering)){cat("There are no filter on this data")} else {
+  
+  cat (paste0("The filters used on the data analyzed in this document are:  \n "))
+  for (i in 1:length(parameter_filtering)){
+    if (!is.null(parameter_filtering[[i]])){
+      cat(paste0("***- On ", names((parameter_filtering)[i]), " : ", paste((parameter_filtering)[[i]], collapse = " ; "),"*** \n"))
+    } else {""}
+  }
+}
+
+```
+
+
+
 ```{r include=FALSE}
 
 if(!require(RPostgreSQL)){
@@ -200,7 +218,7 @@ if(!require(geoflow)){
 # opts <- action$options
 # conn <- config$software$input$dbi
 
-out <- try((con <- config$software$output$dbi), silent = TRUE)
+out <- try((con <- config$software$input$dbi), silent = TRUE)
 if("try-error" %in% class(out)){con <- parameter_con}
 
 query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
@@ -235,10 +253,10 @@ query <- "SELECT  code,code_cwp,st_area(geom), geom from area.irregular_areas_ta
 irregular_iotc <- sf::st_read(con, query = query)%>% dplyr::filter(!st_is_empty(.))
 irregular_iotc <-irregular_iotc  %>% dplyr::distinct()
 
-irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
-irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
-irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
-if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
+# irregular_iotc[irregular_iotc$code_cwp =="1100030",]$code_cwp <- "9100030"
+# irregular_iotc[irregular_iotc$code_cwp =="2120060",]$code_cwp <- "8120060"
+# irregular_iotc[irregular_iotc$code_cwp =="3200050",]$code_cwp <- "7200050"
+# if(any(irregular_iotc$code_cwp =="4220040")) irregular_iotc[irregular_iotc$code_cwp =="4220040",]$code_cwp <- "8220040"
 
 world_sf <- sf::st_make_valid(world_sf %>% dplyr::mutate(code_cwp = code))
 world_sf <- world_sf[sf::st_is_valid(world_sf),]
