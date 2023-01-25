@@ -465,7 +465,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
 
      
 
-      reduced <- df2 %>% mutate(`Millions of tons` = `Tons` / 1000000, `Millions of fish` = `Number of fish` / 1000000)%>% select(Step, `Millions of tons`, `Millions of fish`, `Lines`, "Difference (in % of tons)","Difference (in % of fish)")%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
+      reduced <- df2 %>% mutate(`Millions of tons` = `Tons` / 1000000, `Millions of fish` = `Number of fish` / 1000000)%>% select(Step, `Millions of tons`, `Millions of fish`,# `Lines`,
+                                                                                                                                  "Difference (in % of tons)","Difference (in % of fish)")%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(`Step number`))$Step)
       
 
@@ -555,7 +556,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
 
      
 
-      reduced <- df2 %>% mutate(`Sum in millions of hooks` = `Sum in hooks` / 1000000, `Sum in millions of days` = `Sum in fishing days` / 1000000)%>% select(Step, `Sum in millions of hooks`, `Sum in millions of days`, `Lines`, "Difference (in % of hooks)","Difference (in % of fishing days)")%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
+      reduced <- df2 %>% mutate(`Sum in millions of hooks` = `Sum in hooks` / 1000000, `Sum in millions of days` = `Sum in fishing days` / 1000000)%>% select(Step, `Sum in millions of hooks`, `Sum in millions of days`, #`Lines`, 
+                                                                                                                                                              "Difference (in % of hooks)","Difference (in % of fishing days)")%>% dplyr::mutate(`Step number` = as.numeric(row_number()))
       reduced$Step <- factor(reduced$Step, levels = (reduced %>% arrange(`Step number`))$Step)
       
       reduced <- ungroup()
@@ -639,6 +641,9 @@ last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 ```
 
 
+
+\clearpage
+
 # Detail of all the steps of treatment of the data
 
 For each treatment on the data, we provide a summary of what has been added, removed or transformed. This allows to see where major changes occurs for specific data needs. 
@@ -705,7 +710,7 @@ df3 <- set_caption(df3, caption ="Review of all the impact and purpose of every 
 ```
 
 
-```{r results='asis'}
+```{r reviewimpact results='asis'}
 
 knit_print(df3)
 
