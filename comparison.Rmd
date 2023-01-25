@@ -64,8 +64,8 @@ fancyhdr:
     headrulewidth: 1pt
     footrulewidth: 0pt
 params: 
-  init: "data/nominal_data_not_mapped"
-  final: "data/nominal_data_mapped"
+  init: "data/ancient"
+  final: "data/new"
   time_dimension:
   geographical_dimension:
   fact: "catch"
@@ -80,7 +80,7 @@ params:
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE, fig.align = 'center'
+	warning = FALSE, fig.align = 'center', error = TRUE
 )
 ```
 
@@ -853,10 +853,12 @@ if (nrow(strates_perdues_first_10)!=0){
 ```
 
 ```{r}
-# groupe_df %>% dplyr::group_by(unit, Dimension) %>%rowwise() %>%  dplyr::summarise(value_sum1 = nrow(unique(Precision)), value_sum2 = nrow(unique(Precision)))
+
 number_init_column <- as.data.frame(t(init %>% select(-value) %>% summarise_all(list(~n_distinct(.))))) %>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_1"))) := V1)
 number_final_column <- as.data.frame(t(final %>% select(-value) %>% summarise_all(list(~n_distinct(.)))))%>%  dplyr::rename(!!as.symbol(eval(parse(text = "titre_2"))) := V1)
 
+number_final_column<-number_final_column[order(row.names(number_final_column)), ,drop=F]
+number_init_column<-number_init_column[order(row.names(number_init_column)), ,drop=F]
 
 
 s <- cbind(number_init_column , number_final_column ) %>% mutate_all(as.numeric)
@@ -1071,15 +1073,19 @@ cat_geo <- paste(as.list(unique(testcat_geo$Precision)), collapse = " ; ")
 
 try(knit_child_map_printing <- knitr::knit_child(text =c(
     '',
-      '```{r results="asis"}', 
+  '```{r results="asis"}', 
   '',
   '```',
   '',
+  'We represent spatial coverage, faceted by geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).', 
+   '\n',
+  ''
 
-  'We represent spatial coverage, faceted by geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).'), envir = environment(), quiet= TRUE))
+  ), envir = environment(), quiet= TRUE))
 
 
 ```
+
 
 
 ```{r eval=print_map}
