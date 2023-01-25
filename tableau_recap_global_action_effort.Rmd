@@ -710,7 +710,7 @@ df3 <- set_caption(df3, caption ="Review of all the impact and purpose of every 
 ```
 
 
-```{r reviewimpact results='asis'}
+```{r reviewimpact, results='asis'}
 
 knit_print(df3)
 
