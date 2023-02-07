@@ -56,10 +56,11 @@ comparison_each_step <- function(action, entity, config, options){
            "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/dmk-format.csl")
     lapply(c,copyrmd)
   }
-  con <- config$software$output$dbi
-  query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
+  con <- config$software$input$dbi
+  query <- "SELECT DISTINCT codesource_area, st_area(geom), geom from area.area_labels"
   world_sf <- st_read(con, query = query)
   shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
+  shapefile.fix <- shapefile.fix %>% mutate(code = as.character(codesource_area)) %>% select(-codesource_area)
   st_write(shapefile.fix, "data/world_sf.csv", layer_options = "GEOMETRY=AS_WKT")
   world_sf <- world_sf[sf::st_is_valid(world_sf),]
   
