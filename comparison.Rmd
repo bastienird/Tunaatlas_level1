@@ -722,14 +722,14 @@ fonction_groupement = function(these_col, init, final){
 # groupement_1 <- init[, value := lapply(.SD, sum), by = these_col, .SDcols = c("value")]
 # groupement_1 <- groupement_1 %>% dplyr::mutate(number_lines1 = 0)%>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))
   # these_col <- enquo(these_col) 
-groupement_1  <-   init %>%dplyr::ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
+groupement_1  <-   init %>%dplyr::ungroup() %>% mutate(value=round(value)) %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
   ,unit) %>% dplyr::summarise(value_sum_1 = round((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup() %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))%>% dplyr::mutate(number_lines1 = n())
 
 # groupement_2 <- final[, value := lapply(.SD, sum), by = these_col, .SDcols = "value"]
 # groupement_2 <- groupement_2 %>% dplyr::mutate(number_lines2 = 0)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>% dplyr::mutate(unit = as.character(unit))
 
-groupement_2  <-   final %>%dplyr::ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
+groupement_2  <-   final %>%dplyr::ungroup() %>% mutate(value=round(value)) %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
   ,unit) %>%  dplyr::summarise(value_sum_2 = round((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup()  %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% dplyr::mutate(unit = as.character(unit)) %>% dplyr::mutate(number_lines2 = n())
 
