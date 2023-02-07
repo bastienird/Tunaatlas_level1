@@ -74,7 +74,7 @@ fancyhdr:
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE, fig.align = 'center', error = ifelse(exists("debugging"), debugging, FALSE)
+	warning = FALSE, fig.align = 'center', error = TRUE
 )
 
 
@@ -171,8 +171,8 @@ if(!(require(readtext))){
 ```{r include=FALSE}
 
 opts <- entity$data$actions[[1]]$options
-con <- config$software$output$dbi
-parameter_fact <-  opts$fact
+con <- config$software$input$dbi
+if(!exists("parameter_fact")){parameter_fact <-  opts$fact}
 if(!is.null(opts$filtering)){parameter_filtering <-opts$filtering} else{ parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
 if(is.character(parameter_filtering)){
   parameter_filtering <- eval(parse(text=toString(parameter_filtering)))
