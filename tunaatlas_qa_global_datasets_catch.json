@@ -14,7 +14,7 @@
     }
   },
   "metadata": {
-    "entities": [
+    "entities" : [
       {
       "handler": "gsheet",
       "source": "https://docs.google.com/spreadsheets/d/1JhS1ADsnqTpWOEEvljk-c9EdzBurkc8A8__JOHJmkOk/edit#gid=163629835"
@@ -74,9 +74,17 @@
 	}
   ],
   "actions": [
+  
+	{		"id": "comparison_each_step",
+		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/recap_all_markdown.R",
+		"run": true, 
+		"options":{
+		"filtering": "list(species = c('YFT', 'SKJ', 'BFT', 'BET', 'ALB', 'SWO'))"
+		}
+	},
 	{
 		"id": "load_dataset",
-		"script": "~/Documents/Tunaatlas_level1/laod_dataset_fast.R",
+		"script": "https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/tunaatlas_actions/load_dataset.R",
 		"run": true,
 		"options": {
 			"upload_to_db": true,
@@ -99,11 +107,6 @@
 		"id": "load_metadata",
 		"script": "https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_actions/load_metadata.R",
 		"run": true
-	},
-	{		"id": "comparison_each_step",
-		"script": "https://raw.githubusercontent.com/BastienIRD/Tunaatlas_level1/main/recap_all_markdown.R",
-		"run": false
-	  
 	}
 	
 
