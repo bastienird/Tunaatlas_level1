@@ -61,18 +61,18 @@ comparison_each_step <- function(action, entity, config, options){
   world_sf <- st_read(con, query = query)
   shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
   shapefile.fix <- shapefile.fix %>% mutate(code = as.character(codesource_area)) %>% select(-codesource_area)
-  st_write(shapefile.fix, "data/world_sf.csv", layer_options = "GEOMETRY=AS_WKT")
+  st_write(shapefile.fix, "data/world_sf.csv", layer_options = "GEOMETRY=AS_WKT", append= FALSE)
   world_sf <- world_sf[sf::st_is_valid(world_sf),]
   
   
   
   query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
   continent <- (st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
-  st_write(continent, "data/continent.csv", layer_options = "GEOMETRY=AS_WKT")
+  st_write(continent, "data/continent.csv", layer_options = "GEOMETRY=AS_WKT", append= FALSE)
   
   query <- "SELECT  * from area.areas_conversion_factors_numtoweigth_ird"
   areas_conversion_factors_numtoweigth_ird <- st_make_valid(st_read(con, query = query))%>% filter(!st_is_empty(.))
-  st_write(areas_conversion_factors_numtoweigth_ird, "data/areas_conversion_factors_numtoweigth_ird.csv", layer_options = "GEOMETRY=AS_WKT")
+  st_write(areas_conversion_factors_numtoweigth_ird, "data/areas_conversion_factors_numtoweigth_ird.csv", layer_options = "GEOMETRY=AS_WKT", append= FALSE)
   
   
   parameters_child_global <- list(action = action,
