@@ -53,6 +53,35 @@
         "Matrix"
       ]
     },
+    "R.methodsS3": {
+      "Package": "R.methodsS3",
+      "Version": "1.8.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "278c286fd6e9e75d0c2e8f731ea445c8",
+      "Requirements": []
+    },
+    "R.oo": {
+      "Package": "R.oo",
+      "Version": "1.25.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a0900a114f4f0194cf4aa8cd4a700681",
+      "Requirements": [
+        "R.methodsS3"
+      ]
+    },
+    "R.utils": {
+      "Package": "R.utils",
+      "Version": "2.12.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "325f01db13da12c04d8f6e7be36ff514",
+      "Requirements": [
+        "R.methodsS3",
+        "R.oo"
+      ]
+    },
     "R3port": {
       "Package": "R3port",
       "Version": "0.2.4",
@@ -206,6 +235,16 @@
       "Hash": "d99c267c57e790c428cb595755e4676e",
       "Requirements": [
         "sys"
+      ]
+    },
+    "arsenal": {
+      "Package": "arsenal",
+      "Version": "3.6.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e16d280d498f4d8f2316a01dc3eed9b6",
+      "Requirements": [
+        "knitr"
       ]
     },
     "askpass": {
@@ -1559,6 +1598,17 @@
         "viridis"
       ]
     },
+    "leaflet.minicharts": {
+      "Package": "leaflet.minicharts",
+      "Version": "0.6.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8d9d7f2979326e875c0e6094d99a1fdf",
+      "Requirements": [
+        "htmltools",
+        "leaflet"
+      ]
+    },
     "leaflet.providers": {
       "Package": "leaflet.providers",
       "Version": "1.9.0",
@@ -1638,6 +1688,14 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "7ce2733a9826b3aeb1775d56fd305472",
+      "Requirements": []
+    },
+    "maps": {
+      "Package": "maps",
+      "Version": "3.4.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "644a88fb036ab50cee0b715394eefa1a",
       "Requirements": []
     },
     "markdown": {
@@ -2467,6 +2525,26 @@
       "Hash": "06c85365a03fdaf699966cc1d3cf53ea",
       "Requirements": []
     },
+    "rtunaatlas": {
+      "Package": "rtunaatlas",
+      "Version": "1.0.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "rtunaatlas",
+      "RemoteUsername": "eblondel",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "9299a13653fe43df8e480ee86033db0668e89771",
+      "Hash": "02733aed153400402dbb4136b2a4b832",
+      "Requirements": [
+        "RPostgreSQL",
+        "data.table",
+        "dplyr",
+        "lubridate",
+        "maps",
+        "sp"
+      ]
+    },
     "rversions": {
       "Package": "rversions",
       "Version": "2.1.1",
@@ -2711,14 +2789,10 @@
     "studycatchesird": {
       "Package": "studycatchesird",
       "Version": "0.0.0.9000",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "sutdycatchesird",
-      "RemoteUsername": "BastienIRD",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "ccfc3c02e010cedea0b76eaa3914021cf9e82003",
-      "Hash": "e26d5cf4b1b5aec3210d8a9ca374b126",
+      "Source": "Local",
+      "RemoteType": "local",
+      "RemoteUrl": "/home/grasset/Documents/studycatchesird",
+      "Hash": "f924d81d85ccf2a78457150faccadf51",
       "Requirements": [
         "RColorBrewer",
         "cowplot",

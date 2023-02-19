@@ -65,7 +65,7 @@ fancyhdr:
     footrulewidth: 0pt
 params: 
   init: "data/ancient"
-  final: "data/new"
+  final: "~/Documents/Tunaatlas_level1/jobs/20230124095233_global_catch_RF3_base_new/entities/ird_level2_2/Markdown/Removing_absurd_nomt/"
   time_dimension:
   geographical_dimension:
   fact: "catch"
@@ -247,22 +247,10 @@ if(!(require(cowplot))){
   install.packages("cowplot") 
   (require(cowplot))} 
 if(!require(sutdycatchesird)){
-  if(!require(remotes)){
-    install.packages("remotes")
-  }
-  require(remotes)
-  if(!require(devtools)){
-    install.packages("devtools")
-  }
-  require(devtools)
-  out <- try(devtools::install_local("~/Documents/studycatchesird"))
-  try(require(studycatchesird))
-  if("try-error" %in% class(out)){
-
   install_github("BastienIRD/sutdycatchesird")
   require(sutdycatchesird)
 
-}
+
 }
 if(!(require(tmap))){ 
   install.packages("tmap") 
@@ -354,7 +342,7 @@ shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
 # query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
 # continent <- fSpatPlan_Convert2PacificRobinson(st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
 
-continent <- st_read("data/continent.csv")%>% select(-WKT) %>% rename(geom = geometry)
+continent <- st_read("data/continent.csv") %>% dplyr::rename(geom = geometry)
 
 
 qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colour = FALSE){
@@ -871,19 +859,21 @@ rownames(s) <- paste0("Number of ", rownames(s))
 
 
 
-```{r results='asis', eval=parameter_short}
-exit <- "This document only presents the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter"
-if(child){exit <- ""}
-if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
-
-
-```
 
 ```{r eval=!unique_analyse}
 if(!(require(tibble))){ 
   install.packages("tibble") 
   (require(tibble))} 
 qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Comparison of number of stratas between the two datasets")
+```
+
+
+```{r results='asis', eval=parameter_short}
+exit <- "This document only presents the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter"
+if(child){exit <- ""}
+if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
+
+
 ```
 
 
@@ -1595,7 +1585,8 @@ unit <- t  %>% dplyr::filter(`Difference (in %)` %notin% c(0,100, -Inf) & (value
 
 
 if(nrow(unit != 0)){unit <- unit%>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain", value_sum_1 == value_sum_2 ~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(base::ifelse(id>(topn),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in value`/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`)) %>% mutate(Other_column = ifelse(Precision == "Others", 1, 0))
-t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(parameter_columns_to_keep,Other_column)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`, Other_column,desc(abs(`Difference in value`)) ) %>% dplyr::select(-Other_column),groups = c("Dimension","unit","Loss / Gain"))
+t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(parameter_columns_to_keep,Other_column)%>%dplyr::mutate_if(is.numeric, round, digits=2) %>% dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`, Other_column,desc(abs(`Difference in value`)) ) %>% dplyr::select(-Other_column),groups = c("Dimension","unit"#,"Loss / Gain"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ))
 } else {to_cat <- "There are no differences between stratas aside the appearing and disappearing ones"}
 
 ```
