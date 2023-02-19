@@ -331,7 +331,7 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 # 
 # world_sf <- st_read(con, query = query)
 
-shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% rename(geom = geometry)
+shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% dplyr::rename(geom = geometry)
 
 
 # shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
@@ -1641,7 +1641,7 @@ cat2("# Annexe")
 df_mapping_final_this_dimension <- read_csv("data/mapping_codelist_summary.csv")
 t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%dplyr::group_by(across(everything())) %>%  dplyr::mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% dplyr::ungroup() 
 
-i <-pivot_wider(t %>% dplyr::mutate(src_code = as.character(src_code)), names_from = source_authority,names_prefix = "Ancient name for ", values_from = "src_code", values_fn = list)  %>% rename("New code" = trg_code) %>% rename(Dimension = src_codingsystem)%>%
+i <-pivot_wider(t %>% dplyr::mutate(src_code = as.character(src_code)), names_from = source_authority,names_prefix = "Ancient name for ", values_from = "src_code", values_fn = list)  %>% dplyr::rename("New code" = trg_code) %>% dplyr::rename(Dimension = src_codingsystem)%>%
     relocate(Dimension)
 t <- as_grouped_data(i, groups = c("Dimension")) %>% as.data.frame() %>% dplyr::ungroup()
 s <- t %>% rowwise() %>% dplyr::mutate(Dimension = ifelse(is.na(Dimension), " ", Dimension)) %>% dplyr::ungroup() %>% as.data.frame() %>% dplyr::mutate(`New code` = ifelse(is.na(`New code`) &  (Dimension == " "), "UNK", `New code`))
