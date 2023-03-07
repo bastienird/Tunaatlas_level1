@@ -2,6 +2,9 @@ comparison_each_step <- function(action, entity, config, options){
   if(!(require(here))){ 
     install.packages("here") 
     (require(here))} 
+  if(!(require(usethis))){ 
+    install.packages("usethis") 
+    (require(usethis))} 
   if(!(require(sf))){ 
     install.packages("sf") 
     (require(sf))} 
@@ -33,9 +36,9 @@ comparison_each_step <- function(action, entity, config, options){
     copyfiles <- function(x){
       last_path = function(y){tail(str_split(y,"/")[[1]],n=1)}
       file.copy(from =x,
-                    to = paste0(getwd(), paste0("/", last_path(x))), overwrite = TRUE
+                to = paste0(getwd(), paste0("/", last_path(x))), overwrite = TRUE
       )
-     }
+    }
     lapply(c,copyfiles)
   } else {
     copyrmd <- function(x){
@@ -78,7 +81,7 @@ comparison_each_step <- function(action, entity, config, options){
   
   
   parameters_child_global <- list(action = action,
-                           entity = entity, config = config, debugging = debugging)
+                                  entity = entity, config = config, debugging = debugging)
   child_env_global = new.env()
   list2env(parameters_child_global, env = child_env_global)
   
@@ -94,7 +97,7 @@ comparison_each_step <- function(action, entity, config, options){
     Realocating_removing_mislocated_data_number <-details %>% filter(str_detect(dir_name,"Realocating_removing_mislocated")) %>% pull(ID)
     before_Realocating_removing_mislocated_data <- details %>% filter(ID == Realocating_removing_mislocated_data_number-1) %>% pull(dir_name)
     parameters_child_mistaken <- list(action = action,
-                                    entity = entity, config = config, debugging = debugging, final = paste0(before_Realocating_removing_mislocated_data))
+                                      entity = entity, config = config, debugging = debugging, final = paste0(before_Realocating_removing_mislocated_data))
     child_env_mistaken = new.env()
     list2env(parameters_child_mistaken, env = child_env_mistaken)
     
@@ -119,5 +122,3 @@ comparison_each_step <- function(action, entity, config, options){
   # }
   
 }
-
-
