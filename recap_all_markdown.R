@@ -1,4 +1,4 @@
-comparison_each_step <- function(action, entity, config, options){
+recap_all_markdown <- function(action, entity, config, options){
   if(!(require(here))){ 
     install.packages("here") 
     (require(here))} 
