@@ -124,6 +124,9 @@ if(exists("params")){
 
 
 ```{r include=FALSE}
+
+formals(install.packages)$upgrade = "never"
+
 if(!(require(dplyr))){ 
   install.packages("dplyr") 
   (require(dplyr))} 
@@ -710,18 +713,18 @@ fonction_groupement = function(these_col, init, final){
 # groupement_1 <- init[, value := lapply(.SD, sum), by = these_col, .SDcols = c("value")]
 # groupement_1 <- groupement_1 %>% dplyr::mutate(number_lines1 = 0)%>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))
   # these_col <- enquo(these_col) 
-groupement_1  <-   init %>%dplyr::ungroup() %>% mutate(value=round(value)) %>%  dplyr::group_by(!!!rlang::syms(these_col)
-  #!!these_col
-  ,unit) %>% dplyr::summarise(value_sum_1 = round((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup() %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))%>% dplyr::mutate(number_lines1 = n())
+groupement_1  <-   init %>%dplyr::ungroup() %>% 
+  mutate(value=(value)) %>%  
+  dplyr::group_by(!!!rlang::syms(these_col) ,unit) %>% dplyr::summarise(value_sum_1 = ((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup() %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))%>% dplyr::mutate(number_lines1 = n())
 
 # groupement_2 <- final[, value := lapply(.SD, sum), by = these_col, .SDcols = "value"]
 # groupement_2 <- groupement_2 %>% dplyr::mutate(number_lines2 = 0)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>% dplyr::mutate(unit = as.character(unit))
 
-groupement_2  <-   final %>%dplyr::ungroup() %>% mutate(value=round(value)) %>%  dplyr::group_by(!!!rlang::syms(these_col)
+groupement_2  <-   final %>%dplyr::ungroup() %>% mutate(value=(value)) %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
-  ,unit) %>%  dplyr::summarise(value_sum_2 = round((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup()  %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% dplyr::mutate(unit = as.character(unit)) %>% dplyr::mutate(number_lines2 = n())
+  ,unit) %>%  dplyr::summarise(value_sum_2 = ((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup()  %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% dplyr::mutate(unit = as.character(unit)) %>% dplyr::mutate(number_lines2 = n())
 
-fulljoin  <-   dplyr::full_join(groupement_1, groupement_2) %>%  dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss == 0 ~ "Egal", loss > 0 ~"Loss",  loss < 0 ~"Gain")) %>%
+fulljoin  <-   dplyr::full_join(groupement_1, groupement_2) %>%  dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>%dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(abs(loss) <= 1 ~ "Egal", loss > 1 ~"Loss",  loss < 1 ~"Gain")) %>%
 dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1))%>%dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
 dplyr::rename("Precision" = 1) %>%dplyr::mutate(Precision = as.character(Precision)) %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>%dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>% dplyr::ungroup() %>%  dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2)%>%
 dplyr::mutate(`Difference in value` = (value_sum_2 - value_sum_1)) %>% #final - init
@@ -833,7 +836,7 @@ join
 if (nrow(strates_perdues_first_10)!=0){
 
 
-  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 0~ "Loss", loss == 0 ~ "No differences", loss < 0~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 1~ "Loss", abs(loss)<=1 ~ "No differences", loss < 1~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
   cat("The stratas differences (completely lost or appearing) between the first one and the second one are:\n")
   cat(knit_print(qflextable2(groupe_df%>% select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))

@@ -80,7 +80,10 @@ knitr::opts_chunk$set(
 
 ```
 
-```{r include=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+formals(install.packages)$upgrade = "never"
+
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
 if(!(require(base))){ 
   install.packages("base") 
@@ -136,7 +139,7 @@ if(!(require(RColorBrewer))){
 if(!(require(cowplot))){ 
   install.packages("cowplot") 
   (require(cowplot))} 
-if(!require(sutdycatchesird)){
+if(!require(studycatchesird)){
   if(!require(remotes)){
     install.packages("remotes")
   }
@@ -145,12 +148,12 @@ if(!require(sutdycatchesird)){
     install.packages("devtools")
   }
   require(devtools)
-  out <- try(devtools::install_local("~/Documents/studycatchesird"))
+  out <- try(devtools::install_local("~/Documents/sutdycatchesird"))
   try(require(studycatchesird))
   if("try-error" %in% class(out)){
 
   install_github("BastienIRD/sutdycatchesird")
-  require(sutdycatchesird)
+  require(studycatchesird)
 
 }
 }
@@ -166,6 +169,7 @@ if(!(require(officer))){
 if(!(require(readtext))){ 
   install.packages("readtext") 
   (require(readtext))} 
+
 ```
 
 ```{r include=FALSE}
@@ -294,19 +298,22 @@ nominal_dataset <- filtering_function(nominal_dataset)
 # Summary of the final provided data : `r entity$identifiers[["id"]]` 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
+
 sub_list_dir_2 <- paste0("Markdown/",list.dirs(path =paste0(getwd(),"/Markdown"), full.names = FALSE, recursive = FALSE))
 details = file.info(paste0(sub_list_dir_2,"/Markdown"))
 details = file.info(sub_list_dir_2)
 details = details[with(details, order(as.POSIXct(mtime))), ]
 sub_list_dir_2 = rownames(details)
+
 ```
 
 
 ```{r include=FALSE, results='asis'}
+
 child_env <- new.env()
 list2env(parameters_child, env = child_env)
 child_env$parameter_titre_dataset_1 <- entity$identifiers[["id"]]
-child_env$parameter_init <- sub_list_dir_2[1]
+child_env$parameter_init <- sub_list_dir_2[length(sub_list_dir_2)]
 child_env$parameter_final <- NULL
 child_env$child <- TRUE
 child_env$no_recap_options <- TRUE
@@ -653,7 +660,7 @@ For each treatment on the data, we provide a summary of what has been added, rem
 function_all_comp <- function(counting, parameters = parameters_child, parameter_short = FALSE, sub_list_dir = sub_list_dir_2){
 last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
 step_mapping <- which(sub_list_dir=="Markdown/mapping_codelist")
-parameter_mapped <- ifelse(counting==step_mapping, TRUE, FALSE)
+parameter_mapped <- ifelse(counting==step_mapping, FALSE, TRUE)
 child_env <- new.env()
 list2env(parameters, env = child_env)
 child_env$titre_1 <- entity$identifiers[["id"]]
