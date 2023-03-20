@@ -5,6 +5,12 @@ recap_all_markdown <- function(action, entity, config, options){
   if(!(require(usethis))){ 
     install.packages("usethis") 
     (require(usethis))} 
+  if(!(require(flextable))){ 
+    install.packages("flextable") 
+    (require(flextable))} 
+  if(!(require(readtext))){ 
+    install.packages("readtext") 
+    (require(readtext))} 
   if(!(require(sf))){ 
     install.packages("sf") 
     (require(sf))} 
