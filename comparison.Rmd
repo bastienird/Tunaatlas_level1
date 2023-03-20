@@ -266,7 +266,9 @@ if(!(require(RPostgreSQL))){
 if(!(require(officer))){ 
   install.packages("officer") 
   (require(officer))} 
-
+if(!(require(gdata))){ 
+  install.packages("gdata") 
+  (require(gdata))}
 set_flextable_defaults(
   font.size = 10,
   font.color = "black",
@@ -1226,6 +1228,7 @@ if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_
 ```
 
 ```{r eval=unique_analyse}
+
 figures<- lapply(pie_charts_multiple, function(x){x$pie_chart})
 dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension : ", x$dimension)})
 
@@ -1233,11 +1236,13 @@ dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Di
 ```
 
 ```{r eval=!unique_analyse}
+
 dimension_title_subfigures <- c("","")
+
 ```
 
 
-```{r echo=FALSE, eval=unique_analyse, fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
+```{r eval=unique_analyse,echo=FALSE,  fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
 for (i in figures){plot(i)}
 ```
 
