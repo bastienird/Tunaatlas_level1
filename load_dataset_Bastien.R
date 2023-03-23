@@ -1,10 +1,17 @@
 load_dataset <- function(action,entity, config, options){
   
+  source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/getSQLSardaraQueries.R")
+  source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/FUNMergeDimensions_CodeListLike.R")
+  source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/FUNUploadDatasetToTableInDB.R")
+  source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/FUNMergeDimensions_NonCodeListLike.R")
+  source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/FUNUploadDatasetToTableInDB.R")
+  source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/FUNuploadNewRecordsToDB.R")
+  source("https://raw.githubusercontent.com/firms-gta/geoflow-tunaatlas/master/sardara_functions/list_variable_available_dimensions.R")
+  
+  
   opts <- action$options
-  if(!require(rtunaatlas)){
-    remotes::install_github("eblondel/rtunaatlas")
-    require(rtunaatlas)
-  }
+  
+  
   
   if(!require(readr)){
     install.packages("readr")
@@ -14,6 +21,10 @@ load_dataset <- function(action,entity, config, options){
   if(!require(googledrive)){
     install.packages("googledrive")
     require(googledrive)
+  }
+  if(!require(readr)){
+    install.packages("readr")
+    require(readr)
   }
   
   #control to check that everything is ok on mappings side, if not we stop the workflow until mappings are fixed/updated
@@ -544,11 +555,11 @@ load_dataset <- function(action,entity, config, options){
           writeLines(sql_view, file.path("data", file_sql_view))
           writeLines(sql_data, file.path("data", file_sql_data))
           this_view <- dbGetQuery(con,paste0("SELECT * FROM ",paste0(schema_name_for_view,".",database_view_name),";"))
-          write.csv(this_view, file.path("data", file_csv_view), row.names = FALSE)
+          data.table::fwrite(this_view, file.path("data", file_csv_view), row.names = FALSE)
           if("geom_wkt" %in% colnames(this_view)){
             this_view_without_geom = this_view
             this_view_without_geom$geom_wkt <- NULL
-            write.csv(this_view_without_geom, file.path("data", file_csv_view_without_geom), row.names = FALSE)
+            data.table::fwrite(this_view_without_geom, file.path("data", file_csv_view_without_geom), row.names = FALSE)
             drive_upload(file.path("data", file_csv_view_without_geom), as_id(folder_views_id), overwrite = TRUE)
           }
           drive_upload(file.path("data", file_csv_view), as_id(folder_views_id), overwrite = TRUE)
