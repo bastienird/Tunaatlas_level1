@@ -531,7 +531,7 @@ load_dataset <- function(action,entity, config, options){
     if(upload_to_googledrive){
       config$logger.info("Upload dataset (CSV) to Google Drive")
       # folder_datasets_id <- drive_get("~/geoflow_tunaatlas/data/outputs/datasets")$id #googledrive 1.0.0 doesn't work for that.. needs the github fix
-      folder_datasets_id <- "1f2P03JNoEpRdTDj9D-CrQuhHIr0Cwr7s"
+      folder_datasets_id <- "16fVLytARK13uHCKffho3kYJgm0KopbKL"
       path_to_dataset_new <- file.path(getwd(), "data", paste0(entity$identifiers[["id"]], ".csv"))
       file.rename(from = path_to_dataset, to = path_to_dataset_new)
       id_csv_dataset <- drive_upload(path_to_dataset_new, as_id(folder_datasets_id), overwrite = TRUE)$id
@@ -549,7 +549,7 @@ load_dataset <- function(action,entity, config, options){
         
         config$logger.info("Upload SQL queries (view/data) to Google Drive")
         # folder_views_id <- drive_get("~/geoflow_tunaatlas/data/outputs/views")$id #googledrive 1.0.0 doesn't work for that.. needs the github fix
-        folder_views_id <- "1Soo5DuwMxDIoWJo_yrR5IEpJlxIyDwOQ"
+        folder_views_id <- "1Rm8TJsUM0DQo1c91LXS5kCzaTLt8__bS"
         entity$data$access <- "googledrive"
         if(create_materialized_view){
           writeLines(sql_view, file.path("data", file_sql_view))
