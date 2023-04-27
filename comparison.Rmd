@@ -372,6 +372,12 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
 
 }
 
+# qflextable2 <- function(data) {
+# 
+#   kableExtra::kbl(data, booktabs = TRUE, digits = 2) %>% 
+#     kable_styling(latex_options =c("striped", "scale_down"))%>%
+#   kable_styling(full_width = F)
+# }
 
 
 ```
@@ -388,12 +394,9 @@ species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% jani
                                                   Name_Es = col_skip(), Name_Ar = col_skip()))
  
  
-if(is_null_or_not_exist(parameter_colnames_to_keep)){
-if(parameter_fact == "catch"){colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",                 
-                      "geographic_identifier","schooltype",           "species",              "catchtype",           
-                      "unit",                 "value",                "source_authority")} else if(parameter_fact == "effort") {colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",                     
-                      "geographic_identifier","schooltype",                           
-                      "unit",                 "value",                "source_authority")}
+if(is_null_or_not_exist(parameter_colnames_to_keep)){colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",                 
+                      "geographic_identifier","schooltype",           "species",                       
+                      "unit",                 "value",                "source_authority")
   }else {colnames_to_keep <-parameter_colnames_to_keep}
 
 ```
@@ -712,13 +715,12 @@ fonction_groupement = function(these_col, init, final){
 # groupement_1 <- groupement_1 %>% dplyr::mutate(number_lines1 = 0)%>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))
   # these_col <- enquo(these_col) 
 groupement_1  <-   init %>%dplyr::ungroup() %>% 
-  mutate(value=(value)) %>%  
   dplyr::group_by(!!!rlang::syms(these_col) ,unit) %>% dplyr::summarise(value_sum_1 = ((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup() %>%dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0))%>% dplyr::mutate(unit = as.character(unit))%>% dplyr::mutate(number_lines1 = n())
 
 # groupement_2 <- final[, value := lapply(.SD, sum), by = these_col, .SDcols = "value"]
 # groupement_2 <- groupement_2 %>% dplyr::mutate(number_lines2 = 0)%>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0))%>% dplyr::mutate(unit = as.character(unit))
 
-groupement_2  <-   final %>%dplyr::ungroup() %>% mutate(value=(value)) %>%  dplyr::group_by(!!!rlang::syms(these_col)
+groupement_2  <-   final %>%dplyr::ungroup() %>%  dplyr::group_by(!!!rlang::syms(these_col)
   #!!these_col
   ,unit) %>%  dplyr::summarise(value_sum_2 = ((sum(value, na.rm=TRUE)))) %>% dplyr::ungroup()  %>%dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>% dplyr::mutate(unit = as.character(unit)) %>% dplyr::mutate(number_lines2 = n())
 
