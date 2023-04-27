@@ -1228,9 +1228,14 @@ if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_
 ```
 
 ```{r eval=unique_analyse}
-
 figures<- lapply(pie_charts_multiple, function(x){x$pie_chart})
-dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension : ", x$dimension)})
+```
+
+
+```{r }
+if(unique_analyse){
+  dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Distribution in value for the dimension : ", x$dimension)})
+} else {dimension_title_subfigures <- NULL}
 
 
 ```
@@ -1247,11 +1252,7 @@ knitr::knit_exit(fully = FALSE)
 ```
 
 
-```{r eval=!unique_analyse}
 
-dimension_title_subfigures <- c("","")
-
-```
 
 ```{r eval=!unique_analyse}
 
