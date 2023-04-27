@@ -193,7 +193,7 @@ if(!child){cat("\\clearpage")}
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r eval = !child, message=FALSE, warning=FALSE, include=FALSE}
 
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
 
@@ -680,7 +680,7 @@ cat(explenation_step$X1)
 
 
 
-```{r eval= !unique_analyse, eval=treatment}
+```{r eval= !unique_analyse && treatment}
 if (nrow(differences_between_options2) == 0){
   towrite ="There are no differences between the options to create the two datasets. They are created by the same workflow."
 } else { towrite ="The differences in options choosen between the two dataframes are : "
@@ -875,7 +875,7 @@ qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Comparison of num
 ```
 
 
-```{r results='asis', eval=parameter_short}
+```{r eval=parameter_short, results='asis'}
 exit <- "This document only presents the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter"
 if(child){exit <- ""}
 if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
@@ -884,7 +884,7 @@ if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
 ```
 
 
-```{r results='asis'}
+```{r eval=!unique_analyse,results='asis'}
 title_introduction <- "# Introduction to the two datasets"
 if(!unique_analyse){
   cat2(title_introduction)
@@ -1054,12 +1054,12 @@ map_unit <- lapply(unique(t$unit), FUN = fonction_empreinte_spatiale)
 
 \clearpage
 
-```{r results='asis', eval=print_map}
+```{r eval=print_map,results='asis'}
 cat2("## Spatial coverage ")
 ```
 
 
-```{r results='asis', eval=print_map}
+```{r eval=print_map,results='asis'}
 tmap_mode(plotting_type)
 
 number_of_cat_geo <- length(unique(testcat_geo$Precision))
@@ -1067,7 +1067,7 @@ cat_geo <- paste(as.list(unique(testcat_geo$Precision)), collapse = " ; ")
 
 ```
 
-```{r results='asis',eval=print_map}
+```{r eval=print_map,results='asis'}
 
 try(knit_child_map_printing <- knitr::knit_child(text =c(
     '',
@@ -1086,7 +1086,7 @@ try(knit_child_map_printing <- knitr::knit_child(text =c(
 
 
 
-```{r results='asis',eval=print_map}
+```{r eval=print_map,results='asis'}
 try(cat(knit_child_map_printing))
 ```
 
@@ -1094,7 +1094,7 @@ try(cat(knit_child_map_printing))
 
 
 
-```{r echo=FALSE, results='asis', eval=print_map}
+```{r echo=FALSE, eval=print_map,results='asis'}
 try(map_unit_knit_list <- lapply(map_unit, FUN = map_unit_knit ))
 # purrr::imap(map_unit, map_unit_knit)
 # test <- map_unit[1:2]
@@ -1110,7 +1110,7 @@ try(map_unit_knit_list <- lapply(map_unit, FUN = map_unit_knit ))
 ```
 
 
-```{r echo=FALSE, results='asis', eval=print_map}
+```{r echo=FALSE, eval=print_map,results='asis'}
 
 try(cat(unlist(map_unit_knit_list), sep = "\\clearpage"))
 
@@ -1235,6 +1235,18 @@ dimension_title_subfigures <- lapply(pie_charts_multiple, function(x){paste0("Di
 
 ```
 
+```{r eval=unique_analyse, echo=FALSE,  fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
+
+for (i in figures){plot(i)}
+
+```
+
+
+```{r eval=unique_analyse}
+knitr::knit_exit(fully = FALSE)
+```
+
+
 ```{r eval=!unique_analyse}
 
 dimension_title_subfigures <- c("","")
@@ -1247,21 +1259,11 @@ pie_chart_knit <- lapply(pie_charts_multiple, FUN = resume_knit_child)
 
 ```
 
-```{r results='asis', eval=!unique_analyse}
+```{r eval=!unique_analyse, results='asis'}
 cat(unlist(pie_chart_knit),  sep = "\n")
 ```
 
 
-```{r eval=unique_analyse}
-knitr::knit_exit(fully = FALSE)
-```
-
-
-```{r eval=unique_analyse, echo=FALSE,  fig.cap='Other dimensions', fig.subcap=c(unlist(gsub("_","..",dimension_title_subfigures))), fig.ncol = 2, out.width = "50%", fig.align = "center"}
-
-for (i in figures){plot(i)}
-
-```
 
 \clearpage
 
