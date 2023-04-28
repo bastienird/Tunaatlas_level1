@@ -71,10 +71,12 @@ fancyhdr:
 
 
 ```{r setupmain, include=FALSE}
+
+
 knitr::opts_chunk$set(
-	echo = FALSE,
-	message = FALSE,
-	warning = FALSE, fig.align = 'center', error = TRUE
+	echo = TRUE,
+	message = debugging,
+	warning = TRUE, fig.align = 'center', error = 0
 )
 
 
@@ -184,9 +186,9 @@ if(is.character(parameter_filtering)){
 
 
 # if(exists('params')){parameters <- params}else{
-parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, parameter_port = config$software$input$dbi_config$parameters$port,  parameter_user = config$software$input$dbi_config$parameters$user,parameter_dbname=config$software$input$dbi_config$parameters$dbname, parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE, no_recap_options = TRUE, plotting_type = "plot")
-child_env = new.env()
-list2env(parameters_child, env = child_env)
+parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, parameter_port = config$software$input$dbi_config$parameters$port,  parameter_user = config$software$input$dbi_config$parameters$user,parameter_dbname=config$software$input$dbi_config$parameters$dbname, parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE, no_recap_options = TRUE, plotting_type = "plot",parameter_colnames_to_keep = c("fishingfleet",         "gear",                 "time_start",                 
+                      "geographic_identifier","schooltype",           "species",                       
+                      "unit",                 "value",                "source_authority"))
 
 # }
 ```
@@ -310,25 +312,26 @@ sub_list_dir_2 = rownames(details)
 
 ```{r include=FALSE, results='asis'}
 
-child_env <- new.env()
-list2env(parameters_child, env = child_env)
-child_env$parameter_titre_dataset_1 <- entity$identifiers[["id"]]
-child_env$parameter_init <- sub_list_dir_2[length(sub_list_dir_2)]
-child_env$parameter_final <- NULL
-child_env$child <- TRUE
-child_env$no_recap_options <- TRUE
-child_env$unique_analyse <- TRUE
+
+child_env_last <- new.env()
+list2env(parameters_child, env = child_env_last)
+child_env_last$parameter_titre_dataset_1 <- entity$identifiers[["id"]]
+child_env_last$parameter_init <- sub_list_dir_2[length(sub_list_dir_2)]
+child_env_last$parameter_final <- NULL
+child_env_last$child <- TRUE
+child_env_last$no_recap_options <- TRUE
+child_env_last$unique_analyse <- TRUE
 if(debugging == TRUE){
-  child_env$debugging <- TRUE
-  } else {child_env$debugging <- FALSE}
-child_env$child_header <- "#"
+  child_env_last$debugging <- TRUE
+  } else {child_env_last$debugging <- FALSE}
+child_env_last$child_header <- "#"
+child_env_last$parameter_mapped <- FALSE
+child_env_last$last_to_first <- FALSE
+child_env_last$parameter_short <- FALSE
 
 
-  # assign("parameter_init", sub_list_dir_2[1], pos = environment())
-  # assign("parameter_fact", action$options$fact, pos = environment())
-  # assign("child", TRUE, pos = environment())
-  # assign("parameter_con", con, pos = environment())
-res2 <- knitr::knit_child("comparison.Rmd", envir = child_env, quiet = TRUE)
+
+res2 <- knitr::knit_child("comparison.Rmd", envir = child_env_last, quiet = TRUE)
 
 ```
 
@@ -348,30 +351,20 @@ cat(res2, sep =  "\\clearpage")
 
 ```{r include=FALSE, results='asis'}
 
-child_env <- new.env()
-list2env(parameters_child, env = child_env)
-child_env$titre_1 <- entity$identifiers[["id"]]
-child_env$parameter_init <- sub_list_dir_2[1]
-child_env$child <- TRUE
-# child_env$parameter_con <- con
-child_env$parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
-child_env$unique_analyse <- FALSE
-child_env$parameter_titre_dataset_1 <- "Initial_data"
-child_env$parameter_titre_dataset_2 <- entity$identifiers[["id"]]
-child_env$last_to_first <- TRUE
-child_env$parameter_mapped <- FALSE
+child_env_comp <- new.env()
+list2env(parameters_child, env = child_env_comp)
+child_env_comp$titre_1 <- entity$identifiers[["id"]]
+child_env_comp$parameter_init <- sub_list_dir_2[1]
+child_env_comp$child <- TRUE
+child_env_comp$parameter_final <- sub_list_dir_2[length(sub_list_dir_2)]
+child_env_comp$unique_analyse <- FALSE
+child_env_comp$parameter_titre_dataset_1 <- "Initial_data"
+child_env_comp$parameter_titre_dataset_2 <- entity$identifiers[["id"]]
+child_env_comp$last_to_first <- TRUE
+child_env_comp$parameter_mapped <- FALSE
+child_env_comp$parameter_short <- FALSE
 
-  # assign("parameter_final", sub_list_dir_2[length(sub_list_dir_2)] , pos = environment())
-  # assign("child", TRUE, pos = environment())
-  # assign("parameter_mapped", TRUE, pos = environment())
-  # assign("title_1", "Initial_data", pos = environment())
-  # assign("title_2", "Final_data", pos = environment())
-  # if(exists("step_title")) {rm(step_title)}
-  # 
-  # assign("last_to_first", TRUE, pos = environment())
-  # assign("parameter_con", con, pos = environment())
-
-res <- knitr::knit_child("comparison.Rmd", envir = child_env, quiet = TRUE)
+res <- knitr::knit_child("comparison.Rmd", envir = child_env_comp, quiet = TRUE)
 ```
 
 
@@ -420,32 +413,22 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
                         "Explenation", "Fonctions", 
                         "Options", "Tons", "Number of fish", "Lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference in number of fish", "Difference (in % of lines)", "Percentage of nominal"
       )
-      # if((!is.null(opts))){ #have not change for species$filter
-      #   tons_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[1])
-      #   lines_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[3])
-      #   nofish_init <- pull(read.csv(paste0(sub_list_dir_2[1],"/sums.csv"))[2])
-      #   } else{
-          main <- filtering_function(readRDS(paste0(sub_list_dir_2[1],"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%opts$species_filter)
-          tons_init <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT")))$value)
-          nofish_init <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO")))$value)
+          main <- filtering_function(readRDS(paste0(sub_list_dir_2[1],"/rds.rds")), matchingList = matchingList)
+          tons_init <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT","t")))$value)
+          nofish_init <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO","no")))$value)
           lines_init <- nrow(main)
         # }
       for (i in sub_list_dir_2){
-        # sums <- read.csv(paste0(i,"/sums.csv"))
         Explenation <- readtext(paste0(i,"/explication.txt"))[2]
         Fonctions <- pull(readtext(paste0(i,"/fonctions.txt"))[2])
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
-        # if(!is.null(filter_species)){
-          main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%filter_species)
-          sum_t <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT")))$value)
-          sum_no <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO")))$value)
+          main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)
+          sum_t <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT","t")))$value)
+          sum_no <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO","no")))$value)
           nrow <- nrow(main)
           
-        # } else{sum_t <- pull(sums[1])
-        # sum_no <-  pull(sums[2])
-        # nrow <- pull(sums[3])}
-        
+
         step <- tail(str_split(paste0(i),"/")[[1]],n=1)
         Difference_percent <- -100*((tons_init - sum_t)/tons_init)
         Difference_tons <- -(tons_init - sum_t)
@@ -468,7 +451,6 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
       df2 = df[-1,]
       df2[df2 == -Inf] <- 0
       colnames(df2)[1] <- "Step"
-      # df <- df %>%  rename(Step = rawdata)
 
 
 
@@ -659,8 +641,7 @@ For each treatment on the data, we provide a summary of what has been added, rem
 
 ```{r}
 
-function_all_comp <- function(counting, parameters = parameters_child, parameter_short = TRUE, sub_list_dir = sub_list_dir_2){
-last_path = function(x){tail(stringr::str_split(x,"/")[[1]],n=1)}
+function_all_comp <- function(counting, parameters = parameters_child, parameter_short = FALSE, sub_list_dir = sub_list_dir_2){
 step_mapping <- which(sub_list_dir=="Markdown/mapping_codelist")
 parameter_mapped <- ifelse(counting==step_mapping, FALSE, TRUE)
 child_env <- new.env()
@@ -677,19 +658,7 @@ child_env$step <- counting
 child_env$step_title <- paste0(" Treatment : " ,last_path(sub_list_dir[counting+1]))
 
 if( identical(readRDS(paste0(as.character(child_env$parameter_init),"/rds.rds")),readRDS(paste0(as.character(child_env$parameter_final),"/rds.rds")) )){NA}else{
-  
-
-  #   assign("parameter_init", sub_list_dir_2[counting], pos = environment())
-  # assign("parameter_final", sub_list_dir_2[counting+1], pos = environment())
-  # assign("parameter_short", TRUE, pos = environment())
-  # assign("child", TRUE, pos = environment())
-  # assign("step", counting, pos = environment())
-  # assign("child_header", "##", pos= environment())
-  # assign("step_title", paste0(" Treatment : " ,last_path(parameter_final)), pos= environment())
-  # rm(parameter_mapped)
-  # 
-  # step_title_treatment <-  paste0(" Treatment : " ,last_path(sub_list_dir_2[counting+1]))
-  res <- knitr::knit_child("comparison.Rmd", envir = child_env, quiet = TRUE)
+    res <- knitr::knit_child("comparison.Rmd", envir = child_env, quiet = TRUE)
 }
 }
 formals(function_all_comp)$sub_list_dir <- sub_list_dir_2
