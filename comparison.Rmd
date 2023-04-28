@@ -66,6 +66,22 @@ fancyhdr:
 params: 
   init: "data/ancient"
   final: "~/Documents/Tunaatlas_level1/jobs/20230124095233_global_catch_RF3_base_new/entities/ird_level2_2/Markdown/Removing_absurd_nomt/"
+  time_dimension:  [  "time_start"     ,                   "time_end"      ]   
+  geographical_dimension: "geographic_identifier"
+  fact: "catch"
+  colnames_to_keep: ["fishingfleet",         "gear",                 "time_start",                 
+                      "geographic_identifier","schooltype",           "species",                       
+                      "unit",                 "value",                "source_authority"]
+  columns_to_keep: [  "Precision"     ,                   "unit"      ,                     
+  "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
+   "Difference (in %)"          ,     " Dimension"   ,       "Difference in value" ]
+  short: FALSE
+---
+---
+title: 'Comparison of two data sets at different levels/options of the tuna atlas'
+params: 
+  init: "data/ancient"
+  final: "~/Documents/Tunaatlas_level1/jobs/20230124095233_global_catch_RF3_base_new/entities/ird_level2_2/Markdown/Removing_absurd_nomt/"
   time_dimension:
   geographical_dimension:
   fact: "catch"
@@ -77,18 +93,52 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-
 knitr::opts_chunk$set(
-	echo = FALSE,
-	message = FALSE,
-	warning = FALSE, fig.align = 'center', error = TRUE
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = 'center',
+  error = 0
 )
-
 ```
 
+```{r libraries, include=FALSE}
+formals(install.packages)$upgrade <- "never"
 
-```{r cache=FALSE, include=FALSE}
-last_path_reduced = function(x){gsub("georef_dataset","",last_path(x))}
+if (!require(dplyr)) { 
+  install.packages("dplyr") 
+  require(dplyr)
+}
+
+if (!require(knitr)) {
+  install.packages("knitr")
+  require(knitr)
+}
+
+if (!require(stringr)) {
+  install.packages("stringr")
+  require(stringr)
+}
+
+if (!require(purrr)) {
+  install.packages("purrr")
+  require(purrr)
+}
+
+if (!require(readxl)) {
+  install.packages("readxl")
+  require(readxl)
+}
+```
+
+```{r utility_functions, include=FALSE}
+last_path <- function(x) {
+  substr(x, max(gregexpr("/", x)[[1]]) + 1, nchar(x))
+}
+
+last_path_reduced <- function(x) {
+  gsub("georef_dataset", "", last_path(x))
+}
 
 is_null_or_not_exist <- function(x) {
   if (!exists(deparse(substitute(x))) || is.null(x)) {
@@ -97,51 +147,45 @@ is_null_or_not_exist <- function(x) {
     return(FALSE)
   }
 }
+
+```
+
+```{r options, include=FALSE}
 base::options(scipen=999)
 
 ```
 
-
-```{r include=FALSE}
+```{r global_variables, include=FALSE}
 if(!exists("child")){child = FALSE} else{child = child}
 if(!exists("step_title")){step_title_t_f = FALSE} else{step_title_t_f = TRUE}
-```
 
-```{r include=FALSE}
-if(exists("params")){
-  for (i in 1:length(params)){
-  if(!exists(paste0("parameter_",names(params)[i]))){
-    assign(paste0("parameter_",names(params)[i]), params[i][[1]])
+if (exists("params")) {
+  for (i in 1:length(params)) {
+    if(!exists(paste0("parameter_", names(params)[i]))) {
+      assign(paste0("parameter_", names(params)[i]), params[i][[1]])
     }
+  }
 }
+
+if(!exists("fact") || is.null(fact)){fact <-  "effort"}
+
+if(is_null_or_not_exist(parameter_short)){parameter_short <-  FALSE}
+if(is_null_or_not_exist(columns_to_keep)){
+  parameter_columns_to_keep <- c("Precision", "unit", "Values dataset 1",
+                                 "Values dataset 2", "Loss / Gain",
+                                 "Difference (in %)", "Dimension",
+                                 "Difference in value")
+} else {
+  parameter_columns_to_keep <- columns_to_keep
 }
-
-```
-
-
-<!-- ```{r include=FALSE} -->
-<!-- if(!exists("fact") || is.null(fact)){fact <-  "effort"} -->
-<!-- ``` -->
-
-
-
-```{r include=FALSE}
-
-formals(install.packages)$upgrade = "never"
-
-if(!(require(dplyr))){ 
-  install.packages("dplyr") 
-  (require(dplyr))} 
-
-if(!exists("parameter_short") || is.null(parameter_short)){parameter_short <-  FALSE}
-if(is_null_or_not_exist(columns_to_keep)){parameter_columns_to_keep <- c("Precision"     ,                   "unit"      ,                      "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
-   "Difference (in %)"          ,      "Dimension"   ,       "Difference in value")} else {parameter_columns_to_keep <- columns_to_keep}
 
 if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
   parameter_UNK_for_not_standards_unit <- TRUE
 }
+
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- TRUE}
-if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <-list(species = NULL, fishingfleet = NULL)}
+
+if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(species = NULL, fishingfleet = NULL)}
 if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start")}
 
 
@@ -306,48 +350,16 @@ fSpatPlan_Convert2PacificRobinson <- function(df, buff = 0){
 
 ```
 
-<!-- # ```{r justtolaunchinknittingnotoutside, include=FALSE} -->
-<!-- # if(!require(dotenv)){ -->
-<!-- #   install.packages("dotenv") -->
-<!-- #   require(dotenv) -->
-<!-- # } -->
-<!-- # if(!require(geoflow)){ -->
-<!-- #   install.packages("geoflow") -->
-<!-- #   require(geoflow) -->
-<!-- # } -->
-<!-- # load_dot_env(file = "catch_server.env") -->
-<!-- # config <- initWorkflow("tunaatlas_qa_global_datasets_catch.json") #ok -->
-<!-- # entity <- config$metadata$content$entities[[1]] -->
-<!-- # action <- entity$data$actions[[1]] -->
-<!-- # opts <- action$options -->
-<!-- # con <- config$software$input$dbi -->
-<!-- #  -->
-<!-- # ``` -->
-
-
 ```{r include=FALSE}
 
-# out <- try((con <- config$software$output$dbi), silent = TRUE)
-# if("try-error" %in% class(out)){con <- parameter_con}
-# 
-# query <- "SELECT code, st_area(geom), geom from area.cwp_grid"
-# out <- try((world_sf <- st_read(con, query = query)), silent = TRUE)
-# con <- DBI::dbConnect(RPostgres::Postgres() , dbname = parameter_dbname, host = parameter_host,   port = parameter_port,
-#                                                        user = parameter_user,
-#                                                        password = parameter_password)
-# 
-# world_sf <- st_read(con, query = query)
 
 shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% dplyr::rename(geom = geometry)
 
 
-# shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ ">_5_deg")))
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
 
 
 
-# query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
-# continent <- fSpatPlan_Convert2PacificRobinson(st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
 
 continent <- st_read("data/continent.csv") %>% dplyr::rename(geom = geometry)
 
@@ -382,9 +394,6 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
 
 ```
 
-```{r results='asis', eval=FALSE}
-cat2("# The data compared")
-```
 
 ```{r cache=FALSE}
 species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
@@ -518,8 +527,6 @@ if (is_null_or_not_exist(parameter_titre_dataset_2) & !unique_analyse){
 titre_2 <- gsub("_","-",titre_2)
 titre_1 <- gsub("_","-",titre_1)
 
-# if(nrow(init %>% dplyr::filter(unit=="Number of fish"))!=0 | nrow(final%>% dplyr::filter(unit=="Number of fish"))!=0){is_there_no <- TRUE} else{is_there_no <- FALSE}
-# if(nrow(<- %>% dplyr::filter(unit=="Number of fish"))!=0 & nrow(final%>% dplyr::filter(unit=="Number of fish"))==0){all_no_lost <- TRUE} else{all_no_lost <- FALSE}
 
 ```
 
@@ -592,14 +599,7 @@ filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingLi
   }
   return(dataframe_to_filter)
 }
-  #function to filter on all the filter_parameters
 
-# list_init_final <- list(init, final)
-
-# list_init_final <<- lapply(list_init_final,FUN = filtering_function, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
-
-# rapply(list_init_final, f = filtering_function, colnames_to_filter = colnames_to_filter, matchingList = matchingList, how = "replace")
-# purrr::modify(list(init, final), .f = filtering_function, colnames_to_filter = colnames_to_filter, matchingList = matchingList)
 formals(filtering_function)$geo_dim = geographical_dimension
 formals(filtering_function)$parameter_fact = parameter_fact
 formals(filtering_function)$parameter_UNK_for_not_standards_unit = parameter_UNK_for_not_standards_unit
@@ -880,7 +880,7 @@ if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
 ```
 
 
-```{r eval=!unique_analyse,results='asis'}
+```{r eval= !unique_analyse,results='asis'}
 title_introduction <- "# Introduction to the two datasets"
 if(!unique_analyse){
   cat2(title_introduction)
@@ -1140,29 +1140,10 @@ formals(pie_chart_2_default)$titre_2 <- titre_2
 # if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
   # list_pie_chart <- list("fishingfleet","source_authority","Gear")} else {
     list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value", "time_end"))))[[1]]
-    # }
 
-# t <- pie_chart_2_default(fishingfleet, init, final, topn = 1)
-# if(unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = pie_chart_2_default, first = init, topn = 4)}
-# try(pie_charts_multiple <- lapply(list_pie_chart,FUN = pie_chart_2_default, first = init, second = final, topn = 4), silent = TRUE)
-# 
-# pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first = init, second = final2, topn = 4)
 
 ```
 
-
-<!-- ```{r eval=FALSE} -->
-<!-- pie_charts_multiple <- lapply(list_pie_chart,FUN = resume_knit_child,  first = init, second = ifelse(!unique_analyse, final, NULL), dataframe_yes_no = ifelse(!unique_analyse, TRUE, FALSE)) -->
-<!-- ``` -->
-
-
-<!-- ```{r results='asis', eval=TRUE} -->
-
-<!-- cat(unlist(pie_charts_multiple), sep = "\\clearpage") -->
-
-
-
-<!-- ``` -->
 
 ```{r}
 function_pie_chart_df <- function(dimension, ...){
@@ -1651,6 +1632,7 @@ cat2("# Annexe")
 ```
 
 ```{r eval=!parameter_mapped}
+
 df_mapping_final_this_dimension <- read_csv("data/mapping_codelist_summary.csv")
 t <- df_mapping_final_this_dimension %>% select(-trg_codingsystem)%>%dplyr::group_by(across(everything())) %>%  dplyr::mutate(src_codingsystem = unlist(str_split(src_codingsystem, "_"))[1]) %>% dplyr::ungroup() 
 
