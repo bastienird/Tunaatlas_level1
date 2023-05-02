@@ -83,7 +83,6 @@ knitr::opts_chunk$set(
 ```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-
 formals(install.packages)$upgrade = "never"
 
 knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
@@ -188,7 +187,7 @@ if(is.character(parameter_filtering)){
 # if(exists('params')){parameters <- params}else{
 parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, parameter_port = config$software$input$dbi_config$parameters$port,  parameter_user = config$software$input$dbi_config$parameters$user,parameter_dbname=config$software$input$dbi_config$parameters$dbname, parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE, no_recap_options = TRUE, plotting_type = "plot",parameter_colnames_to_keep = c("fishingfleet",         "gear",                 "time_start",                 
                       "geographic_identifier","schooltype",           "species",                       
-                      "unit",                 "value",                "source_authority"))
+                      "unit",                 "value",                "source_authority"), treatment = FALSE)
 
 # }
 ```
@@ -242,7 +241,7 @@ base::options(knitr.duplicate.label = "allow")#for duplicate chunk names
 
 ```{r echo=FALSE, results='asis'}
 
-isNullList <- function(x) all(!lengths(x))
+isNullList = function(x) all(!lengths(x))
 if (isNullList(parameter_filtering)){cat("There are no filter on this data in the following report.")} else {
   
   cat (paste0("The filter used on the data in the following report are:  \n "))
@@ -325,11 +324,12 @@ if(debugging == TRUE){
   child_env_last$debugging <- TRUE
   } else {child_env_last$debugging <- FALSE}
 child_env_last$child_header <- "#"
-child_env_last$parameter_mapped <- FALSE
+child_env_last$parameter_mapped <- TRUE
 child_env_last$last_to_first <- FALSE
 child_env_last$parameter_short <- FALSE
 
 
+# rmarkdown::render("comparison.Rmd", envir = child_env_last, quiet = TRUE)
 
 res2 <- knitr::knit_child("comparison.Rmd", envir = child_env_last, quiet = TRUE)
 
@@ -363,6 +363,9 @@ child_env_comp$parameter_titre_dataset_2 <- entity$identifiers[["id"]]
 child_env_comp$last_to_first <- TRUE
 child_env_comp$parameter_mapped <- FALSE
 child_env_comp$parameter_short <- FALSE
+
+# rmarkdown::render("comparison.Rmd", envir = child_env_comp, quiet = TRUE)
+
 
 res <- knitr::knit_child("comparison.Rmd", envir = child_env_comp, quiet = TRUE)
 ```
@@ -641,7 +644,7 @@ For each treatment on the data, we provide a summary of what has been added, rem
 
 ```{r}
 
-function_all_comp <- function(counting, parameters = parameters_child, parameter_short = FALSE, sub_list_dir = sub_list_dir_2){
+function_all_comp = function(counting, parameters = parameters_child, parameter_short = FALSE, sub_list_dir = sub_list_dir_2){
 step_mapping <- which(sub_list_dir=="Markdown/mapping_codelist")
 parameter_mapped <- ifelse(counting==step_mapping, FALSE, TRUE)
 child_env <- new.env()
@@ -649,6 +652,7 @@ list2env(parameters, env = child_env)
 child_env$titre_1 <- entity$identifiers[["id"]]
 child_env$parameter_init <- sub_list_dir[counting]
 child_env$child <- TRUE
+child_env$treatment <- TRUE
 # child_env$parameter_con <- con
 child_env$parameter_final <- sub_list_dir[counting+1]
 child_env$parameter_mapped <- parameter_mapped
