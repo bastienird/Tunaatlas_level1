@@ -90,36 +90,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r libraries, include=FALSE}
-formals(install.packages)$upgrade <- "never"
-
-if (!require(dplyr)) { 
-  install.packages("dplyr") 
-  require(dplyr)
-}
-
-if (!require(knitr)) {
-  install.packages("knitr")
-  require(knitr)
-}
-
-if (!require(stringr)) {
-  install.packages("stringr")
-  require(stringr)
-}
-
-if (!require(purrr)) {
-  install.packages("purrr")
-  require(purrr)
-}
-
-if (!require(readxl)) {
-  install.packages("readxl")
-  require(readxl)
-}
-```
 
 ```{r utility_functions, include=FALSE}
+
+`%notin%` <- Negate(`%in%`)
+
 last_path = function(x) {
   substr(x, max(gregexpr("/", x)[[1]]) + 1, nchar(x))
 }
@@ -187,11 +162,166 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
 }
 
 
+filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList, geo_dim, parameter_fact, parameter_UNK_for_not_standards_unit){
+  if(length(colnames_to_filter)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% dplyr::filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
+  if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
+    dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
+  if("geographic_identifier"%in%colnames(dataframe_to_filter)){
+    dataframe_to_filter <- dataframe_to_filter %>% dplyr::rename("geographic_identifier" := {{geo_dim}})
+  }
+  return(dataframe_to_filter)
+}
+
+tidying_data_for_GTA = function(dataframe, time_dim, shape, species_group_dataframe = species_group, cl_cwp_gear_level2_dataframe = cl_cwp_gear_level2){
+  if("geographic_identifier"%in%colnames(dataframe)){
+  dataframe <- dataframe%>%  dplyr::left_join(shape, by = c("geographic_identifier"="code"))
+  print_map <- TRUE
+  } else {print_map <- FALSE}
+
+
+dataframe <- dataframe %>% mutate_at(all_of(time_dim), as.character)
+
+if("cat_geo"%in%colnames(dataframe)){
+  dataframe <- dataframe%>%dplyr::mutate(cat_geo = as.character(cat_geo))
+}
+
+dataframe <- dataframe %>% dplyr::left_join(species_group_dataframe%>% dplyr::distinct(), by = c("species"))
+  
+    dataframe <- dataframe %>% dplyr::left_join(cl_cwp_gear_level2_dataframe, by = c("gear" = "Code"))
+    
+  if ("Name_En"%in% colnames(dataframe)){dataframe <- dataframe%>% dplyr::rename(Gear = Name_En)%>%dplyr::mutate(gear = as.character(gear))}
+  
+  dataframe <- dataframe%>%dplyr::mutate(unit = dplyr::case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ unit)) 
+
+return(list(dataframe = dataframe, print_map= print_map))
+}
+
+
+fonction_groupement = function(these_col, init, final){
+  
+  # Compute sum of values for each combination of the columns in "these_col" and "unit" in the "init" dataframe
+  groupement_1 <- init %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(!!!rlang::syms(these_col), unit) %>%
+    dplyr::summarise(value_sum_1 = ((sum(value, na.rm=TRUE)))) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0)) %>%
+    dplyr::mutate(unit = as.character(unit)) %>%
+    dplyr::mutate(number_lines1 = n())
+  
+  # Compute sum of values for each combination of the columns in "these_col" and "unit" in the "final" dataframe
+  groupement_2 <- final %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(!!!rlang::syms(these_col), unit) %>%
+    dplyr::summarise(value_sum_2 = ((sum(value, na.rm=TRUE)))) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%
+    dplyr::mutate(unit = as.character(unit)) %>%
+    dplyr::mutate(number_lines2 = n())
+  
+  # Join the two dataframes based on the columns in "these_col" and "unit"
+  fulljoin <- dplyr::full_join(groupement_1, groupement_2) %>%
+    dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%
+    dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0)) %>%
+    dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%
+    # Compute whether the difference in value is a gain or loss
+    dplyr::mutate(`Loss / Gain` = dplyr::case_when(abs(loss) <= 1 ~ "Egal", loss > 1 ~"Loss",  loss < 1 ~"Gain")) %>%
+    dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>%
+    dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
+    dplyr::rename("Precision" = 1) %>%
+    dplyr::mutate(Precision = as.character(Precision)) %>%
+    dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%
+    # Set Loss_pourcent to 100 if it is NA or -Inf
+    dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%
+    dplyr::ungroup() %>%
+    # Compute the difference in the number of lines between the two dataframes
+    dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2) %>%
+    dplyr::mutate(`Difference in value`= (value_sum_2 - value_sum_1)) %>% #final - init
+    dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in number of lines` = loss_nb_ligne)%>%
+    dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
+
+return(fulljoin)
+}
+
+
+resume_knit_child = function(x){
+  
+  knitr::knit_child(text = c(
+    '',
+    '```{r}', 
+    'dimension_title <- gsub("_","..",x$dimension)',
+    '',
+    '```',
+    '',
+    '',
+    '',
+    '```{r results = "asis" ,fig.cap = paste0("Distribution in value for the dimension : ",(dimension_title))}',
+    '',
+    'x$pie_chart',
+    '```',
+    '',
+    '',
+    '',
+    '```{r results = "asis", eval= !is.null(x$df)}',
+    'x$df',
+    '',
+    '',
+    '```',
+    '',
+    '', 
+    ''
+
+
+
+
+  ), envir = environment(), quiet= TRUE)
+}
+function_pie_chart_df = function(dimension, ...){
+  formals(pie_chart_2_default)$dimension <- dimension
+  dimension_returned <- dimension
+  pie_chart = pie_chart_2_default(...)
+  if(exists("pie_chart$df")){
+    df = pie_chart$df
+  pie_chart = pie_chart$plot} else{
+    pie_chart = pie_chart
+    df = NULL}
+
+if(!is.null(df)){
+df <- qflextable2(df, captionn = paste0("Strata movement for the dimension : ", dimension_returned))}
+  return(list(pie_chart=pie_chart,df=df, dimension=dimension_returned))
+}
+
+
+function_knitting = function(x){
+assign("Dimension2", gsub("_", "", unique(x$data$Dimension)), envir = environment())
+assign("y", x, envir = environment())
+title_knit <- paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " and ",`titre_2`, " dataset ")
+if(nrow(final)==0){title_knit = paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " dataset ")}
+knitr::knit_child(text =c('```{r fig.cap=`title_knit`, fig.align = "center", out.widht = "100%"}',
+'',
+'',
+'(y)',
+'',
+'```'), envir = environment(), quiet= TRUE)
+}
+function_knitting_difference = function(x){
+assign("Dimension2", gsub("_", "", unique(x$data$Dimension)), envir = environment())
+assign("y", x, envir = environment())
+knitr::knit_child(text =c('```{r fig.cap=paste0("Differences in percent of value for temporal dimension :  ", Dimension2, " between ", `titre_1`, " and ",`titre_2`, " dataset ")}',
+'',
+'',
+'(y)',
+'',
+'```'), envir = environment(), quiet= TRUE)
+}
+
+
 ```
 
 ```{r options, include=FALSE}
 base::options(scipen=999)
-
+plotting_type <- "plot" 
+if (knitr::is_html_output()){plotting_type <- "view" }
 ```
 
 ```{r global_variables, include=FALSE}
@@ -227,6 +357,9 @@ if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- TRUE}
 if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(species = NULL, fishingfleet = NULL)}
 if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start")}
 
+if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
+
+
 
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
 ```
@@ -253,11 +386,6 @@ try(cat2(step_title))
 
 ```
 
-```{r}
-`%notin%` <- Negate(`%in%`)
-
-```
-
 ```{r results='asis'}
 
 if(!child){cat("\\clearpage")}
@@ -270,82 +398,44 @@ if(!child){cat("\\clearpage")}
 
 
 
-```{r eval = !child, message=FALSE, warning=FALSE, include=FALSE}
+```{r libraries, eval = !child, message=FALSE, warning=FALSE, include=FALSE}
 
-knitr::knit_hooks$set(inline = function(x) {   if(!is.numeric(x)){     x   }else{    prettyNum(round(x,2), big.mark=",")    } })
+# Set custom inline hook to format numeric values
+knitr::knit_hooks$set(inline = function(x) {   
+  if(!is.numeric(x)){
+    x
+  } else {
+    prettyNum(round(x,2), big.mark=",")
+  }
+})
 
-if(!(require(base))){ 
-  install.packages("base") 
-  (require(base))} 
-if(!(require(flextable))){ 
-  install.packages("flextable") 
-  (require(flextable))} 
-if(!(require(remotes))){ 
-  install.packages("remotes") 
-  (require(remotes))} 
-if(!(require(utils))){ 
-  install.packages("utils") 
-  (require(utils))} 
-if(!(require(stringr))){ 
-  install.packages("stringr") 
-  (require(stringr))} 
-if(!(require(knitr))){ 
-  install.packages("knitr") 
-  (require(knitr))} 
-if(!(require(DBI))){ 
-  install.packages("DBI") 
-  (require(DBI))} 
-if(!(require(odbc))){ 
-  install.packages("odbc") 
-  (require(odbc))} 
-if(!(require(rlang))){ 
-  install.packages("rlang") 
-  (require(rlang))} 
-if(!(require(sf))){ 
-  install.packages("sf") 
-  (require(sf))} 
-if(!(require(kableExtra))){ 
-  install.packages("kableExtra") 
-  (require(kableExtra))} 
-if(!(require(readxl))){ 
-  install.packages("readxl") 
-  (require(readxl))} 
-if(!(require(readr))){ 
-  install.packages("readr") 
-  (require(readr))} 
-if(!(require(tidyr))){ 
-  install.packages("tidyr") 
-  (require(tidyr))} 
-if(!(require(ggplot2))){ 
-  install.packages("ggplot2") 
-  (require(ggplot2))} 
-if(!(require(stats))){ 
-  install.packages("stats") 
-  (require(stats))} 
-if(!(require(RColorBrewer))){ 
-  install.packages("RColorBrewer") 
-  (require(RColorBrewer))} 
-if(!(require(cowplot))){ 
-  install.packages("cowplot") 
-  (require(cowplot))} 
-if(!require(sutdycatchesird)){
-  install_github("BastienIRD/sutdycatchesird")
-  require(sutdycatchesird)
+# Prevent package installation from upgrading
+formals(install.packages)$upgrade <- "never"
 
+# List of required packages
+required_packages <- c("dplyr", "knitr", "stringr", "purrr", "readxl", "base", "flextable", "remotes", 
+                        "utils", "DBI", "odbc", "rlang", "sf", "kableExtra", "readr", "tidyr", "ggplot2", 
+                        "stats", "RColorBrewer", "cowplot", "tmap", "RPostgreSQL", "officer", "gdata",
+                        "sutdycatchesird")
 
+# Check if each package is already installed, and if not, install and load it
+for (package in required_packages) {
+  if (!require(package, character.only = TRUE)) {
+    install.packages(package)
+    require(package)
+  }
 }
-if(!(require(tmap))){ 
-  install.packages("tmap") 
-  (require(tmap))} 
-if(!(require(RPostgreSQL))){ 
-  install.packages("RPostgreSQL") 
-  (require(RPostgreSQL))} 
-if(!(require(officer))){ 
-  install.packages("officer") 
-  (require(officer))} 
-if(!(require(gdata))){ 
-  install.packages("gdata") 
-  (require(gdata))}
+
+# Install and load sutdycatchesird package from GitHub if not already installed
+if(!require(sutdycatchesird)){
+  remotes::install_github("BastienIRD/sutdycatchesird")
+  require(sutdycatchesird)
+}
+
+```
+
+
+```{r eval = !child, message=FALSE, warning=FALSE, include=FALSE}
 set_flextable_defaults(
   font.size = 10,
   font.color = "black",
@@ -363,8 +453,7 @@ if(!child){autonum <- officer::run_autonum(seq_id = "tab", bkm = "TC1", bkm_all 
 
 
 
-plotting_type <- "plot" 
-if (knitr::is_html_output()){plotting_type <- "view" }
+
 ```
 
 
@@ -402,7 +491,29 @@ species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% jani
 if(is_null_or_not_exist(parameter_colnames_to_keep)){colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",                 
                       "geographic_identifier","schooltype",           "species",                       
                       "unit",                 "value",                "source_authority")
-  }else {colnames_to_keep <-parameter_colnames_to_keep}
+}else {colnames_to_keep <-parameter_colnames_to_keep}
+ 
+ if (!is_null_or_not_exist("parameter_final")) {parameter_final <- NULL} 
+
+if (is_null_or_not_exist(parameter_titre_dataset_1)){
+  titre_1 <- last_path_reduced(as.character(parameter_init))
+} else {
+  titre_1 <- parameter_titre_dataset_1
+}
+
+
+if (is_null_or_not_exist(parameter_titre_dataset_2) & !unique_analyse){
+  titre_2 <- last_path_reduced(as.character(parameter_final))
+  } else if (unique_analyse) {
+  titre_2 <- "NONE"
+} else {
+    titre_2 <- parameter_titre_dataset_2
+}
+
+titre_2 <- gsub("_","-",titre_2)
+titre_1 <- gsub("_","-",titre_1)
+
+
 
 ```
 
@@ -425,11 +536,6 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 
 
 
-
-
-```{r}
-if (!is_null_or_not_exist("parameter_final")) {parameter_final <- NULL} 
-```
 
 
 
@@ -459,20 +565,6 @@ mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"),
 init <- init %>% dplyr::select(any_of(colnames_to_keep))
 final <- final %>% dplyr::select(any_of(colnames_to_keep))
 
-tidying_data_for_GTA = function(x, time_dim, shape){
-  if("geographic_identifier"%in%colnames(x)){
-  x <- x%>%  dplyr::left_join(shape, by = c("geographic_identifier"="code"))
-  print_map <- TRUE
-  } else {print_map <- FALSE}
-
-
-x <- x %>% mutate_at(all_of(time_dim), as.character)
-
-if("cat_geo"%in%colnames(x)){
-  x <- x%>%dplyr::mutate(cat_geo = as.character(cat_geo))
-}
-return(list(dataframe = x, print_map= print_map))
-}
 
 list_return_init <- tidying_data_for_GTA(init,time_dim = time_dimension, shape = shape_without_geom)
 init <- list_return_init$dataframe
@@ -483,48 +575,6 @@ print_map <- list_return_init$print_map
 }
 ```
 
-
-
-```{r}
-if(parameter_fact=="catch"){
-  function_dataframe_tot_filter =function(dataframe_tot_filter){
-  dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(species_group%>% dplyr::distinct(), by = c("species"))
-  
-    dataframe_tot_filter <- dataframe_tot_filter %>% dplyr::left_join(cl_cwp_gear_level2, by = c("gear" = "Code"))
-    
-  if ("Name_En"%in% colnames(dataframe_tot_filter)){dataframe_tot_filter <- dataframe_tot_filter%>% dplyr::rename(Gear = Name_En)%>%dplyr::mutate(gear = as.character(gear))}
-  
-  dataframe_tot_filter <- dataframe_tot_filter%>%dplyr::mutate(unit = dplyr::case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ unit)) 
-  
-}
-init <- function_dataframe_tot_filter(init)
-final <- function_dataframe_tot_filter(final)
-  }
-
-
-# if(!exists("titre_dataset_1")){titre_dataset_1 <- NULL}
-# if(!exists("titre_dataset_2")){titre_dataset_2 <- NULL}
-
-if (is_null_or_not_exist(parameter_titre_dataset_1)){
-  titre_1 <- last_path_reduced(as.character(parameter_init))
-} else {
-  titre_1 <- parameter_titre_dataset_1
-}
-
-
-if (is_null_or_not_exist(parameter_titre_dataset_2) & !unique_analyse){
-  titre_2 <- last_path_reduced(as.character(parameter_final))
-  } else if (unique_analyse) {
-  titre_2 <- "NONE"
-} else {
-    titre_2 <- parameter_titre_dataset_2
-}
-
-titre_2 <- gsub("_","-",titre_2)
-titre_1 <- gsub("_","-",titre_1)
-
-
-```
 
 
 
@@ -584,17 +634,7 @@ matchingList <- lapply(matchingList, function(x){ #handling single filter
 
 }
   )
-if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
 
-filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList, geo_dim, parameter_fact, parameter_UNK_for_not_standards_unit){
-  if(length(colnames_to_filter)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% dplyr::filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
-  if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
-    dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
-  if("geographic_identifier"%in%colnames(dataframe_to_filter)){
-    dataframe_to_filter <- dataframe_to_filter %>% dplyr::rename("geographic_identifier" := {{geo_dim}})
-  }
-  return(dataframe_to_filter)
-}
 
 formals(filtering_function)$geo_dim = geographical_dimension
 formals(filtering_function)$parameter_fact = parameter_fact
@@ -609,7 +649,7 @@ if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, c
 ```
 
 
-```{r include=FALSE}
+```{r eval = treatment, include=FALSE}
 errorfinal <- try(differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
 errorinit <- try(differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
 
@@ -620,7 +660,7 @@ if(exists("no_recap_options") && no_recap_options == TRUE){options_total <- FALS
 ```
 
 
-```{r eval=options_total}
+```{r eval=options_total& treatment}
 differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
 differences_in_optionsinit$X1 <- gsub(" ","",differences_in_optionsinit$X1)
 differences_in_optionsinit$X1 <- gsub("options_","",differences_in_optionsinit$X1) 
@@ -631,7 +671,7 @@ differences_in_optionsinit_base <- differences_in_optionsinit %>% dplyr::distinc
 ```
 
 
-```{r eval=treatment}
+```{r eval=treatment & options_total}
 differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
 
 
@@ -666,7 +706,7 @@ if(!exists("last_to_first")){last_to_first <- FALSE}
 ```
 
 
-```{r results='asis', eval=(treatment & !last_to_first)}
+```{r results='asis', eval=(treatment && !last_to_first)}
 cat("Summary of this treatment : ")
 cat(explenation_step$X1)
 ```
@@ -702,53 +742,6 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 
 ```
 
-```{r}
-fonction_groupement = function(these_col, init, final){
-  
-  # Compute sum of values for each combination of the columns in "these_col" and "unit" in the "init" dataframe
-  groupement_1 <- init %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(!!!rlang::syms(these_col), unit) %>%
-    dplyr::summarise(value_sum_1 = ((sum(value, na.rm=TRUE)))) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0)) %>%
-    dplyr::mutate(unit = as.character(unit)) %>%
-    dplyr::mutate(number_lines1 = n())
-  
-  # Compute sum of values for each combination of the columns in "these_col" and "unit" in the "final" dataframe
-  groupement_2 <- final %>%
-    dplyr::ungroup() %>%
-    dplyr::group_by(!!!rlang::syms(these_col), unit) %>%
-    dplyr::summarise(value_sum_2 = ((sum(value, na.rm=TRUE)))) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%
-    dplyr::mutate(unit = as.character(unit)) %>%
-    dplyr::mutate(number_lines2 = n())
-  
-  # Join the two dataframes based on the columns in "these_col" and "unit"
-  fulljoin <- dplyr::full_join(groupement_1, groupement_2) %>%
-    dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%
-    dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0)) %>%
-    dplyr::mutate(loss = value_sum_1 - value_sum_2) %>%
-    # Compute whether the difference in value is a gain or loss
-    dplyr::mutate(`Loss / Gain` = dplyr::case_when(abs(loss) <= 1 ~ "Egal", loss > 1 ~"Loss",  loss < 1 ~"Gain")) %>%
-    dplyr::mutate(Loss_pourcent = 100*((value_sum_1 - value_sum_2)/value_sum_1)) %>%
-    dplyr::mutate(Dimension = colnames(groupement_1[1])) %>%
-    dplyr::rename("Precision" = 1) %>%
-    dplyr::mutate(Precision = as.character(Precision)) %>%
-    dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%
-    # Set Loss_pourcent to 100 if it is NA or -Inf
-    dplyr::mutate(Loss_pourcent = base::ifelse(is.na(Loss_pourcent)|Loss_pourcent==-Inf, 100, Loss_pourcent)) %>%
-    dplyr::ungroup() %>%
-    # Compute the difference in the number of lines between the two dataframes
-    dplyr::mutate(loss_nb_ligne = number_lines1 - number_lines2) %>%
-    dplyr::mutate(`Difference in value`= (value_sum_2 - value_sum_1)) %>% #final - init
-    dplyr::rename(`Difference (in %)` = Loss_pourcent,`Difference in number of lines` = loss_nb_ligne)%>%
-    dplyr::mutate_if(is.numeric, list(~replace_na(., 0)))
-
-return(fulljoin)
-}
-```
 
 
 ```{r eval = !unique_analyse, message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
@@ -947,18 +940,6 @@ facet_grid("unit", scales = "free_y")})
 
 
 ```{r}
-function_knitting = function(x){
-assign("Dimension2", gsub("_", "", unique(x$data$Dimension)), envir = environment())
-assign("y", x, envir = environment())
-title_knit <- paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " and ",`titre_2`, " dataset ")
-if(nrow(final)==0){title_knit = paste0("Evolutions of values for the dimension ", Dimension2, " for ", `titre_1`, " dataset ")}
-knitr::knit_child(text =c('```{r fig.cap=`title_knit`, fig.align = "center", out.widht = "100%"}',
-'',
-'',
-'(y)',
-'',
-'```'), envir = environment(), quiet= TRUE)
-}
 
 map_unit_knit_list <- lapply(map, FUN = function_knitting)
 ```
@@ -1000,7 +981,7 @@ cat(unlist(map_unit_knit_list_cumulated), sep = "\n")
 ggplot_capt_time
 ```
 
-```{r eval =print_map}
+```{r functionprintingmaps, eval =print_map}
 fonction_empreinte_spatiale = function(variable_affichee){
   selection = function(x){x %>% dplyr::ungroup() %>% dplyr::select(geographic_identifier, value, cat_geo, unit)}
   Initial_dataframe <-selection(init)
@@ -1028,10 +1009,6 @@ fonction_empreinte_spatiale = function(variable_affichee){
   }
 }
 
-```
-
-
-```{r eval=print_map}
 map_unit_knit = function(map){
   # if (deparse(substitute(unit)) == "X[[i]]"){ #for sapply function bug
   # assign("r", unit, envir = environment())
@@ -1152,59 +1129,10 @@ formals(pie_chart_2_default)$titre_2 <- titre_2
 ```
 
 
-```{r}
-function_pie_chart_df = function(dimension, ...){
-  formals(pie_chart_2_default)$dimension <- dimension
-  dimension_returned <- dimension
-  pie_chart = pie_chart_2_default(...)
-  if(exists("pie_chart$df")){
-    df = pie_chart$df
-  pie_chart = pie_chart$plot} else{
-    pie_chart = pie_chart
-    df = NULL}
-
-if(!is.null(df)){
-df <- qflextable2(df, captionn = paste0("Strata movement for the dimension : ", dimension_returned))}
-  return(list(pie_chart=pie_chart,df=df, dimension=dimension_returned))
-}
-```
-
-
-
-```{r}
-resume_knit_child = function(x){
-  
-  knitr::knit_child(text = c(
-    '',
-    '```{r}', 
-    'dimension_title <- gsub("_","..",x$dimension)',
-    '',
-    '```',
-    '',
-    '',
-    '',
-    '```{r results = "asis" ,fig.cap = paste0("Distribution in value for the dimension : ",(dimension_title))}',
-    '',
-    'x$pie_chart',
-    '```',
-    '',
-    '',
-    '',
-    '```{r results = "asis", eval= !is.null(x$df)}',
-    'x$df',
-    '',
-    '',
-    '```',
-    '',
-    '', 
-    ''
 
 
 
 
-  ), envir = environment(), quiet= TRUE)
-}
-```
 
 
 ```{r}
@@ -1282,16 +1210,8 @@ facet_grid("unit", scales = "free_y")}, dataframe = t)
 
 
 ```{r}
-function_knitting_difference = function(x){
-assign("Dimension2", gsub("_", "", unique(x$data$Dimension)), envir = environment())
-assign("y", x, envir = environment())
-knitr::knit_child(text =c('```{r fig.cap=paste0("Differences in percent of value for temporal dimension :  ", Dimension2, " between ", `titre_1`, " and ",`titre_2`, " dataset ")}',
-'',
-'',
-'(y)',
-'',
-'```'), envir = environment(), quiet= TRUE)
-}
+
+
 
 map_unit_knit_list <- lapply(map, FUN = function_knitting)
 ```
@@ -1378,99 +1298,6 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
 
 
 
-
-```{r eval = FALSE, echo=FALSE, fig.cap=paste0("Geographical differences in % between ", titre_1, " and ", titre_2), results='asis'}
-
-
-image
-
-
-
-```
-
-
-
-```{r eval=FALSE}
-
-
-
-fonction_empreinte_spatiale_diff  = function(unit, plotting_type, shapefile_fix_function, t_filtered, percent = FALSE){
-  if (deparse(substitute(unit)) == "X[[i]]"){ #for sapply function bug
-  assign("new_name", paste0("Difference in millions of ",unit), envir = globalenv())
-    if(percent){assign("new_name", paste0("Difference (in %) of ", unit), envir = globalenv())}
-    }else {  assign("new_name", paste0("Difference in millions of ", substitute(unit)), envir = globalenv())
-    if(percent){assign("new_name", paste0("Difference (in %) of ", substitute(unit)), envir = globalenv())}
-    }
-  
-  enquo_unit <- enquo(unit)
-  dataset <- dplyr::inner_join(shapefile_fix_function,(t_filtered%>% dplyr::ungroup() %>%dplyr::filter(Dimension == ("geographic_identifier")) %>% dplyr::filter(unit == !!enquo_unit)) , by = c("code"= "Precision"))
-  if(percent){
-  dataset <- dataset%>%  dplyr::rename(!!as.symbol(eval(parse(text = "new_name"))) := "Difference (in %)")} else {
-  dataset <- dataset%>%  dplyr::rename(!!as.symbol(eval(parse(text = "new_name"))) := "Difference in value")}
-image_child <- tm_shape(dataset) +tm_fill(eval(parse(text = "new_name")), palette= ("-PiYG"), id= ("name"), midpoint = 0)+tm_facets(by =   c("cat_geo", "Loss / Gain"),free.coords = FALSE)+tm_borders(lwd = 0.05)
-  if(plotting_type == "plot"){image_child <-image_child+tm_shape(continent)+tm_borders()}
-  return(list(image_child,unit))
-}
-
-tmap_mode(plotting_type)
-formals(tm_shape)$drop.empty_facets <- FALSE
-formals(fonction_empreinte_spatiale_diff)$plotting_type <- plotting_type
-formals(fonction_empreinte_spatiale_diff)$shapefile_fix_function <- shapefile.fix
-formals(fonction_empreinte_spatiale_diff)$t_filtered <- t_filtered
-# t_filtered <- t
-
-map_diff <- lapply(unique(t_filtered$unit), fonction_empreinte_spatiale_diff)
-map_diff
-
-
-map_plotted_knit <- lapply(map_diff, knit_child_map)
-formals(fonction_empreinte_spatiale_diff)$percent <- TRUE
-map_diff_percent <- lapply(unique(t_filtered$unit), fonction_empreinte_spatiale_diff)
-
-map_plotted_percent <- lapply(map_diff_percent, knit_child_map)
-
-```
-
-
-```{r eval=FALSE}
-
-
-inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
-t_filtered <- t #%>% dplyr::filter(`Difference (in %)` >= -100)
-```
-
-
-
-
-```{r eval=FALSE}
-
-if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
-   try(restest <- lapply(unique(t_filtered$unit), FUN = knit_child_map))
-}
-
-formals(knit_child_map)$percent <- TRUE
-
-if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
-   try(restest_percent <- lapply(unique(t_filtered$unit), FUN = knit_child_map))
-}
-```
-
-
-```{r eval=FALSE,echo=FALSE, results='asis'}
-
-
-try(cat(unlist(map_plotted_knit), sep = "\\clearpage"))
-
-
-```
-
-```{r eval=FALSE, echo=FALSE, results='asis'}
-
-
-try(cat(unlist(map_plotted_percent), sep = "\\clearpage"))
-
-
-```
 
 Here is represented for each area the polygons keeping all the initial information, the ones losing a part and the ones losing all the information. 
 
@@ -1569,13 +1396,19 @@ if(nrow(unit != 0)){
   
   unit <- unit%>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain", value_sum_1 == value_sum_2 ~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(base::ifelse(id>(topn),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in value`/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`)) %>% mutate(Other_column = ifelse(Precision == "Others", 1, 0)) 
 
-t3 <- as_grouped_data(unit %>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2")%>% dplyr::filter(`Loss / Gain` != "Egal")%>%dplyr::select(parameter_columns_to_keep,Other_column) %>% 
-                        dplyr::mutate(across(c(`Values dataset 1`, `Values dataset 2`,`Difference in value` )), base::round)%>%
-                        dplyr::mutate_if(is.numeric, base::round, digits=2) %>% 
-                        dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% 
-                        dplyr::arrange( Dimension, unit,`Loss / Gain`, Other_column,desc(abs(`Difference in value`)) ) %>% 
-                        dplyr::select(-Other_column),groups = c("Dimension","unit","Loss / Gain"
-                                        ))
+
+t3 <- as_grouped_data(unit %>% dplyr::ungroup() %>% 
+                      dplyr::rename(`Values dataset 1` = "value_sum_1",
+                                    `Values dataset 2` = "value_sum_2") %>% 
+                      dplyr::filter(`Loss / Gain` != "Egal") %>% 
+                      dplyr::select(parameter_columns_to_keep, Other_column) %>% 
+                      dplyr::mutate(across(c("Values dataset 1", "Values dataset 2", "Difference in value"),  ~ round(., digits = 0))) %>% 
+                       dplyr::mutate_if(is.numeric, base::round, digits=2) %>% 
+                      dplyr::group_by(Dimension, unit, `Loss / Gain`) %>% 
+                      dplyr::arrange(Dimension, unit, `Loss / Gain`, Other_column, desc(abs(`Difference in value`))) %>% 
+                      dplyr::select(-Other_column),
+                    groups = c("Dimension", "unit", "Loss / Gain"))
+
 } else {to_cat <- "There are no differences between stratas aside the appearing and disappearing ones"}
 
 ```
@@ -1589,6 +1422,7 @@ if(nrow(unit != 0)){qflextable2(t3, captionn = "Difference between stratas of th
 ```
 
 ```{r numberstrataswithtoutmapping, eval=!parameter_mapped}
+
 initnotmapped <- readRDS(paste0(as.character(parameter_init),"/rds.rds"))
 finalnotmapped <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))
 
@@ -1645,12 +1479,98 @@ kable(s, caption = "Replacement code during the mapping codelist treatment")
 
 
 
-<!-- ```{r eval=!unique_analyse} -->
-<!-- if(!(require(tibble))){  -->
-<!--   install.packages("tibble")  -->
-<!--   (require(tibble))}  -->
-<!-- qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Replacement code during the mapping codelist treatment") -->
-<!-- ``` -->
+
+
+```{r eval=FALSE}
 
 
 
+fonction_empreinte_spatiale_diff  = function(unit, plotting_type, shapefile_fix_function, t_filtered, percent = FALSE){
+  if (deparse(substitute(unit)) == "X[[i]]"){ #for sapply function bug
+  assign("new_name", paste0("Difference in millions of ",unit), envir = globalenv())
+    if(percent){assign("new_name", paste0("Difference (in %) of ", unit), envir = globalenv())}
+    }else {  assign("new_name", paste0("Difference in millions of ", substitute(unit)), envir = globalenv())
+    if(percent){assign("new_name", paste0("Difference (in %) of ", substitute(unit)), envir = globalenv())}
+    }
+  
+  enquo_unit <- enquo(unit)
+  dataset <- dplyr::inner_join(shapefile_fix_function,(t_filtered%>% dplyr::ungroup() %>%dplyr::filter(Dimension == ("geographic_identifier")) %>% dplyr::filter(unit == !!enquo_unit)) , by = c("code"= "Precision"))
+  if(percent){
+  dataset <- dataset%>%  dplyr::rename(!!as.symbol(eval(parse(text = "new_name"))) := "Difference (in %)")} else {
+  dataset <- dataset%>%  dplyr::rename(!!as.symbol(eval(parse(text = "new_name"))) := "Difference in value")}
+image_child <- tm_shape(dataset) +tm_fill(eval(parse(text = "new_name")), palette= ("-PiYG"), id= ("name"), midpoint = 0)+tm_facets(by =   c("cat_geo", "Loss / Gain"),free.coords = FALSE)+tm_borders(lwd = 0.05)
+  if(plotting_type == "plot"){image_child <-image_child+tm_shape(continent)+tm_borders()}
+  return(list(image_child,unit))
+}
+
+tmap_mode(plotting_type)
+formals(tm_shape)$drop.empty_facets <- FALSE
+formals(fonction_empreinte_spatiale_diff)$plotting_type <- plotting_type
+formals(fonction_empreinte_spatiale_diff)$shapefile_fix_function <- shapefile.fix
+formals(fonction_empreinte_spatiale_diff)$t_filtered <- t_filtered
+# t_filtered <- t
+
+map_diff <- lapply(unique(t_filtered$unit), fonction_empreinte_spatiale_diff)
+map_diff
+
+
+map_plotted_knit <- lapply(map_diff, knit_child_map)
+formals(fonction_empreinte_spatiale_diff)$percent <- TRUE
+map_diff_percent <- lapply(unique(t_filtered$unit), fonction_empreinte_spatiale_diff)
+
+map_plotted_percent <- lapply(map_diff_percent, knit_child_map)
+
+```
+
+
+```{r eval=FALSE}
+
+
+inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
+t_filtered <- t #%>% dplyr::filter(`Difference (in %)` >= -100)
+```
+
+
+
+
+```{r eval=FALSE}
+
+if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
+   try(restest <- lapply(unique(t_filtered$unit), FUN = knit_child_map))
+}
+
+formals(knit_child_map)$percent <- TRUE
+
+if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
+   try(restest_percent <- lapply(unique(t_filtered$unit), FUN = knit_child_map))
+}
+```
+
+
+```{r eval=FALSE,echo=FALSE, results='asis'}
+
+
+try(cat(unlist(map_plotted_knit), sep = "\\clearpage"))
+
+
+```
+
+```{r eval=FALSE, echo=FALSE, results='asis'}
+
+
+try(cat(unlist(map_plotted_percent), sep = "\\clearpage"))
+
+
+```
+
+
+
+
+```{r eval = FALSE, echo=FALSE, fig.cap=paste0("Geographical differences in % between ", titre_1, " and ", titre_2), results='asis'}
+
+
+image
+
+
+
+```
