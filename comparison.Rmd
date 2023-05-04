@@ -480,6 +480,7 @@ continent <- st_read("data/continent.csv") %>% dplyr::rename(geom = geometry)
 ```
 
 
+
 ```{r cache=FALSE}
 species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
  cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
@@ -493,7 +494,6 @@ if(is_null_or_not_exist(parameter_colnames_to_keep)){colnames_to_keep <- c("fish
                       "unit",                 "value",                "source_authority")
 }else {colnames_to_keep <-parameter_colnames_to_keep}
  
- if (!is_null_or_not_exist("parameter_final")) {parameter_final <- NULL} 
 
 if (is_null_or_not_exist(parameter_titre_dataset_1)){
   titre_1 <- last_path_reduced(as.character(parameter_init))
@@ -614,7 +614,7 @@ try(knit_mapped <- knitr::knit_child(text =c(
 ''), envir = environment(), quiet= TRUE))
 ```
 
-```{r results='asis', eval=(!parameter_mapped  & !unique_analyse)}
+```{r results='asis', eval=(!parameter_mapped  && !unique_analyse)}
 try(cat(knit_mapped))
 ```
 
@@ -655,12 +655,15 @@ errorinit <- try(differences_in_optionsinit <- readr::read_delim(paste0(paramete
 
 if(!("try-error" %in% class(errorfinal))){treatment <- TRUE} else {treatment <- FALSE}
 if(!("try-error" %in% class(errorinit))){options_total <- TRUE} else {options_total <- FALSE}
-
-if(exists("no_recap_options") && no_recap_options == TRUE){options_total <- FALSE}
 ```
 
 
-```{r eval=options_total& treatment}
+```{r include=FALSE}
+if(exists("no_recap_options") && no_recap_options == TRUE){options_total <- FALSE} else {options_total <- TRUE}
+```
+
+
+```{r eval=treatment && options_total}
 differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
 differences_in_optionsinit$X1 <- gsub(" ","",differences_in_optionsinit$X1)
 differences_in_optionsinit$X1 <- gsub("options_","",differences_in_optionsinit$X1) 
@@ -671,7 +674,7 @@ differences_in_optionsinit_base <- differences_in_optionsinit %>% dplyr::distinc
 ```
 
 
-```{r eval=treatment & options_total}
+```{r eval=treatment}
 differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
 
 
@@ -713,7 +716,7 @@ cat(explenation_step$X1)
 
 
 
-```{r eval= !unique_analyse && treatment}
+```{r eval= !unique_analyse && options_total}
 if (nrow(differences_between_options2) == 0){
   towrite ="There are no differences between the options to create the two datasets. They are created by the same workflow."
 } else { towrite ="The differences in options choosen between the two dataframes are : "
@@ -721,21 +724,21 @@ qflextable2(differences_between_options2, "Differences between the options of th
 ```
 
 
-```{r results='asis', eval=(!parameter_short && !unique_analyse & treatment)}
+```{r results='asis', eval=(!parameter_short && !unique_analyse & options_total)}
 cat(towrite)
 ```
 
 
 
 
-```{r eval=(!parameter_short & options_total), results='asis'}
+```{r eval=(!parameter_short && options_total), results='asis'}
 cat(ifelse(unique_analyse, "The options used to create the data frame are :", "The options used to create the initial data frame are :"))
 
 s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% dplyr::mutate(Options = gsub("_","-",Options))%>% dplyr::mutate(Options = gsub("=","=\n",Options))%>% dplyr::mutate(Value = gsub("_","-",Value))%>% dplyr::mutate(Value = gsub("=","=\n",Value)) %>% dplyr::mutate(Options = gsub("NONE", "", Options))
 ```
 
 
-```{r eval=(!parameter_short & options_total), results='asis',echo=FALSE, out.width="100%"}
+```{r eval=(!parameter_short && options_total), results='asis',echo=FALSE, out.width="100%"}
 
 qflextable2(s, captionn = "Options used in the treatment of the dataset")
 
@@ -758,7 +761,6 @@ t <- carte_init[0,]
 
 
 ```{r eval = !unique_analyse, message=FALSE, warning=FALSE, include=FALSE}
-
 for (i in Dimensions){
   temporaire <- fonction_groupement(i,init, final)
   assign(paste0("test", i), temporaire)
