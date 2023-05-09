@@ -63,21 +63,6 @@ fancyhdr:
     headright: "GTA"
     headrulewidth: 1pt
     footrulewidth: 0pt
-    
-# params: 
-#   init: "data/ancient"
-#   final: "~/Documents/Tunaatlas_level1/jobs/20230124095233_global_catch_RF3_base_new/entities/ird_level2_2/Markdown/Removing_absurd_nomt/"
-#   time_dimension:  [  "time_start"     ,                   "time_end"      ]   
-#   geographical_dimension: "geographic_identifier"
-#   fact: "catch"
-#   colnames_to_keep: ["fishingfleet",         "gear",                 "time_start",                 
-#                       "geographic_identifier","schooltype",           "species",                       
-#                       "unit",                 "value",                "source_authority"]
-#   columns_to_keep: [  "Precision"     ,                   "unit"      ,                     
-#   "Values dataset 1"      ,"Values dataset 2"      ,                               "Loss / Gain",
-#    "Difference (in %)"          ,     " Dimension"   ,       "Difference in value" ]
-#   short: FALSE
-  
 ---
 
 ```{r setup, include=FALSE}
@@ -502,16 +487,7 @@ if (is_null_or_not_exist(parameter_titre_dataset_1)){
 }
 
 
-if (is_null_or_not_exist(parameter_titre_dataset_2) & !unique_analyse){
-  titre_2 <- last_path_reduced(as.character(parameter_final))
-  } else if (unique_analyse) {
-  titre_2 <- "NONE"
-} else {
-    titre_2 <- parameter_titre_dataset_2
-}
 
-titre_2 <- gsub("_","-",titre_2)
-titre_1 <- gsub("_","-",titre_1)
 
 
 
@@ -540,11 +516,28 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 
 
 ```{r}
+
 init <- readRDS(paste0(as.character(parameter_init),"/rds.rds"))
-if(is_null_or_not_exist(parameter_final)){final <- init[0,] 
- unique_analyse <-  TRUE} else{
+if(is_null_or_not_exist(parameter_final)){
+  final <- init[0,] 
+ unique_analyse <-  TRUE
+ } else{
 final <- readRDS(paste0(as.character(parameter_final),"/rds.rds"))
-unique_analyse <- FALSE}
+unique_analyse <- FALSE
+ }
+
+
+if (is_null_or_not_exist(parameter_titre_dataset_2) & !unique_analyse){
+  titre_2 <- last_path_reduced(as.character(parameter_final))
+  } else if (unique_analyse) {
+  titre_2 <- "NONE"
+} else {
+    titre_2 <- parameter_titre_dataset_2
+}
+
+titre_2 <- gsub("_","-",titre_2)
+titre_1 <- gsub("_","-",titre_1)
+
 ```
 
 
@@ -814,7 +807,7 @@ if(parameter_short == FALSE){cat2("# Main differences \n ")}
 ```
 
 
-```{r  eval=!unique_analyse}
+```{r eval=!unique_analyse}
 units <- unique(c(unique(init$unit), unique(final$unit)))
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
@@ -849,7 +842,7 @@ join
 if (nrow(strates_perdues_first_10)!=0){
 
 
-  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 1~ "Loss", abs(loss)<=1 ~ "No differences", loss < 1~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 1~ "Loss", abs(loss)<=1 ~ "No differences", loss < 1~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% dplyr::select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
   cat("The stratas differences (completely lost or appearing) between the first one and the second one are:\n")
   cat(knit_print(qflextable2(groupe_df%>% select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))
@@ -1387,7 +1380,7 @@ cat2("## The differences for each dimension")
 
 We will look for each dimension the `r topn` most important differences without presenting the stratas completely appearing or desappearing.
 
-```{r}
+```{r eval!=unique_analyse}
 
 valeur_totale <- sum(init$value, na.rm = TRUE)
 ligne_totale <- nrow(init)
