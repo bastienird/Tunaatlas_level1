@@ -747,7 +747,7 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 
 
 
-```{r eval = !unique_analyse, message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 
 
 carte_init <- fonction_groupement("fishingfleet",init, final)
@@ -760,13 +760,14 @@ t <- carte_init[0,]
 
 
 
-```{r eval = !unique_analyse, message=FALSE, warning=FALSE, include=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 for (i in Dimensions){
   temporaire <- fonction_groupement(i,init, final)
   assign(paste0("test", i), temporaire)
   
   t <- rbind(t, temporaire)
 }
+
 ```
 
 
