@@ -137,8 +137,56 @@ if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geogr
 matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
 ```
 
+```{r shapefilereading, include=FALSE, error=0}
 
-```{r GTA_MARKDOWN_FUNCTIONS, include=FALSE}
+
+shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% dplyr::rename(geom = geometry)
+
+
+shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
+
+
+
+
+continent <- st_read("data/continent.csv") %>% dplyr::rename(geom = geometry)
+
+
+
+
+
+
+```
+
+
+```{r speciesandgearfilereading, cache=FALSE}
+species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
+ cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
+                                 col_types = cols(Identifier = col_skip(), 
+                                                  Abbreviation = col_skip(), Name_Fr = col_skip(), 
+                                                  Name_Es = col_skip(), Name_Ar = col_skip()))
+ 
+ 
+if(is_null_or_not_exist(parameter_colnames_to_keep)){colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",                 
+                      "geographic_identifier","schooltype",           "species",                       
+                      "unit",                 "value",                "source_authority")
+}else {colnames_to_keep <-parameter_colnames_to_keep}
+ 
+
+if (is_null_or_not_exist(parameter_titre_dataset_1)){
+  titre_1 <- last_path_reduced(as.character(parameter_init))
+} else {
+  titre_1 <- parameter_titre_dataset_1
+}
+
+
+
+
+
+
+```
+
+
+```{r GTAMARKDOWNFUNCTIONS, include=FALSE}
 fSpatPlan_Convert2PacificRobinson = function(df, buff = 0){
   
   if(!exists("df_robinson")){
@@ -451,32 +499,6 @@ if(!child){autonum <- officer::run_autonum(seq_id = "tab", bkm = "TC1", bkm_all 
 
 
 
-```{r species_and_gear, cache=FALSE}
-species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
- cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
-                                 col_types = cols(Identifier = col_skip(), 
-                                                  Abbreviation = col_skip(), Name_Fr = col_skip(), 
-                                                  Name_Es = col_skip(), Name_Ar = col_skip()))
- 
- 
-if(is_null_or_not_exist(parameter_colnames_to_keep)){colnames_to_keep <- c("fishingfleet",         "gear",                 "time_start",                 
-                      "geographic_identifier","schooltype",           "species",                       
-                      "unit",                 "value",                "source_authority")
-}else {colnames_to_keep <-parameter_colnames_to_keep}
- 
-
-if (is_null_or_not_exist(parameter_titre_dataset_1)){
-  titre_1 <- last_path_reduced(as.character(parameter_init))
-} else {
-  titre_1 <- parameter_titre_dataset_1
-}
-
-
-
-
-
-
-```
 
 
 
@@ -540,6 +562,7 @@ mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"),
 ```
 
 ```{r}
+
 init <- init %>% dplyr::select(any_of(colnames_to_keep))
 final <- final %>% dplyr::select(any_of(colnames_to_keep))
 
@@ -551,31 +574,15 @@ final <- tidying_data_for_GTA(final, time_dim = time_dimension, shape = shape_wi
 if(!exists("print_map")){
 print_map <- list_return_init$print_map
 }
-```
-
-```{r shapefilereading, eval = print_map, include=FALSE}
-
-
-shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% dplyr::rename(geom = geometry)
-
-
-shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
-
-
-
-
-continent <- st_read("data/continent.csv") %>% dplyr::rename(geom = geometry)
-
-
-
-
-
 
 ```
 
 
 
-```{r explanation_on_gain_and_loss, results='asis', eval=(!parameter_short && !unique_analyse)}
+
+
+
+```{r explanationongainandloss, results='asis', eval=(!parameter_short && !unique_analyse)}
 knit_child_attention <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
@@ -598,7 +605,7 @@ knit_child_attention <- knitr::knit_child(text =c(
 cat(knit_child_attention)
 ```
 
-```{r explanation_on_result_mapping, results='asis', eval=(!parameter_mapped &&  !unique_analyse) }
+```{r explanationonresultmapping, results='asis', eval=(!parameter_mapped &&  !unique_analyse) }
 knit_mapped <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
@@ -616,7 +623,7 @@ try(cat(knit_mapped))
 ```
 
 
-```{r filtering_function_on_data}
+```{r filteringfunctionondata}
 
 
 colnames_to_filter <- colnames(init %>% select(names(matchingList)))
@@ -757,7 +764,7 @@ t <- carte_init[0,]
 
 
 
-```{r allfonction_groupement,  message=FALSE, warning=FALSE, include=FALSE}
+```{r allfonctiongroupement,  message=FALSE, warning=FALSE, include=FALSE}
 for (i in Dimensions){
   temporaire <- fonction_groupement(i,init, final)
   assign(paste0("test", i), temporaire)
@@ -811,7 +818,7 @@ if(parameter_short == FALSE){cat2("# Main differences \n ")}
 ```
 
 
-```{r summary_of_differences, eval=!unique_analyse}
+```{r summaryofdifferences, eval=!unique_analyse}
 units <- unique(c(unique(init$unit), unique(final$unit)))
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
@@ -839,7 +846,7 @@ join
 ```
 
 
-```{r stratas_loss, echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
+```{r stratasloss, echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
 
   strates_perdues_first_10 <- strates_perdues_first_10 %>% filter(Dimension %notin% geographical_dimension) %>% filter(Dimension %notin% time_dimension)
 
