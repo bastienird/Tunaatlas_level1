@@ -66,11 +66,22 @@ recap_all_markdown <- function(action, entity, config, options){
     lapply(c,copyrmd)
   }
   con <- config$software$input$dbi
-  query <- "SELECT DISTINCT codesource_area, st_area(geom), geom from area.area_labels"
+  query <- "SELECT DISTINCT codesource_area, geom from area.area_labels"
+  # query <- "SELECT DISTINCT codesource_area, st_area(geom), geom from area.area_labels"
   world_sf <- st_read(con, query = query)
   world_sf <- world_sf[sf::st_is_valid(world_sf),]
   
-  shapefile.fix <- st_make_valid(world_sf)%>% dplyr::filter(!st_is_empty(.)) %>%dplyr::mutate(cat_geo = as.factor(dplyr::case_when(st_area == 1 ~ "1_deg", st_area == 25 ~ "5_deg", TRUE ~ "Else")))
+  shapefile.fix <- world_sf %>% 
+    dplyr::filter(!st_is_empty(.)) %>%
+    dplyr::mutate(
+      cat_geo = as.factor(
+        dplyr::case_when(
+          stringr::str_starts(codesource_area, "6") ~ "1_deg",
+          stringr::str_starts(codesource_area, "5") ~ "5_deg",
+          TRUE ~ "Else"
+        )
+      )
+    )
   shapefile.fix <- shapefile.fix %>% mutate(code = as.character(codesource_area)) %>% select(-codesource_area)
   
   st_write(shapefile.fix, "data/world_sf.csv", layer_options = "GEOMETRY=AS_WKT", append= FALSE)
@@ -87,7 +98,7 @@ recap_all_markdown <- function(action, entity, config, options){
   
   
   parameters_child_global <- list(action = action,
-                                  entity = entity, config = config, debugging = debugging)
+                                  entity = entity, config = config, debugging = FALSE)
   child_env_global = new.env()
   list2env(parameters_child_global, env = child_env_global)
   
