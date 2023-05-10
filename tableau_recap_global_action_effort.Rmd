@@ -344,6 +344,7 @@ cat(res2, sep =  "\\clearpage")
 
 ```
 
+
 \clearpage
 
 
@@ -730,4 +731,26 @@ t <- set_caption(t, caption =  "Replacement code during the mapping codelist tre
 knit_print(t)
 ```
 
+
+```{r statsirregular_areas}
+if(file.exists("data/stats_irregular_areas.rds")){stats_irregular_areas <- readRDS("data/stats_irregular_areas.rds")} else {knitr::knit_exit()}
+
+```
+
+```{r echo=FALSE, results='asis'}
+qflextable2(stats_irregular_areas, captionn ="Summary of the irregular area reallocation by unit", pgwidth = 6)
+```
+
+
+
+
+
+```{r not_mapped_total}
+if(file.exists("data/not_mapped_total.rds")){not_mapped_total <- readRDS("data/not_mapped_total.rds")} else {knitr::knit_exit()}
+
+```
+
+```{r echo=FALSE, results='asis'}
+qflextable2(not_mapped_total, captionn ="Summary of the not mapped factors and so replaced by 'UNK'", pgwidth = 6)
+```
 
