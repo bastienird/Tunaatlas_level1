@@ -77,7 +77,6 @@ knitr::opts_chunk$set(
 
 
 ```{r utility_functions, include=FALSE}
-
 `%notin%` <- Negate(`%in%`)
 
 last_path = function(x) {
@@ -95,7 +94,51 @@ is_null_or_not_exist = function(x) {
     return(FALSE)
   }
 }
+```
 
+
+```{r globalvariables, include=FALSE}
+if(!exists("child")){child = FALSE} else{child = child}
+if(!exists("step_title")){step_title_t_f = FALSE} else{step_title_t_f = TRUE}
+
+if (exists("params")) {
+  for (i in 1:length(params)) {
+    if(!exists(paste0("parameter_", names(params)[i]))) {
+      assign(paste0("parameter_", names(params)[i]), params[i][[1]])
+    }
+  }
+}
+
+if(!exists("fact") || is.null(fact)){fact <-  "effort"}
+
+if(is_null_or_not_exist(parameter_short)){parameter_short <-  FALSE}
+if(is_null_or_not_exist(columns_to_keep)){
+  parameter_columns_to_keep <- c("Precision", "unit", "Values dataset 1",
+                                 "Values dataset 2", "Loss / Gain",
+                                 "Difference (in %)", "Dimension",
+                                 "Difference in value")
+} else {
+  parameter_columns_to_keep <- columns_to_keep
+}
+
+if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
+  parameter_UNK_for_not_standards_unit <- TRUE
+}
+
+if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- TRUE}
+
+if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(species = NULL, fishingfleet = NULL)}
+if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start")}
+
+if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
+
+
+
+matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
+```
+
+
+```{r GTA_MARKDOWN_FUNCTIONS, include=FALSE}
 fSpatPlan_Convert2PacificRobinson = function(df, buff = 0){
   
   if(!exists("df_robinson")){
@@ -309,45 +352,6 @@ plotting_type <- "plot"
 if (knitr::is_html_output()){plotting_type <- "view" }
 ```
 
-```{r global_variables, include=FALSE}
-if(!exists("child")){child = FALSE} else{child = child}
-if(!exists("step_title")){step_title_t_f = FALSE} else{step_title_t_f = TRUE}
-
-if (exists("params")) {
-  for (i in 1:length(params)) {
-    if(!exists(paste0("parameter_", names(params)[i]))) {
-      assign(paste0("parameter_", names(params)[i]), params[i][[1]])
-    }
-  }
-}
-
-if(!exists("fact") || is.null(fact)){fact <-  "effort"}
-
-if(is_null_or_not_exist(parameter_short)){parameter_short <-  FALSE}
-if(is_null_or_not_exist(columns_to_keep)){
-  parameter_columns_to_keep <- c("Precision", "unit", "Values dataset 1",
-                                 "Values dataset 2", "Loss / Gain",
-                                 "Difference (in %)", "Dimension",
-                                 "Difference in value")
-} else {
-  parameter_columns_to_keep <- columns_to_keep
-}
-
-if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
-  parameter_UNK_for_not_standards_unit <- TRUE
-}
-
-if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- TRUE}
-
-if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(species = NULL, fishingfleet = NULL)}
-if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start")}
-
-if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
-
-
-
-matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
-```
 
 
 ```{r include=FALSE}
@@ -444,29 +448,10 @@ if(!child){autonum <- officer::run_autonum(seq_id = "tab", bkm = "TC1", bkm_all 
 
 
 
-```{r include=FALSE}
-
-
-shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% dplyr::rename(geom = geometry)
-
-
-shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
 
 
 
-
-continent <- st_read("data/continent.csv") %>% dplyr::rename(geom = geometry)
-
-
-
-
-
-
-```
-
-
-
-```{r cache=FALSE}
+```{r species_and_gear, cache=FALSE}
 species_group <-  read_excel("data/SPECIES_LIST_RFMO_WITH_ERRORS.xlsx") %>% janitor::clean_names() %>%  dplyr::select(species_group, species_code) %>% dplyr::rename(species = species_code)
  cl_cwp_gear_level2 <- read_csv(file.path("data","cl_cwp_gear_level2.csv"), 
                                  col_types = cols(Identifier = col_skip(), 
@@ -495,7 +480,7 @@ if (is_null_or_not_exist(parameter_titre_dataset_1)){
 
 
 
-```{r eval=!child, results='asis'}
+```{r filterprinting, eval=!child, results='asis'}
 
 isNullList = function(x) all(!lengths(x))
 if (isNullList(parameter_filtering)){cat("There are no filter on this data")} else {
@@ -515,7 +500,7 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 
 
 
-```{r}
+```{r filereading}
 
 init <- readRDS(paste0(as.character(parameter_init),"/rds.rds"))
 if(is_null_or_not_exist(parameter_final)){
@@ -541,7 +526,7 @@ titre_1 <- gsub("_","-",titre_1)
 ```
 
 
-```{r include=FALSE}
+```{r mappingifnot, include=FALSE}
 if(!parameter_mapped){
 
 
@@ -549,7 +534,7 @@ mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"),
   mapping_keep_src_code <- FALSE
 
   source("https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation/map_codelists.R")
-  init <- map_codelists(con, parameter_fact, mapping_dataset, init, mapping_keep_src_code = FALSE, summary_mapping = FALSE)$dataset_mapped #this map condelist function is to retrieve the mapping dataset used
+  init <- map_codelists(con = con, parameter_fact = parameter_fact, mapping_dataset = mapping_dataset, dataset_to_map = init, mapping_keep_src_code = FALSE, summary_mapping = FALSE)$dataset_mapped #this map condelist function is to retrieve the mapping dataset used
   # final <- map_codelists(conn, parameter_fact, mapping_dataset, final, mapping_keep_src_code = FALSE, summary_mapping = FALSE)
 }
 ```
@@ -568,11 +553,30 @@ print_map <- list_return_init$print_map
 }
 ```
 
+```{r shapefilereading, eval = print_map, include=FALSE}
+
+
+shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% dplyr::rename(geom = geometry)
+
+
+shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
 
 
 
-```{r results='asis', eval=(!parameter_short && !unique_analyse)}
-try(knit_child_attention <- knitr::knit_child(text =c(
+
+continent <- st_read("data/continent.csv") %>% dplyr::rename(geom = geometry)
+
+
+
+
+
+
+```
+
+
+
+```{r explanation_on_gain_and_loss, results='asis', eval=(!parameter_short && !unique_analyse)}
+knit_child_attention <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
   'test <- 1', 
@@ -587,15 +591,15 @@ try(knit_child_attention <- knitr::knit_child(text =c(
 '-***The final dataset, refered as, dataset 2 is `r titre_2`***', 
   '\n',
 '', 
-''), envir = environment(), quiet= TRUE))
+''), envir = environment(), quiet= TRUE)
 ```
 
 ```{r results='asis', eval=(!parameter_short && !unique_analyse)}
-try(cat(knit_child_attention))
+cat(knit_child_attention)
 ```
 
-```{r results='asis', eval=(!parameter_mapped &&  !unique_analyse) }
-try(knit_mapped <- knitr::knit_child(text =c(
+```{r explanation_on_result_mapping, results='asis', eval=(!parameter_mapped &&  !unique_analyse) }
+knit_mapped <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
   '',
@@ -604,7 +608,7 @@ try(knit_mapped <- knitr::knit_child(text =c(
   'In this comparison, the differences due to the mapping thas is to say, the renaming of codes to harmonize data will not be presented. The recap of the mapping is presented in annexe.',
 
 '', 
-''), envir = environment(), quiet= TRUE))
+''), envir = environment(), quiet= TRUE)
 ```
 
 ```{r results='asis', eval=(!parameter_mapped  && !unique_analyse)}
@@ -612,7 +616,7 @@ try(cat(knit_mapped))
 ```
 
 
-```{r}
+```{r filtering_function_on_data}
 
 
 colnames_to_filter <- colnames(init %>% select(names(matchingList)))
@@ -642,7 +646,7 @@ if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, c
 ```
 
 
-```{r eval = treatment, include=FALSE}
+```{r treatment, eval = treatment, include=FALSE}
 errorfinal <- try(differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
 errorinit <- try(differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
 
@@ -702,14 +706,14 @@ if(!exists("last_to_first")){last_to_first <- FALSE}
 ```
 
 
-```{r results='asis', eval=(treatment && !last_to_first)}
+```{r summarytreatment, results='asis', eval=(treatment && !last_to_first)}
 cat("Summary of this treatment : ")
 cat(explenation_step$X1)
 ```
 
 
 
-```{r eval= !unique_analyse && options_total}
+```{r eval=(!parameter_short && !unique_analyse & options_total)}
 if (nrow(differences_between_options2) == 0){
   towrite ="There are no differences between the options to create the two datasets. They are created by the same workflow."
 } else { towrite ="The differences in options choosen between the two dataframes are : "
@@ -740,7 +744,7 @@ qflextable2(s, captionn = "Options used in the treatment of the dataset")
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
+```{r firstfonctiongroupement, message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 
 
 carte_init <- fonction_groupement("fishingfleet",init, final)
@@ -753,7 +757,7 @@ t <- carte_init[0,]
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r allfonction_groupement,  message=FALSE, warning=FALSE, include=FALSE}
 for (i in Dimensions){
   temporaire <- fonction_groupement(i,init, final)
   assign(paste0("test", i), temporaire)
@@ -764,7 +768,7 @@ for (i in Dimensions){
 ```
 
 
-```{r eval=!unique_analyse, message=FALSE, warning=FALSE, include=FALSE}
+```{r stratasloss, eval=!unique_analyse, message=FALSE, warning=FALSE, include=FALSE}
 
 nb_ligne_init_millions <- nrow(init)
 nb_ligne_final_millions<- nrow(final)
@@ -807,7 +811,7 @@ if(parameter_short == FALSE){cat2("# Main differences \n ")}
 ```
 
 
-```{r eval=!unique_analyse}
+```{r summary_of_differences, eval=!unique_analyse}
 units <- unique(c(unique(init$unit), unique(final$unit)))
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
@@ -828,23 +832,23 @@ join <- set_caption(join, "Summary of the difference between the two datasets")
 ```
 
 
-```{r  eval=!unique_analyse,echo=FALSE, results='asis', out.width="100%"}
+```{r eval=!unique_analyse,echo=FALSE, results='asis', out.width="100%"}
 
 join
 
 ```
 
 
-```{r echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
+```{r stratas_loss, echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
 
   strates_perdues_first_10 <- strates_perdues_first_10 %>% filter(Dimension %notin% geographical_dimension) %>% filter(Dimension %notin% time_dimension)
 
 if (nrow(strates_perdues_first_10)!=0){
 
 
-  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 1~ "Loss", abs(loss)<=1 ~ "No differences", loss < 1~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% dplyr::select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)),groups = c("Dimension","unit","Loss / Gain"))
+  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 1~ "Loss", abs(loss)<=1 ~ "No differences", loss < 1~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% dplyr::select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)) %>% ungroup(),groups = c("Dimension","unit","Loss / Gain"))
   cat("The stratas differences (completely lost or appearing) between the first one and the second one are:\n")
-  cat(knit_print(qflextable2(groupe_df%>% select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
+  cat(knit_print(qflextable2(groupe_df%>% dplyr::select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))
 } else {towrite =("No strata is gain nor lost")}
 
@@ -1382,13 +1386,11 @@ We will look for each dimension the `r topn` most important differences without 
 
 ```{r eval!=unique_analyse}
 
-valeur_totale <- sum(init$value, na.rm = TRUE)
-ligne_totale <- nrow(init)
 
 unit <- t  %>% dplyr::filter(`Difference (in %)` %notin% c(0,100, -Inf) & (value_sum_1!=0 )& value_sum_2!=0 ) 
 
 
-if(nrow(unit != 0)){
+if(nrow(unit) != 0){
   
   unit <- unit%>%dplyr::mutate(`Loss / Gain` = base::ifelse(loss >= 0, "Loss", "Gain")) %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain", value_sum_1 == value_sum_2 ~"Egal", TRUE ~ `Loss / Gain`))%>%dplyr::mutate(Dimension = as.factor(Dimension)) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% arrange(desc(`Difference (in %)`)) %>% dplyr::mutate(id = row_number())%>%  dplyr::mutate(Precision = as.factor(base::ifelse(id>(topn),paste0("Others"),paste0(as.character(Precision))))) %>% dplyr::ungroup() %>%dplyr::group_by(`Loss / Gain`,Dimension,Precision, unit) %>%dplyr::summarise(across(is.numeric, sum)) %>%dplyr::mutate(`Difference (in %)` = (`Difference in value`/value_sum_1)*100) %>%dplyr::select(-id, -number_lines2)%>%dplyr::group_by(`Loss / Gain`,Dimension,unit) %>%  arrange(Dimension,unit,desc(`Difference (in %)`)) %>% mutate(Other_column = ifelse(Precision == "Others", 1, 0)) 
 
@@ -1439,7 +1441,7 @@ rownames(s) <- paste0("Number of ", rownames(s))
 
 ```
 
-```{r eval=!unique_analyse, eval=!parameter_mapped}
+```{r eval=!unique_analyse && !parameter_mapped}
 if(!(require(tibble))){ 
   install.packages("tibble") 
   (require(tibble))} 
