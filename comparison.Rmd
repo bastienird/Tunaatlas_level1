@@ -1341,14 +1341,14 @@ image
 init <- init%>% mutate(st_area=as.numeric(st_area))
 out <- try(spatial_coverage_init <-sum((init %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct()%>%dplyr::left_join(shape_without_geom %>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct())$st_area, na.rm = TRUE))
 
-if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow init = ", nrow(init)))}
+# if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow init = ", nrow(init)))}
 ```
 
 
 ```{r eval=print_map}
 final <- final%>% mutate(value=as.numeric(value))
 out <- try(spatial_coverage_final <- as.numeric(sum((final %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom%>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)))
-if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow_final= ",nrow(final)))}
+# if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow_final= ",nrow(final)))}
 
 difference_coverage <- spatial_coverage_init - spatial_coverage_final
 gain_loss <- ifelse(difference_coverage >0, "Loss" ,"Gain")
