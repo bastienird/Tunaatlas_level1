@@ -107,23 +107,23 @@ recap_all_markdown <- function(action, entity, config, options){
   
   rmarkdown::render("tableau_recap_global_action_effort.Rmd"  , 
                     envir =  child_env_global)
-  if(dir.exists("Markdown/Realocating_removing_mislocated_data")){
-    wd <- getwd()
-    list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
-    details = file.info(list_dir)
-    details = details[with(details, order(as.POSIXct(mtime))), ]
-    details <- tibble::rownames_to_column(details, "dir_name")
-    details <- tibble::rowid_to_column(details, "ID")
-    Realocating_removing_mislocated_data_number <-details %>% filter(str_detect(dir_name,"Realocating_removing_mislocated")) %>% pull(ID)
-    before_Realocating_removing_mislocated_data <- details %>% filter(ID == Realocating_removing_mislocated_data_number-1) %>% pull(dir_name)
-    parameters_child_mistaken <- list(action = action,
-                                      entity = entity, config = config, debugging = debugging, final = paste0(before_Realocating_removing_mislocated_data))
-    child_env_mistaken = new.env()
-    list2env(parameters_child_mistaken, env = child_env_mistaken)
-    
-    rmarkdown::render("potentially_mistaken_data.Rmd"  , envir =  child_env_mistaken, output_file = "Analyse_mislocated_before_treatment")
-    
-  }
+  # if(dir.exists("Markdown/Realocating_removing_mislocated_data")){
+  #   wd <- getwd()
+  #   list_dir <- list.dirs(path =paste0(wd,"/Markdown"), full.names = TRUE, recursive = FALSE)
+  #   details = file.info(list_dir)
+  #   details = details[with(details, order(as.POSIXct(mtime))), ]
+  #   details <- tibble::rownames_to_column(details, "dir_name")
+  #   details <- tibble::rowid_to_column(details, "ID")
+  #   Realocating_removing_mislocated_data_number <-details %>% filter(str_detect(dir_name,"Realocating_removing_mislocated")) %>% pull(ID)
+  #   before_Realocating_removing_mislocated_data <- details %>% filter(ID == Realocating_removing_mislocated_data_number-1) %>% pull(dir_name)
+  #   parameters_child_mistaken <- list(action = action,
+  #                                     entity = entity, config = config, debugging = debugging, final = paste0(before_Realocating_removing_mislocated_data))
+  #   child_env_mistaken = new.env()
+  #   list2env(parameters_child_mistaken, env = child_env_mistaken)
+  #   
+  #   rmarkdown::render("potentially_mistaken_data.Rmd"  , envir =  child_env_mistaken, output_file = "Analyse_mislocated_before_treatment")
+  #   
+  # }
   gc()
   # if(dir.exists("Markdown/Removing_absurd_nomt")){
   #   wd <- getwd()
