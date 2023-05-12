@@ -1,4 +1,7 @@
 recap_all_markdown <- function(action, entity, config, options){
+  if(!file.exists("Markdown")){
+    return(NULL)
+  } else {
   if(!(require(here))){ 
     install.packages("here") 
     (require(here))} 
@@ -137,5 +140,5 @@ recap_all_markdown <- function(action, entity, config, options){
   #                                   final = paste0(before_begin_conv_fact_handling)), envir =  new.env(), output_file = "Analyse_mislocated_before_treatment")
   #   
   # }
-  
+  }
 }
