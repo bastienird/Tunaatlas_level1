@@ -75,6 +75,19 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r namingplots, include=FALSE}
+counter <- 1  # Initialize a counter
+
+knitr::opts_hooks$set(plot = function(options) {
+  if (!is.null(options$fig.cap)) {
+    filename <- paste0(options$label, "_", counter, ".pdf")
+    options$fig.path <- paste0("path/to/save/directory/", filename)
+    counter <<- counter + 1  # Increment the counter
+  }
+  options
+})
+```
+
 
 ```{r utility_functions, include=FALSE}
 `%notin%` <- Negate(`%in%`)
@@ -98,6 +111,7 @@ is_null_or_not_exist = function(x) {
 
 
 ```{r globalvariables, include=FALSE}
+
 if(!exists("child")){child = FALSE} else{child = child}
 if(!exists("step_title")){step_title_t_f = FALSE} else{step_title_t_f = TRUE}
 
@@ -269,7 +283,7 @@ dataframe <- dataframe %>% dplyr::left_join(species_group_dataframe%>% dplyr::di
   
   dataframe <- dataframe%>%dplyr::mutate(unit = dplyr::case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ unit)) 
 
-return(list(dataframe = dataframe, print_map= print_map))
+return(list(dataframe = dataframe, print_map = print_map))
 }
 
 
@@ -402,37 +416,23 @@ if (knitr::is_html_output()){plotting_type <- "view" }
 
 
 
-```{r include=FALSE}
+```{r childheader, include=FALSE}
 
 if(!exists("child_header")){child_header = "#"}
 cat2 = function(x){cat(paste0(child_header, x, " \n"))}
 
+if(!child|!step_title_t_f){
+  cat2 <- cat
 
-```
+}
 
-
-
-```{r eval=!child|!step_title_t_f, include=FALSE}
-cat2 <- cat
-```
-
-
-```{r results='asis', eval=step_title_t_f}
-
-try(cat2(step_title))
-
-```
-
-```{r results='asis'}
+if(step_title_t_f){
+  cat2(step_title)
+}
 
 if(!child){cat("\\clearpage")}
 
 ```
-
-
-
-
-
 
 
 ```{r libraries, eval = !child, message=FALSE, warning=FALSE, include=FALSE}
@@ -488,18 +488,7 @@ set_flextable_defaults(
 if(!child){autonum <- officer::run_autonum(seq_id = "tab", bkm = "TC1", bkm_all = TRUE) # number the table, bkm (bookmark) is important as the cross-referencing is done using the bookmark
 }
 
-
-
-
 ```
-
-
-
-
-
-
-
-
 
 
 ```{r filterprinting, eval=!child, results='asis'}
@@ -556,12 +545,13 @@ mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"),
   mapping_keep_src_code <- FALSE
 
   source("https://raw.githubusercontent.com/eblondel/geoflow-tunaatlas/master/tunaatlas_scripts/generation/map_codelists.R")
-  init <- map_codelists(con = con, parameter_fact = parameter_fact, mapping_dataset = mapping_dataset, dataset_to_map = init, mapping_keep_src_code = FALSE, summary_mapping = FALSE)$dataset_mapped #this map condelist function is to retrieve the mapping dataset used
+  init <- map_codelists(con = con, fact = parameter_fact, mapping_dataset = mapping_dataset, dataset_to_map = init, mapping_keep_src_code = FALSE, summary_mapping = FALSE)$dataset_mapped
+  #this map condelist function is to retrieve the mapping dataset used
   # final <- map_codelists(conn, parameter_fact, mapping_dataset, final, mapping_keep_src_code = FALSE, summary_mapping = FALSE)
 }
 ```
 
-```{r}
+```{r filetidying}
 
 init <- init %>% dplyr::select(any_of(colnames_to_keep))
 final <- final %>% dplyr::select(any_of(colnames_to_keep))
@@ -571,9 +561,12 @@ list_return_init <- tidying_data_for_GTA(init,time_dim = time_dimension, shape =
 init <- list_return_init$dataframe
 final <- tidying_data_for_GTA(final, time_dim = time_dimension, shape = shape_without_geom)$dataframe
 
-if(!exists("print_map")){
+if(is_null_or_not_exist("print_map")){
 print_map <- list_return_init$print_map
 }
+
+if(is_null_or_not_exist("print_map")){
+print_map<- TRUE}
 
 ```
 
@@ -583,6 +576,7 @@ print_map <- list_return_init$print_map
 
 
 ```{r explanationongainandloss, results='asis', eval=(!parameter_short && !unique_analyse)}
+
 knit_child_attention <- knitr::knit_child(text =c(
   '',
       '```{r results="asis"}', 
@@ -599,9 +593,7 @@ knit_child_attention <- knitr::knit_child(text =c(
   '\n',
 '', 
 ''), envir = environment(), quiet= TRUE)
-```
 
-```{r results='asis', eval=(!parameter_short && !unique_analyse)}
 cat(knit_child_attention)
 ```
 
@@ -616,10 +608,8 @@ knit_mapped <- knitr::knit_child(text =c(
 
 '', 
 ''), envir = environment(), quiet= TRUE)
-```
 
-```{r results='asis', eval=(!parameter_mapped  && !unique_analyse)}
-try(cat(knit_mapped))
+cat(knit_mapped)
 ```
 
 
@@ -652,102 +642,10 @@ if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, c
 
 ```
 
-
-```{r treatment, eval = treatment, include=FALSE}
-errorfinal <- try(differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
-errorinit <- try(differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt") ,col_names = FALSE,delim="=" ) %>% dplyr::distinct(), silent = TRUE)
-
-if(!("try-error" %in% class(errorfinal))){treatment <- TRUE} else {treatment <- FALSE}
-if(!("try-error" %in% class(errorinit))){options_total <- TRUE} else {options_total <- FALSE}
-```
-
-
-```{r include=FALSE}
-if(exists("no_recap_options") && no_recap_options == TRUE){options_total <- FALSE} else {options_total <- TRUE}
-```
-
-
-```{r eval=treatment && options_total}
-differences_in_optionsinit <- readr::read_delim(paste0(parameter_init,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
-differences_in_optionsinit$X1 <- gsub(" ","",differences_in_optionsinit$X1)
-differences_in_optionsinit$X1 <- gsub("options_","",differences_in_optionsinit$X1) 
-differences_in_optionsinit$X2 <- gsub(" ","",differences_in_optionsinit$X2)
-differences_in_optionsinit$X2 <- gsub("options_","",differences_in_optionsinit$X2) 
-
-differences_in_optionsinit_base <- differences_in_optionsinit %>% dplyr::distinct()
-```
-
-
-```{r eval=treatment}
-differences_in_optionsfinal <- readr::read_delim(paste0(parameter_final,"/options_total.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
-
-
-differences_in_optionsfinal$X1 <- gsub(" ","",differences_in_optionsfinal$X1)
-differences_in_optionsfinal$X1 <- gsub("options_","",differences_in_optionsfinal$X1)
-differences_in_optionsfinal$X2 <- gsub(" ","",differences_in_optionsfinal$X2)
-differences_in_optionsfinal$X2 <- gsub("options_","",differences_in_optionsfinal$X2)
-
-differences_in_optionsfinal_base <- differences_in_optionsfinal %>% dplyr::distinct()
-
-colnames(differences_in_optionsinit) <- "Options init"
-
-colnames(differences_in_optionsfinal) <- "Options final"
-
-
-differences_in_optionsinit <- as.data.frame(stringr::str_split_fixed(differences_in_optionsinit$`Options init`, "=", 2)) %>% dplyr::rename(Options_initial =V2)%>%dplyr::filter(Options_initial!="")
-
-differences_in_optionsfinal <- as.data.frame(stringr::str_split_fixed(differences_in_optionsfinal$`Options final`, "=", 2)) %>% dplyr::rename(Options_final =V2) %>%dplyr::filter(Options_final!="")
-
-differences_between_options <- dplyr::full_join(differences_in_optionsfinal,differences_in_optionsinit) %>% dplyr::distinct()
-
-differences_between_options[is.na(differences_between_options)] = "none"
-
-differences_between_options2 <-differences_between_options %>%dplyr::filter(Options_final != Options_initial)
-
-explenation_step <- readr::read_delim(paste0(parameter_final,"/explication.txt"), col_names = FALSE, delim = "=") %>% dplyr::distinct() 
+```{r child='child_treatment.Rmd'}
 
 ```
 
-```{r eval = !unique_analyse}
-if(!exists("last_to_first")){last_to_first <- FALSE}
-```
-
-
-```{r summarytreatment, results='asis', eval=(treatment && !last_to_first)}
-cat("Summary of this treatment : ")
-cat(explenation_step$X1)
-```
-
-
-
-```{r eval=(!parameter_short && !unique_analyse & options_total)}
-if (nrow(differences_between_options2) == 0){
-  towrite ="There are no differences between the options to create the two datasets. They are created by the same workflow."
-} else { towrite ="The differences in options choosen between the two dataframes are : "
-qflextable2(differences_between_options2, "Differences between the options of the two datasets")}
-```
-
-
-```{r results='asis', eval=(!parameter_short && !unique_analyse & options_total)}
-cat(towrite)
-```
-
-
-
-
-```{r eval=(!parameter_short && options_total), results='asis'}
-cat(ifelse(unique_analyse, "The options used to create the data frame are :", "The options used to create the initial data frame are :"))
-
-s <-  differences_in_optionsinit_base%>% dplyr::rename("Options" = X1, "Value" = X2) %>% dplyr::mutate(Options = gsub("_","-",Options))%>% dplyr::mutate(Options = gsub("=","=\n",Options))%>% dplyr::mutate(Value = gsub("_","-",Value))%>% dplyr::mutate(Value = gsub("=","=\n",Value)) %>% dplyr::mutate(Options = gsub("NONE", "", Options))
-```
-
-
-```{r eval=(!parameter_short && options_total), results='asis',echo=FALSE, out.width="100%"}
-
-qflextable2(s, captionn = "Options used in the treatment of the dataset")
-
-
-```
 
 
 
@@ -813,12 +711,13 @@ if (round(sum_valeur_init) == round(sum_valeur_final)&nrow(t %>%dplyr::filter(`L
   knitr::knit_exit(fully = FALSE)}
 ```
 
-```{r results='asis', eval=!unique_analyse}
+```{r eval=!unique_analyse ,  results='asis'}
 if(parameter_short == FALSE){cat2("# Main differences \n ")}
 ```
 
 
 ```{r summaryofdifferences, eval=!unique_analyse}
+
 units <- unique(c(unique(init$unit), unique(final$unit)))
 list_units <- unlist(as.vector(lapply(units, function(.)paste0("Value in ", .))))
 df <- data.frame(matrix(ncol =4, nrow = length(c(c( "Lines"), list_units ))))
@@ -836,6 +735,8 @@ join <- width(join, width = dim(join)$widths*6 /(flextable_dim(join)$widths))
 
 join <- set_caption(join, "Summary of the difference between the two datasets")
 
+
+
 ```
 
 
@@ -846,14 +747,14 @@ join
 ```
 
 
-```{r stratasloss, echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
+```{r echo=FALSE, eval=!unique_analyse, message=FALSE, warning=FALSE, paged.print=TRUE, results='asis'}
 
-  strates_perdues_first_10 <- strates_perdues_first_10 %>% filter(Dimension %notin% geographical_dimension) %>% filter(Dimension %notin% time_dimension)
+strates_perdues_first_10 <- strates_perdues_first_10 %>% filter(Dimension %notin% geographical_dimension) %>% filter(Dimension %notin% time_dimension)
 
 if (nrow(strates_perdues_first_10)!=0){
 
 
-  groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 1~ "Loss", abs(loss)<=1 ~ "No differences", loss < 1~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% dplyr::select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)) %>% ungroup(),groups = c("Dimension","unit","Loss / Gain"))
+groupe_df <- flextable::as_grouped_data(strates_perdues_first_10 %>%dplyr::mutate(`Loss / Gain` = dplyr::case_when(loss > 1~ "Loss", abs(loss)<=1 ~ "No differences", loss < 1~ "Gain", TRUE ~ NA_character_))  %>% dplyr::mutate(`Loss / Gain` = dplyr::case_when(is.na(`Loss / Gain`) ~ "Gain",value_sum_1 == value_sum_2~"Egal", TRUE ~ `Loss / Gain`))%>% dplyr::ungroup()%>%  dplyr::rename(`Values dataset 1` = "value_sum_1",`Values dataset 2` = "value_sum_2") %>% dplyr::select(parameter_columns_to_keep) %>%  dplyr::group_by(Dimension, unit,`Loss / Gain`) %>% dplyr::arrange( Dimension, unit,`Loss / Gain`,desc(`Difference in value`)) %>% ungroup(),groups = c("Dimension","unit","Loss / Gain"))
   cat("The stratas differences (completely lost or appearing) between the first one and the second one are:\n")
   cat(knit_print(qflextable2(groupe_df%>% dplyr::select(Dimension, unit, `Loss / Gain`, Precision, `Difference in millions` = `Difference in value`), captionn = paste0("Disappearing or appearing stratas between ", titre_1, " and ", titre_2))))
   cat(paste0("They represent ", round(pourcentage_strates_perdues)," % of the total number of stratas."))
@@ -881,14 +782,17 @@ rownames(s) <- paste0("Number of ", rownames(s))
 
 
 ```{r eval=!unique_analyse}
+
 if(!(require(tibble))){ 
   install.packages("tibble") 
   (require(tibble))} 
 qflextable2(s %>% tibble::rownames_to_column(" "), captionn = "Comparison of number of stratas between the two datasets")
+
 ```
 
 
 ```{r eval=parameter_short, results='asis'}
+
 exit <- "This document only presents the summary of the differences between the two datasets. If you need a more detailed summary please provide FALSE as argument for the 'short' parameter"
 if(child){exit <- ""}
 if (parameter_short){knitr::knit_exit(exit, fully = FALSE)}
@@ -911,7 +815,7 @@ We first present the main characteristics of each dimension.
 cat2("## Time coverage")
 ```
 
-We present the evolution of value in every unit available.
+We present the evolution of value in every unit available (id est `r unique(init$unit)` )
 
 ```{r include=FALSE}
 time_dimension_list_groupped <- lapply(time_dimension, fonction_groupement, init = init, final = final)
@@ -988,6 +892,7 @@ cat(unlist(map_unit_knit_list_cumulated), sep = "\n")
 ggplot_capt_time
 ```
 
+
 ```{r functionprintingmaps, eval =print_map}
 fonction_empreinte_spatiale = function(variable_affichee){
   selection = function(x){x %>% dplyr::ungroup() %>% dplyr::select(geographic_identifier, value, cat_geo, unit)}
@@ -1000,11 +905,7 @@ fonction_empreinte_spatiale = function(variable_affichee){
   inner_join <- st_as_sf(geo_data%>% dplyr::group_by(geographic_identifier, unit,source)  %>%  dplyr::summarise(value = sum(value, na.rm = TRUE))  %>% dplyr::filter(value != 0) %>% dplyr::inner_join(shapefile.fix, by = c("geographic_identifier"="code")))
   
   if(nrow(inner_join %>% dplyr::filter(unit == variable_affichee)) != 0){
-    
-    
-    
-    
-    if (plotting_type == "view"){image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
+     if (plotting_type == "view"){image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
       tm_fill("value", palette="RdYlGn", style="cont", n=8,
               id="name", midpoint = 0) +
       tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)} else {image <- tm_shape(inner_join %>% dplyr::filter(unit == variable_affichee))+
@@ -1066,7 +967,7 @@ cat_geo <- paste(as.list(unique(testcat_geo$Precision)), collapse = " ; ")
 
 ```{r eval=print_map,results='asis'}
 
-try(knit_child_map_printing <- knitr::knit_child(text =c(
+knit_child_map_printing <- knitr::knit_child(text =c(
     '',
   '```{r results="asis"}', 
   '',
@@ -1076,7 +977,7 @@ try(knit_child_map_printing <- knitr::knit_child(text =c(
    '\n',
   ''
 
-  ), envir = environment(), quiet= TRUE))
+  ), envir = environment(), quiet= TRUE)
 
 
 ```
@@ -1084,23 +985,17 @@ try(knit_child_map_printing <- knitr::knit_child(text =c(
 
 
 ```{r eval=print_map,results='asis'}
-try(cat(knit_child_map_printing))
+cat(knit_child_map_printing)
+```
+
+```{r echo=FALSE, eval=print_map,results='asis'} 
+map_unit_knit_list <- lapply(map_unit, FUN = map_unit_knit )
 ```
 
 
+```{r printingmaps, eval = FALSE, echo=FALSE, eval=print_map,results='asis'}
 
-
-
-```{r echo=FALSE, eval=print_map,results='asis'}
-try(map_unit_knit_list <- lapply(map_unit, FUN = map_unit_knit ))
-
-```
-
-
-```{r echo=FALSE, eval=print_map,results='asis'}
-
-try(cat(unlist(map_unit_knit_list), sep = "\\clearpage"))
-
+cat(unlist(map_unit_knit_list), sep = "\n")
 
 ```
 
@@ -1115,13 +1010,6 @@ cat2("## Repartition of the data for the other dimensions")
 
 We check the distribution of the value of each dimension and each unit.
 
-
-<!-- ```{r} -->
-<!-- formals(resume_knit_child)$titre_1 <- titre_1 -->
-<!-- formals(resume_knit_child)$titre_2 <- titre_2 -->
-<!-- ``` -->
-
-
 ```{r }
 pie_chart_2_default <- studycatchesird::pie_chart_2
 formals(pie_chart_2_default)$titre_1 <- titre_1
@@ -1130,7 +1018,12 @@ formals(pie_chart_2_default)$titre_2 <- titre_2
 # formals(pie_chart_2_default)$second <- final
 # if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
   # list_pie_chart <- list("fishingfleet","source_authority","Gear")} else {
-    list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value", "time_end"))))[[1]]
+
+list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "unit", "value", "time_end"))))[[1]]
+    
+if(unique_analyse){
+  formals(pie_chart_2_default)$titre_1 <- ""
+}
 
 
 ```
@@ -1338,6 +1231,7 @@ image
 
 
 ```{r eval=print_map}
+
 init <- init%>% mutate(st_area=as.numeric(st_area))
 out <- try(spatial_coverage_init <-sum((init %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct()%>%dplyr::left_join(shape_without_geom %>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct())$st_area, na.rm = TRUE))
 
@@ -1346,6 +1240,7 @@ out <- try(spatial_coverage_init <-sum((init %>% dplyr::filter(value > 0)%>% sel
 
 
 ```{r eval=print_map}
+
 final <- final%>% mutate(value=as.numeric(value))
 out <- try(spatial_coverage_final <- as.numeric(sum((final %>% dplyr::filter(value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom%>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)))
 # if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow_final= ",nrow(final)))}
@@ -1476,10 +1371,14 @@ t <- as_grouped_data(i, groups = c("Dimension")) %>% as.data.frame() %>% dplyr::
 s <- t %>% rowwise() %>% dplyr::mutate(Dimension = ifelse(is.na(Dimension), " ", Dimension)) %>% dplyr::ungroup() %>% as.data.frame() %>% dplyr::mutate(`New code` = ifelse(is.na(`New code`) &  (Dimension == " "), "UNK", `New code`))
 s[is.na(s)] <- ""
 
+write.xlsx(s, "outputs/datasets/replacement_code_mapping.xlsx")
+
 ```
 
 ```{r eval=!parameter_mapped}
-kable(s, caption = "Replacement code during the mapping codelist treatment")
+
+qflextable2(readxl::read_excel("outputs/datasets/replacement_code_mapping.xlsx"))
+
 ```
 
 
