@@ -69,27 +69,58 @@ recap_all_markdown <- function(action, entity, config, options){
     lapply(c,copyrmd)
   }
   con <- config$software$input$dbi
-  query <- "SELECT DISTINCT codesource_area, geom from area.area_labels"
-  # query <- "SELECT DISTINCT codesource_area, st_area(geom), geom from area.area_labels"
-  world_sf <- st_read(con, query = query)
-  world_sf <- world_sf[sf::st_is_valid(world_sf),]
   
-  shapefile.fix <- world_sf %>% 
-    dplyr::filter(!st_is_empty(.)) %>%
-    dplyr::mutate(
-      cat_geo = as.factor(
-        dplyr::case_when(
-          stringr::str_starts(codesource_area, "6") ~ "1_deg",
-          stringr::str_starts(codesource_area, "5") ~ "5_deg",
-          TRUE ~ "Else"
-        )
-      )
-    )
-  shapefile.fix <- shapefile.fix %>% mutate(code = as.character(codesource_area)) %>% select(-codesource_area)
+  url= "https://www.fao.org/fishery/geoserver/wfs" 
+  serviceVersion = "1.0.0" 
+  logger = "INFO"
+  # SOURCE: OGC ####
+  WFS = WFSClient$new(url = url, serviceVersion = serviceVersion, logger = logger)
   
+  library(data.table)
+  library(sf)
+  library(sp)
+  
+  
+  get_wfs_data <- function(url= "https://www.fao.org/fishery/geoserver/wfs", 
+                           version = "1.0.0", 
+                           layer_name, output_dir = "data",logger = "INFO") {
+    
+    # create output directory if it doesn't exist
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir)
+    }
+    
+    # define file paths
+    shapefile_path <- file.path(output_dir, paste0(layer_name, ".shp"))
+    
+    # check if shapefile already exists
+    if (file.exists(shapefile_path)) {
+      message(paste0("Shapefile for layer '", layer_name, "' already exists, skipping download."))
+      return(sf::st_read(shapefile_path) %>% rename(the_geom = geometry))
+    }
+    
+    cwp_sf <- WFS$getFeatures(layer_name)
+    cwp <- as.data.table(cwp_sf)
+    if("gml_id.1" %in% colnames(cwp)){
+      cwp <- cwp %>% select(-"gml_id.1")
+    }
+    
+    # save data as shapefile
+    sf::st_write(cwp, shapefile_path, driver = "ESRI Shapefile")
+    
+    # return data
+    return(cwp)
+  }
+  
+  CWP11_ERASED <- get_wfs_data(layer_name = "cwp:cwp-grid-map-1deg_x_1deg_erased")
+  CWP55_ERASED <- get_wfs_data(layer_name = "cwp:cwp-grid-map-5deg_x_5deg_erased")
+  CWP1010_ERASED <- get_wfs_data(layer_name = "cwp:cwp-grid-map-10deg_x_10deg_erased")
+  CWP2020_ERASED <- get_wfs_data(layer_name = "cwp:cwp-grid-map-20deg_x_20deg_erased")
+  CWP3030_ERASED <- get_wfs_data(layer_name = "cwp:cwp-grid-map-30deg_x_30deg_erased")
+  
+  # CWP_GRIDS <- rbindlist(list(CWP11, CWP55, CWP1010, CWP2020, CWP3030))
+  shapefile.fix <- rbindlist(list(CWP11_ERASED, CWP55_ERASED, CWP1010_ERASED, CWP2020_ERASED, CWP3030_ERASED))
   st_write(shapefile.fix, "data/world_sf.csv", layer_options = "GEOMETRY=AS_WKT", append= FALSE)
-  
-  
   
   query <- "SELECT  code,st_area(geom), geom from area.gshhs_world_coastlines"
   continent <- (st_read(con, query = query)%>%dplyr::filter(!st_is_empty(.)))
