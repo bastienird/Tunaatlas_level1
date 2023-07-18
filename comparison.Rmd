@@ -71,7 +71,7 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
   fig.align = 'center',
-  error = 0
+  error = TRUE
 )
 ```
 
@@ -141,7 +141,7 @@ if(is_null_or_not_exist(parameter_UNK_for_not_standards_unit)){
 
 if(is_null_or_not_exist(parameter_mapped)){parameter_mapped <- TRUE}
 
-if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(species = NULL, fishingfleet = NULL)}
+if(is_null_or_not_exist(parameter_filtering)){parameter_filtering <- list(species = NULL, fishing_fleet = NULL)}
 if(is_null_or_not_exist(time_dimension)){time_dimension = c("time_start")}
 
 if(is_null_or_not_exist(geographical_dimension)){geographical_dimension = "geographic_identifier"}
@@ -154,7 +154,7 @@ matchingList <- parameter_filtering %>% purrr::keep( ~ !is.null(.) )
 ```{r shapefilereading, include=FALSE, error=0}
 
 
-shapefile.fix <- st_read("data/world_sf.csv") %>% select(-WKT) %>% dplyr::rename(geom = geometry)
+shapefile.fix <- st_read("data/world_sf.csv") %>% dplyr::select(CWP_CODE, GRIDTYPE, SURFACE) %>% dplyr::rename(geom = geometry)
 
 
 shape_without_geom  <- shapefile.fix %>% as_tibble() %>%dplyr::select(-geom)
@@ -177,7 +177,7 @@ species_group <-  read_csv("https://raw.githubusercontent.com/fdiwg/fdi-codelist
  cl_cwp_gear_level2 <- read_csv(file.path("https://raw.githubusercontent.com/fdiwg/fdi-codelists/main/global/firms/gta/cl_isscfg_pilot_gear.csv")) %>% select(Code = code, Gear = label)
  
  
-if(is_null_or_not_exist(parameter_colnames_to_keep)){colnames_to_keep <- c("fishingfleet",         "gear_type",                 "time_start",                 
+if(is_null_or_not_exist(parameter_colnames_to_keep)){colnames_to_keep <- c("fishing_fleet",         "gear_type",                 "time_start",                 
                       "geographic_identifier","fishing_mode",           "species",                       
                       "measurement_unit",                 "measurement_value",                "source_authority")
 }else {colnames_to_keep <-parameter_colnames_to_keep}
@@ -252,7 +252,7 @@ qflextable2 =function(x, captionn = NULL, autonumm = autonum, pgwidth = 6, colou
 filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingList, geo_dim, parameter_fact, parameter_UNK_for_not_standards_unit){
   if(length(colnames_to_filter)!= 0){  dataframe_to_filter <- dataframe_to_filter%>% dplyr::filter(!! rlang::parse_expr(str_c(colnames_to_filter, matchingList, sep = '%in%', collapse="&")))}
   if(  parameter_UNK_for_not_standards_unit & parameter_fact == "effort"){
-    dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(unit = ifelse(unit%in%c("HOOKS","FDAYS"), unit, "UNK" ))}
+    dataframe_to_filter <- dataframe_to_filter %>% dplyr::mutate(measurement_unit = ifelse(measurement_unit%in%c("HOOKS","FDAYS"), measurement_unit, "UNK" ))}
   if("geographic_identifier"%in%colnames(dataframe_to_filter)){
     dataframe_to_filter <- dataframe_to_filter %>% dplyr::rename("geographic_identifier" := {{geo_dim}})
   }
@@ -261,15 +261,15 @@ filtering_function= function(dataframe_to_filter, colnames_to_filter, matchingLi
 
 tidying_data_for_GTA = function(dataframe, time_dim, shape, species_group_dataframe = species_group, cl_cwp_gear_level2_dataframe = cl_cwp_gear_level2){
   if("geographic_identifier"%in%colnames(dataframe)){
-  dataframe <- dataframe%>%  dplyr::left_join(shape, by = c("geographic_identifier"="code"))
+  dataframe <- dataframe%>%  dplyr::left_join(shape, by = c("geographic_identifier"="CWP_CODE"))
   print_map <- TRUE
   } else {print_map <- FALSE}
 
 
 dataframe <- dataframe %>% mutate_at(all_of(time_dim), as.character)
 
-if("cat_geo"%in%colnames(dataframe)){
-  dataframe <- dataframe%>%dplyr::mutate(cat_geo = as.character(cat_geo))
+if("GRIDTYPE"%in%colnames(dataframe)){
+  dataframe <- dataframe%>%dplyr::mutate(GRIDTYPE = as.character(GRIDTYPE))
 }
 
 dataframe <- dataframe %>% dplyr::left_join(species_group_dataframe%>% dplyr::distinct(), by = c("species"))
@@ -278,7 +278,7 @@ dataframe <- dataframe %>% dplyr::left_join(species_group_dataframe%>% dplyr::di
     
 
   
-  dataframe <- dataframe%>%dplyr::mutate(unit = dplyr::case_when(unit %in% c("MT","t","MTNO", "Tons")~ "Tons", unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ unit)) 
+  dataframe <- dataframe%>%dplyr::mutate(measurement_unit = dplyr::case_when(measurement_unit %in% c("MT","t","MTNO", "Tons")~ "Tons", measurement_unit %in% c("NO", "NOMT","no", "Number of fish")~"Number of fish", TRUE ~ measurement_unit)) 
 
 return(list(dataframe = dataframe, print_map = print_map))
 }
@@ -289,21 +289,21 @@ fonction_groupement = function(these_col, init, final){
   # Compute sum of values for each combination of the columns in "these_col" and "measurement_unit" in the "init" dataframe
   groupement_1 <- init %>%
     dplyr::ungroup() %>%
-    dplyr::group_by(!!!rlang::syms(these_col), unit) %>%
+    dplyr::group_by(!!!rlang::syms(these_col), measurement_unit) %>%
     dplyr::summarise(value_sum_1 = ((sum(measurement_value, na.rm=TRUE)))) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(value_sum_1 = dplyr::coalesce(value_sum_1, 0)) %>%
-    dplyr::mutate(unit = as.character(unit)) %>%
+    dplyr::mutate(measurement_unit = as.character(measurement_unit)) %>%
     dplyr::mutate(number_lines1 = n())
   
   # Compute sum of values for each combination of the columns in "these_col" and "measurement_unit" in the "final" dataframe
   groupement_2 <- final %>%
     dplyr::ungroup() %>%
-    dplyr::group_by(!!!rlang::syms(these_col), unit) %>%
+    dplyr::group_by(!!!rlang::syms(these_col), measurement_unit) %>%
     dplyr::summarise(value_sum_2 = ((sum(measurement_value, na.rm=TRUE)))) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(value_sum_2 = dplyr::coalesce(value_sum_2, 0)) %>%
-    dplyr::mutate(unit = as.character(unit)) %>%
+    dplyr::mutate(measurement_unit = as.character(measurement_unit)) %>%
     dplyr::mutate(number_lines2 = n())
   
   # Join the two dataframes based on the columns in "these_col" and "measurement_unit"
@@ -449,8 +449,7 @@ formals(install.packages)$upgrade <- "never"
 # List of required packages
 required_packages <- c("dplyr", "knitr", "stringr", "purrr", "readxl", "base", "flextable", "remotes", 
                         "utils", "DBI", "odbc", "rlang", "sf", "kableExtra", "readr", "tidyr", "ggplot2", 
-                        "stats", "RColorBrewer", "cowplot", "tmap", "RPostgreSQL", "officer", "gdata",
-                        "sutdycatchesird")
+                        "stats", "RColorBrewer", "cowplot", "tmap", "RPostgreSQL", "officer", "gdata")
 
 # Check if each package is already installed, and if not, install and load it
 for (package in required_packages) {
@@ -467,6 +466,58 @@ if(!require(sutdycatchesird)){
 }
 
 ```
+
+```{r include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE, error = TRUE
+)
+knitr::opts_chunk$set(fig.filename = paste0("figure_", knitr::opts_current$get("fig.cap"), ".png"), fig.path = fig.path)
+
+knitr::knit_hooks$set(fig_filename = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    options$fig.filename <- paste0("figure_", gsub(" ", "_", options$fig.cap), ".png")
+  }
+  NULL
+})
+
+# Custom hook for kable
+knitr::knit_hooks$set(kable = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    filename <- paste0(options$fig.cap, ".html")
+    save_as_html(kable_table, filename)
+  }
+  NULL
+})
+
+# Custom hook for qflextable
+knitr::knit_hooks$set(qflextable = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    filename <- paste0(options$fig.cap, ".docx")
+    save_as_docx(qflextable_table, filename)
+  }
+  NULL
+})
+
+# Custom hook for ggplot
+knitr::knit_hooks$set(ggplot = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    filename_pdf <- paste0(options$fig.cap, ".pdf")
+    filename_png <- paste0(options$fig.cap, ".png")
+    filename_html <- paste0(options$fig.cap, ".html")
+
+    ggsave(filename_pdf, plot = ggplot_object, device = "pdf")
+    ggsave(filename_png, plot = ggplot_object, device = "png")
+    webshot::webshot(ggplot_object, file = filename_html)
+  }
+  NULL
+})
+
+
+options(knitr.duplicate.label = "allow")
+```
+
 
 
 ```{r eval = !child, message=FALSE, warning=FALSE, include=FALSE}
@@ -509,7 +560,6 @@ if (isNullList(parameter_filtering)){cat("There are no filter on this data")} el
 
 
 ```{r filereading}
-
 init <- readRDS(paste0(as.character(parameter_init),"/rds.rds"))
 if(is_null_or_not_exist(parameter_final)){
   final <- init[0,] 
@@ -534,8 +584,11 @@ titre_1 <- gsub("_","-",titre_1)
 ```
 
 
-```{r mappingifnot, include=FALSE}
+```{r mappingifnot, include=FALSE, eval=FALSE}
+
+
 if(!parameter_mapped){
+  
 
 
 mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"), stringsAsFactors = F,colClasses = "character")#, entity$data$source[[2]])) #bof mais pour l'instant comme ça 
@@ -550,8 +603,8 @@ mapping_dataset <- read.csv(paste0("data/codelist_mapping_rfmos_to_global.csv"),
 
 ```{r filetidying}
 
-init <- init %>% dplyr::select(any_of(colnames_to_keep))
 final <- final %>% dplyr::select(any_of(colnames_to_keep))
+init <- init %>% dplyr::select(any_of(colnames_to_keep))
 
 
 list_return_init <- tidying_data_for_GTA(init,time_dim = time_dimension, shape = shape_without_geom)
@@ -647,9 +700,9 @@ if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, c
 ```{r firstfonctiongroupement, message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 
 
-carte_init <- fonction_groupement("fishingfleet",init, final)
+carte_init <- fonction_groupement("fishing_fleet",init, final)
 
-Dimensions <- colnames(init)[colnames(init) != "measurement_unit" & colnames(init)!= "measurement_value"& colnames(init)!= "st_area"]
+Dimensions <- colnames(init)[colnames(init) != "measurement_unit" & colnames(init)!= "measurement_value"& colnames(init)!= "SURFACE"]
 t <- carte_init[0,]
 
 
@@ -890,23 +943,23 @@ ggplot_capt_time
 
 ```{r functionprintingmaps, eval =print_map}
 fonction_empreinte_spatiale = function(variable_affichee){
-  selection = function(x){x %>% dplyr::ungroup() %>% dplyr::select(geographic_identifier, measurement_value, cat_geo, measurement_unit)}
+  selection = function(x){x %>% dplyr::ungroup() %>% dplyr::select(geographic_identifier, measurement_value, GRIDTYPE, measurement_unit)}
   Initial_dataframe <-selection(init)
   Final_dataframe <-selection(final)
   geo_data <- gdata::combine(`Initial_dataframe`, `Final_dataframe`)
   rm(`Initial_dataframe`, `Final_dataframe`)
   gc()
   geo_data <- geo_data %>% dplyr::mutate(source = dplyr::case_when(source == "Initial_dataframe"~  eval(parse(text = "titre_1")),source == "Final_dataframe"~ eval(parse(text = "titre_2")), TRUE ~ "Error"))
-  inner_join <- st_as_sf(geo_data%>% dplyr::group_by(geographic_identifier, measurement_unit,source)  %>%  dplyr::summarise(measurement_value = sum(measurement_value, na.rm = TRUE))  %>% dplyr::filter(measurement_value != 0) %>% dplyr::inner_join(shapefile.fix, by = c("geographic_identifier"="code")))
+  inner_join <- st_as_sf(geo_data%>% dplyr::group_by(geographic_identifier, measurement_unit,source)  %>%  dplyr::summarise(measurement_value = sum(measurement_value, na.rm = TRUE))  %>% dplyr::filter(measurement_value != 0) %>% dplyr::inner_join(shapefile.fix, by = c("geographic_identifier"="CWP_CODE")))
   
   if(nrow(inner_join %>% dplyr::filter(measurement_unit == variable_affichee)) != 0){
      if (plotting_type == "view"){image <- tm_shape(inner_join %>% dplyr::filter(measurement_unit == variable_affichee))+
       tm_fill("measurement_value", palette="RdYlGn", style="cont", n=8,
               id="name", midpoint = 0) +
-      tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)} else {image <- tm_shape(inner_join %>% dplyr::filter(measurement_unit == variable_affichee))+
+      tm_layout(legend.outside = FALSE) + tm_facets(by=c("GRIDTYPE","source"), free.scales = TRUE)} else {image <- tm_shape(inner_join %>% dplyr::filter(measurement_unit == variable_affichee))+
         tm_fill("measurement_value", palette="RdYlGn", style="cont", n=8,
                 id="name", midpoint = 0) +
-        tm_layout(legend.outside = FALSE) + tm_facets(by=c("cat_geo","source"), free.scales = TRUE)+tm_shape(continent)+tm_borders()}
+        tm_layout(legend.outside = FALSE) + tm_facets(by=c("GRIDTYPE","source"), free.scales = TRUE)+tm_shape(continent)+tm_borders()}
     
     return(list(image, variable_affichee))
   }
@@ -955,8 +1008,8 @@ cat2("## Spatial coverage ")
 ```{r eval=print_map,results='asis'}
 tmap_mode(plotting_type)
 
-number_of_cat_geo <- length(unique(testcat_geo$Precision))
-cat_geo <- paste(as.list(unique(testcat_geo$Precision)), collapse = " ; ")
+number_of_GRIDTYPE <- length(unique(testGRIDTYPE$Precision))
+GRIDTYPE <- paste(as.list(unique(testGRIDTYPE$Precision)), collapse = " ; ")
 
 ```
 
@@ -968,7 +1021,7 @@ knit_child_map_printing <- knitr::knit_child(text =c(
   '',
   '```',
   '',
-  'We represent spatial coverage, faceted by geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_cat_geo` categories which are `r cat_geo`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).', 
+  'We represent spatial coverage, faceted by geographical category. The geographical category depends on the area of the geographic polygon. In this case there are `r number_of_GRIDTYPE` categories which are `r GRIDTYPE`. The category is made on the area, also different shapes could be included in the same geographical category (example 5x10, 10x5 and 25x2).', 
    '\n',
   ''
 
@@ -1012,7 +1065,7 @@ formals(pie_chart_2_default)$titre_2 <- titre_2
 # formals(pie_chart_2_default)$first <- init
 # formals(pie_chart_2_default)$second <- final
 # if ("Gear"%in% colnames(init) & "Gear"%in% colnames(final) ){
-  # list_pie_chart <- list("fishingfleet","source_authority","Gear")} else {
+  # list_pie_chart <- list("fishing_fleet","source_authority","Gear")} else {
 
 list_pie_chart <- list(setdiff(colnames_to_keep, unlist(list(time_dimension, geographical_dimension, "measurement_unit", "measurement_value", "time_end"))))[[1]]
     
@@ -1134,16 +1187,16 @@ cat2("## Differences in geographical data")
 tmap_mode(plotting_type)
 formals(tm_shape)$drop.empty_facets <- FALSE
 
-inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
+inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
 
 if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
   if(plotting_type == "plot"){
-    image <- tm_shape(dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
+    image <- tm_shape(dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision")) %>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
       tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-              id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("measurement_unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
-      tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()} else {image <- tm_shape(dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
+              id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("measurement_unit", "GRIDTYPE"),free.coords = FALSE, free.scales = FALSE)+
+      tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()} else {image <- tm_shape(dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision"))%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
         tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-                id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("measurement_unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
+                id="name", midpoint = 0)+ tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences')) + tm_borders(col="skyblue")+tm_shape(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different')) +tm_borders(col="red")+tm_facets(by = c("measurement_unit", "GRIDTYPE"),free.coords = FALSE, free.scales = FALSE)+
         tm_layout(legend.outside = TRUE)}
   #   tmap::tmap_save(image,"image2.png")
   # # mapshot(image, file = "image.png")
@@ -1151,9 +1204,9 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
   image
 } else{
   
-  image <- tm_shape(dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
+  image <- tm_shape(dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision"))%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
     tm_fill("Difference (in %)", palette="RdYlGn", style="cont", n=8,
-            id="name", midpoint = 0)+ tm_facets(by = c("measurement_unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
+            id="name", midpoint = 0)+ tm_facets(by = c("measurement_unit", "GRIDTYPE"),free.coords = FALSE, free.scales = FALSE)+
     tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
   image
   #   tmap::tmap_save(image,"image3.png")
@@ -1170,18 +1223,18 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
 tmap_mode(plotting_type)
 formals(tm_shape)$drop.empty_facets <- FALSE
 
-inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss'))) 
+inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss'))) 
 minimum <- abs(min(t$`Difference (in %)`))
-t_filtered <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>% dplyr::group_by(measurement_unit,cat_geo) %>%  dplyr::mutate(`Difference (in %)` = log(`Difference (in %)` + abs(min(`Difference (in %)`)) +1)) %>% dplyr::filter(!(value_sum_1 ==0 & value_sum_2==0))
+t_filtered <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision")) %>% dplyr::group_by(measurement_unit,GRIDTYPE) %>%  dplyr::mutate(`Difference (in %)` = log(`Difference (in %)` + abs(min(`Difference (in %)`)) +1)) %>% dplyr::filter(!(value_sum_1 ==0 & value_sum_2==0))
 if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different'))!=0 & nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'No differences'))!=0){
   if(plotting_type == "plot"){
     image <- tm_shape(t_filtered)  +
-      tm_fill("Difference (in %)",style = "equal", palette = "Blues", auto.palette.mapping = FALSE, midpoint = 0)+tm_facets(by = c("measurement_unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
+      tm_fill("Difference (in %)",style = "equal", palette = "Blues", auto.palette.mapping = FALSE, midpoint = 0)+tm_facets(by = c("measurement_unit", "GRIDTYPE"),free.coords = FALSE, free.scales = FALSE)+
       tm_layout(legend.outside = TRUE)+tm_shape(continent)+tm_borders()
     } else {
       image <- tm_shape(t_filtered) +
         tm_fill("Difference (in %)", palette="PiYG", style="cont", n=8,
-                id="name", midpoint = 0)+tm_facets(by = c("measurement_unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
+                id="name", midpoint = 0)+tm_facets(by = c("measurement_unit", "GRIDTYPE"),free.coords = FALSE, free.scales = FALSE)+
         tm_layout(legend.outside = TRUE)}
 
 
@@ -1189,7 +1242,7 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
   
   image <- tm_shape(t_filtered%>% dplyr::filter("Difference (in %)" != 100 & "Difference (in %)" != 0 )) +
     tm_polygons(col = "Difference (in %)", palette="PiYG", style="cont", n=8,
-            id="name", midpoint = 0,interval.closure	= "left")+ tm_facets(by = c("measurement_unit", "cat_geo"),free.coords = FALSE, free.scales = FALSE)+
+            id="name", midpoint = 0,interval.closure	= "left")+ tm_facets(by = c("measurement_unit", "GRIDTYPE"),free.coords = FALSE, free.scales = FALSE)+
     tm_layout(legend.outside = TRUE) +tm_shape(continent)+tm_borders()
 
 }
@@ -1201,14 +1254,14 @@ if (nrow(inner_join %>%dplyr::filter(`Impact on the data` == 'All data different
 Here is represented for each area the polygons keeping all the initial information, the ones losing a part and the ones losing all the information. 
 
 ```{r}
-breaks <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision")) %>%dplyr::mutate(`Impact on the data` = dplyr::case_when(`Difference (in %)` == -Inf ~"Appearing data", -Inf<`Difference (in %)`  & `Difference (in %)`<= -100 ~"Gain (more than double)" ,  -100<`Difference (in %)`  & `Difference (in %)`<0 ~ "Gain",`Difference (in %)`==0~"No differences" ,0<`Difference (in %)`  & `Difference (in %)`<100 ~ "Loss",`Difference (in %)` ==100 ~  "All data lost" ))
+breaks <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision")) %>%dplyr::mutate(`Impact on the data` = dplyr::case_when(`Difference (in %)` == -Inf ~"Appearing data", -Inf<`Difference (in %)`  & `Difference (in %)`<= -100 ~"Gain (more than double)" ,  -100<`Difference (in %)`  & `Difference (in %)`<0 ~ "Gain",`Difference (in %)`==0~"No differences" ,0<`Difference (in %)`  & `Difference (in %)`<100 ~ "Loss",`Difference (in %)` ==100 ~  "All data lost" ))
 
 breaks <- breaks %>% ungroup()
 
 
 breaks$`Impact on the data` <- factor(breaks$`Impact on the data`, levels = c("Appearing data", "Gain (more than double)","Gain", "No differences", "Loss", "All data lost"))
 
- image <- tm_shape(breaks)+tm_fill("Impact on the data", palette="-PiYG",  id="name")+ tm_facets(by = c("measurement_unit", "cat_geo"), free.scales = FALSE,free.coords = TRUE)+    tm_layout(legend.outside = TRUE)
+ image <- tm_shape(breaks)+tm_fill("Impact on the data", palette="-PiYG",  id="name")+ tm_facets(by = c("measurement_unit", "GRIDTYPE"), free.scales = FALSE,free.coords = TRUE)+    tm_layout(legend.outside = TRUE)
 
 if(plotting_type == "plot"){image <- image  +tm_shape(continent)+tm_borders()}
 
@@ -1231,21 +1284,17 @@ image
 
 ```{r eval=print_map}
 
-init <- init%>% mutate(st_area=as.numeric(st_area))
-out <- try(spatial_coverage_init <-sum((init %>% dplyr::filter(measurement_value > 0)%>% select(geographic_identifier)%>%dplyr::distinct()%>%dplyr::left_join(shape_without_geom %>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct())$st_area, na.rm = TRUE))
+init <- init%>% mutate(SURFACE=as.numeric(SURFACE))
+spatial_coverage_init <-as.numeric(sum((init %>% dplyr::filter(measurement_value > 0)%>% select(geographic_identifier)%>%dplyr::distinct()%>%dplyr::left_join(shape_without_geom %>% dplyr::mutate(SURFACE=as.numeric(SURFACE)), by = c("geographic_identifier"="CWP_CODE")) %>% distinct())$SURFACE, na.rm = TRUE))
 
-# if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow init = ", nrow(init)))}
-```
-
-
-```{r eval=print_map}
 
 final <- final%>% mutate(measurement_value=as.numeric(measurement_value))
-out <- try(spatial_coverage_final <- as.numeric(sum((final %>% dplyr::filter(measurement_value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom%>% mutate(st_area=as.numeric(st_area)), by = c("geographic_identifier"="code")) %>% distinct)$st_area, na.rm = TRUE)))
+spatial_coverage_final <- as.numeric(sum((final %>% dplyr::filter(measurement_value > 0)%>% select(geographic_identifier)%>%dplyr::distinct() %>%dplyr::left_join(shape_without_geom%>% mutate(SURFACE=as.numeric(SURFACE)), by = c("geographic_identifier"="CWP_CODE")) %>% distinct)$SURFACE, na.rm = TRUE))
 # if("try-error" %in% class(out)){knitr::knit_exit(paste0("nrow_final= ",nrow(final)))}
 
-difference_coverage <- spatial_coverage_init - spatial_coverage_final
+difference_coverage <- spatial_coverage_init - spatial_coverage_final / 1000000
 gain_loss <- ifelse(difference_coverage >0, "Loss" ,"Gain")
+
 ```
 
 The coverage difference is `r difference_coverage` km square. (`r gain_loss`)
@@ -1388,20 +1437,20 @@ qflextable2(readxl::read_excel("outputs/datasets/replacement_code_mapping.xlsx")
 
 
 
-fonction_empreinte_spatiale_diff  = function(unit, plotting_type, shapefile_fix_function, t_filtered, percent = FALSE){
-  if (deparse(substitute(unit)) == "X[[i]]"){ #for sapply function bug
-  assign("new_name", paste0("Difference in millions of ",unit), envir = globalenv())
-    if(percent){assign("new_name", paste0("Difference (in %) of ", unit), envir = globalenv())}
-    }else {  assign("new_name", paste0("Difference in millions of ", substitute(unit)), envir = globalenv())
-    if(percent){assign("new_name", paste0("Difference (in %) of ", substitute(unit)), envir = globalenv())}
+fonction_empreinte_spatiale_diff  = function(measurement_unit, plotting_type, shapefile_fix_function, t_filtered, percent = FALSE){
+  if (deparse(substitute(measurement_unit)) == "X[[i]]"){ #for sapply function bug
+  assign("new_name", paste0("Difference in millions of ",measurement_unit), envir = globalenv())
+    if(percent){assign("new_name", paste0("Difference (in %) of ", measurement_unit), envir = globalenv())}
+    }else {  assign("new_name", paste0("Difference in millions of ", substitute(measurement_unit)), envir = globalenv())
+    if(percent){assign("new_name", paste0("Difference (in %) of ", substitute(measurement_unit)), envir = globalenv())}
     }
   
-  enquo_unit <- enquo(unit)
-  dataset <- dplyr::inner_join(shapefile_fix_function,(t_filtered%>% dplyr::ungroup() %>%dplyr::filter(Dimension == ("geographic_identifier")) %>% dplyr::filter(measurement_unit == !!enquo_unit)) , by = c("code"= "Precision"))
+  enquo_unit <- enquo(measurement_unit)
+  dataset <- dplyr::inner_join(shapefile_fix_function,(t_filtered%>% dplyr::ungroup() %>%dplyr::filter(Dimension == ("geographic_identifier")) %>% dplyr::filter(measurement_unit == !!enquo_unit)) , by = c("CWP_CODE"= "Precision"))
   if(percent){
   dataset <- dataset%>%  dplyr::rename(!!as.symbol(eval(parse(text = "new_name"))) := "Difference (in %)")} else {
   dataset <- dataset%>%  dplyr::rename(!!as.symbol(eval(parse(text = "new_name"))) := "Difference in value")}
-image_child <- tm_shape(dataset) +tm_fill(eval(parse(text = "new_name")), palette= ("-PiYG"), id= ("name"), midpoint = 0)+tm_facets(by =   c("cat_geo", "Loss / Gain"),free.coords = FALSE)+tm_borders(lwd = 0.05)
+image_child <- tm_shape(dataset) +tm_fill(eval(parse(text = "new_name")), palette= ("-PiYG"), id= ("name"), midpoint = 0)+tm_facets(by =   c("GRIDTYPE", "Loss / Gain"),free.coords = FALSE)+tm_borders(lwd = 0.05)
   if(plotting_type == "plot"){image_child <-image_child+tm_shape(continent)+tm_borders()}
   return(list(image_child,measurement_unit))
 }
@@ -1429,7 +1478,7 @@ map_plotted_percent <- lapply(map_diff_percent, knit_child_map)
 ```{r eval=FALSE}
 
 
-inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("code"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
+inner_join <- dplyr::inner_join(shapefile.fix,(t %>%dplyr::filter(Dimension == "geographic_identifier")) , by = c("CWP_CODE"="Precision"))%>%dplyr::mutate(`Impact on the data` = as.factor(dplyr::case_when(`Difference (in %)` == 0 ~ 'No differences', `Difference (in %)` == 100~'All data different',`Difference (in %)` < 0 ~ "Gain", TRUE ~ 'Loss')))
 t_filtered <- t #%>% dplyr::filter(`Difference (in %)` >= -100)
 ```
 
