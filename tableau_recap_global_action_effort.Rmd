@@ -76,7 +76,7 @@ fancyhdr:
 knitr::opts_chunk$set(
 	echo = TRUE,
 	message = debugging,
-	warning = TRUE, fig.align = 'center', error = FALSE
+	warning = TRUE, fig.align = 'center', error = TRUE
 )
 
 
@@ -174,6 +174,59 @@ if(!(require(readtext))){
 ```
 
 ```{r include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE, error = TRUE
+)
+knitr::opts_chunk$set(fig.filename = paste0("figure_", knitr::opts_current$get("fig.cap"), ".png"), fig.path = fig.path)
+
+knitr::knit_hooks$set(fig_filename = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    options$fig.filename <- paste0("figure_", gsub(" ", "_", options$fig.cap), ".png")
+  }
+  NULL
+})
+
+# Custom hook for kable
+knitr::knit_hooks$set(kable = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    filename <- paste0(options$fig.cap, ".html")
+    save_as_html(kable_table, filename)
+  }
+  NULL
+})
+
+# Custom hook for qflextable
+knitr::knit_hooks$set(qflextable = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    filename <- paste0(options$fig.cap, ".docx")
+    save_as_docx(qflextable_table, filename)
+  }
+  NULL
+})
+
+# Custom hook for ggplot
+knitr::knit_hooks$set(ggplot = function(before, options, envir) {
+  if (before && !is.null(options$fig.cap)) {
+    filename_pdf <- paste0(options$fig.cap, ".pdf")
+    filename_png <- paste0(options$fig.cap, ".png")
+    filename_html <- paste0(options$fig.cap, ".html")
+
+    ggsave(filename_pdf, plot = ggplot_object, device = "pdf")
+    ggsave(filename_png, plot = ggplot_object, device = "png")
+    webshot::webshot(ggplot_object, file = filename_html)
+  }
+  NULL
+})
+
+
+
+options(knitr.duplicate.label = "allow")
+```
+
+
+```{r include=FALSE}
 
 opts <- entity$data$actions[[1]]$options
 con <- config$software$input$dbi
@@ -185,9 +238,9 @@ if(is.character(parameter_filtering)){
 
 
 # if(exists('params')){parameters <- params}else{
-parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, parameter_port = config$software$input$dbi_config$parameters$port,  parameter_user = config$software$input$dbi_config$parameters$user,parameter_dbname=config$software$input$dbi_config$parameters$dbname, parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE, no_recap_options = TRUE, plotting_type = "plot",parameter_colnames_to_keep = c("fishingfleet",         "gear",                 "time_start",                 
-                      "geographic_identifier","schooltype",           "species",                       
-                      "unit",                 "value",                "source_authority"), treatment = FALSE)
+parameters_child <- list(config = config, entity = entity,opts = opts ,action = action, parameter_filtering = parameter_filtering, parameter_fact = parameter_fact, parameter_con = con,parameter_host =config$software$input$dbi_config$parameters$host, parameter_port = config$software$input$dbi_config$parameters$port,  parameter_user = config$software$input$dbi_config$parameters$user,parameter_dbname=config$software$input$dbi_config$parameters$dbname, parameter_password = config$software$input$dbi_config$parameters$password,  child = TRUE, no_recap_options = TRUE, plotting_type = "plot",parameter_colnames_to_keep = c("fishing_fleet",         "gear_type",                 "time_start",                 
+                      "geographic_identifier","fishing_mode",           "species",                       
+                      "measurement_unit",                 "measurement_value",                "source_authority"), treatment = FALSE)
 
 # }
 ```
@@ -327,11 +380,14 @@ child_env_last$child_header <- "#"
 child_env_last$parameter_mapped <- TRUE
 child_env_last$last_to_first <- FALSE
 child_env_last$parameter_short <- FALSE
+child_env_last$fig.path = paste0("Comparisonfirsttolast/figures/")
 
 
 # rmarkdown::render("comparison.Rmd", envir = child_env_last, quiet = TRUE)
 
 res2 <- knitr::knit_child("comparison.Rmd", envir = child_env_last, quiet = TRUE)
+
+
 
 ```
 
@@ -364,6 +420,7 @@ child_env_comp$parameter_titre_dataset_2 <- entity$identifiers[["id"]]
 child_env_comp$last_to_first <- TRUE
 child_env_comp$parameter_mapped <- FALSE
 child_env_comp$parameter_short <- FALSE
+child_env_comp$fig.path = paste0("Comparison/",entity$identifiers[["id"]], "/figures/")
 
 # rmarkdown::render("comparison.Rmd", envir = child_env_comp, quiet = TRUE)
 
@@ -418,8 +475,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
                         "Options", "Tons", "Number of fish", "Lines","Difference (in % of tons)","Difference in tons","Difference (in % of fish)", "Difference in number of fish", "Difference (in % of lines)", "Percentage of nominal"
       )
           main <- filtering_function(readRDS(paste0(sub_list_dir_2[1],"/rds.rds")), matchingList = matchingList)
-          tons_init <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT","t")))$value)
-          nofish_init <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO","no")))$value)
+          tons_init <- sum((main %>% dplyr::filter(measurement_unit%in%c("MTNO", "MT","t")))$measurement_value)
+          nofish_init <- sum((main %>% dplyr::filter(measurement_unit%in%c("NOMT", "NO","no")))$measurement_value)
           lines_init <- nrow(main)
         # }
       for (i in sub_list_dir_2){
@@ -428,8 +485,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
           main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)
-          sum_t <- sum((main %>% dplyr::filter(unit%in%c("MTNO", "MT","t")))$value)
-          sum_no <- sum((main %>% dplyr::filter(unit%in%c("NOMT", "NO","no")))$value)
+          sum_t <- sum((main %>% dplyr::filter(measurement_unit%in%c("MTNO", "MT","t")))$measurement_value)
+          sum_no <- sum((main %>% dplyr::filter(measurement_unit%in%c("NOMT", "NO","no")))$measurement_value)
           nrow <- nrow(main)
           
 
@@ -507,8 +564,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
       )
 
           main <- filtering_function(readRDS(paste0(sub_list_dir_2[1],"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%opts$species_filter)
-          hooks_init <- sum((main %>% dplyr::filter(unit%in%c("HOOKS", "HOOKS")))$value)
-          fishing_days_init <- sum((main %>% dplyr::filter(unit%in%c("FDAYS", "FDAYS")))$value)
+          hooks_init <- sum((main %>% dplyr::filter(measurement_unit%in%c("HOOKS", "HOOKS")))$measurement_value)
+          fishing_days_init <- sum((main %>% dplyr::filter(measurement_unit%in%c("FDAYS", "FDAYS")))$measurement_value)
           lines_init <- nrow(main)
         
       for (i in sub_list_dir_2){
@@ -518,8 +575,8 @@ df <- data.frame(matrix(ncol =13, nrow = 1))
         if (file.exists(paste0(i,"/options_written.txt"))){
           Options <- pull(readtext(paste0(i,"/options_written.txt"))[2])} else {Options <- "Aucune"}
           main <- filtering_function(readRDS(paste0(i,"/rds.rds")), matchingList = matchingList)# %>% dplyr::filter(species%in%filter_species)
-          sum_hooks <- sum((main %>% dplyr::filter(unit%in%c("HOOKS", "HOOKS")))$value)
-          sum_fdays <- sum((main %>% dplyr::filter(unit%in%c("FDAYS", "FDAYS")))$value)
+          sum_hooks <- sum((main %>% dplyr::filter(measurement_unit%in%c("HOOKS", "HOOKS")))$measurement_value)
+          sum_fdays <- sum((main %>% dplyr::filter(measurement_unit%in%c("FDAYS", "FDAYS")))$measurement_value)
           nrow <- nrow(main)
           
 
@@ -732,12 +789,12 @@ knit_print(t)
 ```
 
 
-```{r statsirregular_areas}
+```{r statsirregularareas}
 if(file.exists("data/stats_irregular_areas.rds")){stats_irregular_areas <- readRDS("data/stats_irregular_areas.rds")} else {knitr::knit_exit()}
 
 ```
 
-```{r echo=FALSE, results='asis'}
+```{r statsirregularareasflextable,echo=FALSE, results='asis'}
 qflextable2(stats_irregular_areas, captionn ="Summary of the irregular area reallocation by unit", pgwidth = 6)
 ```
 
@@ -750,7 +807,7 @@ if(file.exists("data/not_mapped_total.rds")){not_mapped_total <- readRDS("data/n
 
 ```
 
-```{r echo=FALSE, results='asis'}
+```{r summaryofthenotmappedfactors,echo=FALSE, results='asis'}
 qflextable2(not_mapped_total, captionn ="Summary of the not mapped factors and so replaced by 'UNK'", pgwidth = 6)
 ```
 
