@@ -700,7 +700,8 @@ if(unique_analyse){final <- init[0,]} else {final <- filtering_function(final, c
 ```{r firstfonctiongroupement, message=FALSE, warning=FALSE, include=FALSE, cache=FALSE}
 
 
-carte_init <- fonction_groupement("fishing_fleet",init, final)
+
+carte_init <- fonction_groupement("species",init, final)
 
 Dimensions <- colnames(init)[colnames(init) != "measurement_unit" & colnames(init)!= "measurement_value"& colnames(init)!= "SURFACE"]
 t <- carte_init[0,]
