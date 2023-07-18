@@ -611,11 +611,11 @@ list_return_init <- tidying_data_for_GTA(init,time_dim = time_dimension, shape =
 init <- list_return_init$dataframe
 final <- tidying_data_for_GTA(final, time_dim = time_dimension, shape = shape_without_geom)$dataframe
 
-if(is_null_or_not_exist("print_map")){
+if(exists("print_map") | is.null(print_map)){
 print_map <- list_return_init$print_map
-}
+} else {print_map <- print_map}
 
-if(is_null_or_not_exist("print_map")){
+if(exists("print_map") | is.null(print_map)){
 print_map<- TRUE}
 
 ```
@@ -1085,7 +1085,9 @@ if(unique_analyse){
 
 
 ```{r}
+
 if(!unique_analyse){pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first= init, second = final, topn = 5)}else{pie_charts_multiple <- lapply(list_pie_chart,FUN = function_pie_chart_df, first= init, topn = 5, title_yes_no = FALSE )}
+
 ```
 
 ```{r eval=unique_analyse}
